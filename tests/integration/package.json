@@ -9,7 +9,8 @@
     "bootstrap:launch": "tsx src/bootstrap-launch.ts",
     "verify:addresses": "tsx src/verify-addresses.ts",
     "measure:costs": "tsx src/measure-costs.ts",
-    "bootstrap:cluster": "tsx src/bootstrap-cluster.ts"
+    "bootstrap:cluster": "tsx src/bootstrap-cluster.ts",
+    "dry-run:cluster": "tsx src/dry-run-cluster.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "1.2.0",

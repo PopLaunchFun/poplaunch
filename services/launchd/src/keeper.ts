@@ -40,6 +40,7 @@ export class Keeper {
     return this.keypair?.publicKey.toBase58() ?? null;
   }
   lastSuccessAt: string | null = null;
+  private lastLowBalanceLog = 0;
 
   /** Operational health for /api/status and alerting. */
   async health(): Promise<{ address: string | null; enabled: boolean; balanceSol: number | null; readyLaunches: { address: string; ageSec: number }[]; failedAttempts15m: number; lastSuccessAt: string | null }> {
@@ -65,7 +66,11 @@ export class Keeper {
     // Below the floor the keeper stands down (anyone can still settle from the launch page) instead of
     // draining its last lamports on attempts that cannot pay their own fee.
     const balance = await this.connection.getBalance(this.keypair.publicKey, "confirmed");
-    if (balance < config.keeperMinBalanceSol * LAMPORTS_PER_SOL) { console.error(`[keeper] balance ${balance / LAMPORTS_PER_SOL} SOL below floor ${config.keeperMinBalanceSol}; not sending`); return 0; }
+    if (balance < config.keeperMinBalanceSol * LAMPORTS_PER_SOL) {
+      // Logged once a minute rather than every tick; /api/status and the keeper-balance-low alert carry the state.
+      if (Date.now() - this.lastLowBalanceLog > 60_000) { this.lastLowBalanceLog = Date.now(); console.error(`[keeper] balance ${balance / LAMPORTS_PER_SOL} SOL below floor ${config.keeperMinBalanceSol}; not sending`); }
+      return 0;
+    }
     const now = Math.floor(Date.now() / 1000);
     const ready = await query<{ address: string; settlement_deadline: string }>(
       `SELECT address, settlement_deadline FROM launches WHERE chain_state = 1 AND settlement_deadline > $1

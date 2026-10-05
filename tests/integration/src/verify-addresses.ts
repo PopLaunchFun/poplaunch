@@ -54,9 +54,12 @@ if (cfg) {
   ok("AmmConfig index matches", index === net.ammConfigIndex, String(index));
   ok("AmmConfig allows pool creation", !disableCreatePool);
   info("AmmConfig fees", `trade ${Number(tradeFee) / 10_000}%  protocol share ${Number(protocolFee) / 10_000}%  fund share ${Number(fundFee) / 10_000}%  creator ${Number(creatorFee) / 10_000}%  create_pool_fee ${Number(createPoolFee) / 1e9} SOL`);
-  // Mainnet config 0 carries no creator fee. Raydium's devnet configs all do (it accrues to the pool creator, i.e.
-  // the launch authority PDA, where nothing collects it); acceptable for testing, a hard failure for mainnet.
-  if (cluster === "mainnet-beta") ok("creator fee rate is zero (no hidden fee on the pool)", creatorFee === 0n);
+  // Raydium's "creator fee" accrues to the pool creator, here the launch authority PDA, where nothing can
+  // collect it: it is a dead-weight 0.05% on every swap on top of the 0.25% trade fee. Every mainnet AmmConfig
+  // (indexes 0-15, checked 5 Oct 2026) carries at least 0.05%, so index 0 is the cheapest available tier; the
+  // check fails if Raydium ever raises it above the disclosed figure (docs/authority-disclosure.md section 5).
+  const disclosedCreatorFee = 500n; // 0.05%, in Raydium's 1e-6 units
+  if (cluster === "mainnet-beta") ok(`creator fee rate within the disclosed 0.05% (uncollectable; accrues to the launch authority)`, creatorFee <= disclosedCreatorFee, `${Number(creatorFee) / 10_000}%`);
   else info("creator fee rate", creatorFee === 0n ? "0 (none)" : `${Number(creatorFee) / 10_000}% (devnet test config; accrues to the launch authority, uncollectable)`);
 }
 

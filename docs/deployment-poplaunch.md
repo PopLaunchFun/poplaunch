@@ -81,4 +81,4 @@ by pausing new launches and letting open launches refund.
 | Sign domain | `poplaunch-devnet` (same string in the site and the backend) |
 
 `verify:addresses` passed on devnet after `initialize_protocol`. Raydium's devnet configs all carry a 0.25%
-creator fee that mainnet config 0 does not; it accrues to the launch authority and is harmless for testing.
+creator fee (mainnet config 0 carries 0.05%); it accrues to the launch authority and is harmless for testing.

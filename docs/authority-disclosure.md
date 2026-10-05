@@ -73,7 +73,11 @@ creator's setup reserve held in the launch's authority PDA, not by the keeper.
 Settlement creates the pool through Raydium's CP-Swap program and burns all LP tokens issued to the
 launch. Raydium's own admin controls its AMM config (fee tiers) and can pause pool creation; neither
 gives Raydium access to pooled assets. Raydium's protocol/fund fee share of trading fees is Raydium's,
-disclosed in Launch details. The addresses used per cluster and their provenance are in
+disclosed in Launch details. The mainnet fee tier used (AmmConfig index 0) charges a 0.25% trade fee and,
+like every mainnet tier Raydium offers (checked October 2026), a 0.05% "creator fee" that Raydium pays to
+the pool creator. The pool creator is the launch authority PDA, and no instruction exists to collect from
+it, so that 0.05% is uncollectable by anyone, Pop Launch included. Traders should read the effective
+Raydium fee as 0.30%. The addresses used per cluster and their provenance are in
 `packages/sdk/src/networks.ts` and are verified live with `pnpm --filter @pop/integration verify:addresses`.
 
 ## 6. Token authorities
@@ -86,7 +90,7 @@ after it opens.
 
 ## 7. What Pop Launch, the company, holds
 
-- Private keys: the devnet deployer key, the keeper fee wallet, and a seat on the mainnet multisig.
+- Private keys: the deployer keys (emptied after each cluster's authority transfer) and the keeper fee wallets. The upgrade and protocol authority key is the owner's own wallet (section 1).
 - Servers: the web app, `launchd` (metadata, images, discovery index, keeper) and its database. The
   database is a cache; taking it offline cannot block refunds or claims, which read the chain directly.
 - Domain `poplaunch.fun`.
