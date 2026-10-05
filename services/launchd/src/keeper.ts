@@ -105,6 +105,8 @@ export class Keeper {
 }
 
 function loadKeeperKeypair(): Keypair | null {
+  // Hosted deployments pass the keypair JSON array through a secret variable instead of a file.
+  if (process.env.KEEPER_KEYPAIR_JSON) return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.KEEPER_KEYPAIR_JSON) as number[]));
   const path = config.keeperKeypairPath;
   if (!path) return null;
   if (!existsSync(path)) {
