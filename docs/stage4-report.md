@@ -126,7 +126,7 @@ Creator setup reserve quoted at 0.2042 SOL (Raydium's 0.15 SOL pool-creation fee
 | `launch.test.ts` (Stage 2 mechanism proof) | 10 passed |
 | `launch-hardening.test.ts` (this stage) | 6 passed |
 | `launchpad.test.ts` (older pop_market program) | 14 passed |
-| Browser end-to-end (`tests/e2e/poplaunch.mjs`) | E2E_RESULT |
+| Browser end-to-end (`tests/e2e/poplaunch.mjs`) | passed: create with immutable metadata, two wallets back, keeper settles (LP burned 999,999,999,900), claim, My pops, missed-target refund; screenshots in `apps/poplaunch/screenshots/e2e/` |
 
 ## 7. What still needs other people or a public cluster
 
