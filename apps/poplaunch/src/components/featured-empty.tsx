@@ -5,7 +5,8 @@ import { ArrowRight, Chevrons, Cloud, Sparkle, Squiggle } from "./art";
 /**
  * Empty state for the featured slot, in the same yellow panel as a live featured launch (the CAT.EXE
  * card from the approved mockup) but with no invented numbers: an invitation, the real target, and a
- * create button where the countdown would be. The balloon is illustration, not a launch.
+ * create button where the countdown would be. The brimming bar, the 49.99/50 figure and the trembling balloon are
+ * illustration of the moment before a pop, not a launch: no coin name, no link, nothing to back.
  */
 export function FeaturedEmpty() {
   return (
@@ -21,7 +22,7 @@ export function FeaturedEmpty() {
         </div>
         <Chevrons className="absolute left-[212px] top-[92px] hidden md:block" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <div className="self-center md:absolute md:left-[258px] md:-top-[21px] -mt-2 md:mt-0 balloon-float"><img src="/art/balloon-cat-featured.png" alt="" width={325} height={420} className="block select-none h-auto w-[230px] md:w-[325px]" draggable={false} /></div>
+        <div className="self-center md:absolute md:left-[258px] md:-top-[21px] -mt-2 md:mt-0 balloon-burst"><img src="/art/balloon-cat-featured.png" alt="" width={325} height={420} className="block select-none h-auto w-[230px] md:w-[325px]" draggable={false} /></div>
         <Sparkle className="absolute left-[322px] top-[296px] hidden md:block" size={34} flip />
         <div className="md:absolute md:left-[37px] md:top-[236px] md:w-[300px] relative">
           <h2 className="condensed text-[56px] md:text-[84px] leading-[0.85]">NEXT POP</h2>
@@ -35,9 +36,11 @@ export function FeaturedEmpty() {
         </div>
         <div className="md:absolute md:right-[27px] md:top-[66px] md:w-[288px]">
           <Sparkle className="absolute -right-2 -top-7 hidden md:block" size={44} />
-          <div className="condensed text-[84px] md:text-[124px] num leading-[0.8] md:text-right md:pr-1">{fmtSol(V1.targetLamports, 0)}</div>
-          <div className="mono font-bold text-[20px] md:text-[26px] num mt-3 md:mt-[14px] md:text-right md:pr-6">SOL TARGET</div>
-          <div className="bar bar-lg mt-3 md:mt-[18px] bg-white" role="presentation"><span className="bg-red" style={{ width: "0%" }} /></div>
+          <div className="md:text-center">
+            <div className="condensed text-[64px] md:text-[80px] num leading-[0.85] tracking-[-0.01em]">49.99<span className="text-[40px] md:text-[52px]">/50</span></div>
+            <div className="mono font-bold text-[20px] md:text-[26px] num mt-1 md:mt-1">SOL TARGET</div>
+          </div>
+          <div className="bar bar-lg bar-brim mt-3 md:mt-[18px] bg-white" role="presentation"><span className="bg-red" /></div>
           <div className="mt-3 md:mt-[12px]"><Link href="/create" className="btn btn-red">Launch a token <ArrowRight /></Link></div>
           <Sparkle className="absolute -left-4 top-[132px] hidden md:block" size={30} flip />
         </div>
