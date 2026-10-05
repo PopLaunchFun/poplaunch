@@ -1,0 +1,404 @@
+{
+  "name": "sandwich",
+  "description": "Victim quotes a 0.5 SOL buy with 1% slippage tolerance (after fees). Attacker front-runs with 1 SOL, victim executes, attacker sells.",
+  "configLabel": "pilot defaults",
+  "config": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "binMin": -64,
+    "binMax": 511,
+    "maxBinsPerSwap": 32,
+    "scarFeeBps": 150,
+    "protocolFeeBps": 25,
+    "creatorFeeBps": 25,
+    "maturityQuoteTarget": "100000000000",
+    "bandQuoteTarget": "1000000000",
+    "bandsRequired": 10,
+    "isPopMarket": true,
+    "configVersion": 1,
+    "p0HumanQuotePerBase": 2.2222222222222197e-8
+  },
+  "startingInventory": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "900000000000000",
+    "vaultQuote": "20000000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "0",
+    "cursor": 0,
+    "cursorPriceHuman": 2.2222222222222197e-8
+  },
+  "endingInventory": {
+    "seedBase": "860457613170725",
+    "seedQuote": "20980000000",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "15000000",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "860457613170725",
+    "vaultQuote": "20995000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "5000000",
+    "cursor": 22,
+    "cursorPriceHuman": 2.766035243890921e-8
+  },
+  "deposits": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000"
+  },
+  "trades": [
+    {
+      "seq": 1,
+      "slot": 1,
+      "actor": "attacker",
+      "direction": "buy",
+      "grossInput": "1000000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "39542386829275",
+      "scarFee": "15000000",
+      "protocolFee": "2500000",
+      "creatorFee": "2500000",
+      "binsInspected": 23,
+      "fills": [
+        {
+          "bin": 0,
+          "input": "39062500",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 1,
+          "input": "39453125",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 2,
+          "input": "39847657",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 3,
+          "input": "40246133",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 4,
+          "input": "40648595",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 5,
+          "input": "41055081",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 6,
+          "input": "41465631",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 7,
+          "input": "41880288",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 8,
+          "input": "42299091",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "42722081",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "43149302",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "43580795",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "44016603",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "44456769",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "44901337",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "45350350",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "45803854",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "46261892",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "46724511",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "47191756",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "47663674",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "48140311",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 22,
+          "input": "24078664",
+          "output": "870511829275",
+          "seedOut": "870511829275",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 0,
+      "endBin": 22,
+      "avgPrice": 2.478353176380493e-8,
+      "scarsFormed": [],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 2,
+      "slot": 2,
+      "actor": "victim",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": false,
+      "minOutput": "20666773458570",
+      "error": "OutputBelowMinimum: output 16883954047670 < min_output 20666773458570",
+      "binsInspected": 11
+    }
+  ],
+  "tradeCount": {
+    "attempted": 2,
+    "succeeded": 1,
+    "failed": 1
+  },
+  "feesByDestination": {
+    "scarEligibleQuote": "15000000",
+    "scarEligibleBase": "0",
+    "scarIneligibleQuote": "0",
+    "scarIneligibleBase": "0",
+    "protocolQuoteOperating": "2500000",
+    "protocolQuoteBuybackEarmark": "0",
+    "protocolBase": "0",
+    "creatorQuote": "2500000",
+    "creatorBase": "0"
+  },
+  "withdrawals": [],
+  "buybacks": [],
+  "burnedBase": "0",
+  "outstandingSupply": "900000000000000",
+  "matched": {
+    "pairedQuoteLifetime": "0",
+    "hardenedBands": 0,
+    "graduationProgress": 0,
+    "status": "active",
+    "graduationEvents": 0,
+    "bands": []
+  },
+  "depth": [
+    {
+      "direction": "buy",
+      "bps": 500,
+      "input": "223940941",
+      "output": "7918550670725",
+      "bins": 5
+    },
+    {
+      "direction": "buy",
+      "bps": 1000,
+      "input": "484612039",
+      "output": "16707613170725",
+      "bins": 10
+    },
+    {
+      "direction": "buy",
+      "bps": 2000,
+      "input": "987782717",
+      "output": "32527925670725",
+      "bins": 19
+    },
+    {
+      "direction": "sell",
+      "bps": 500,
+      "input": "9659574399375",
+      "output": "260060808",
+      "bins": 6
+    },
+    {
+      "direction": "sell",
+      "bps": 1000,
+      "input": "18448636973555",
+      "output": "484589721",
+      "bins": 11
+    },
+    {
+      "direction": "sell",
+      "bps": 2000,
+      "input": "39542387188198",
+      "output": "980000000",
+      "bins": 23
+    }
+  ],
+  "actors": [
+    {
+      "name": "victim",
+      "base": "0",
+      "quote": "1000000000",
+      "quoteSpent": "0",
+      "quoteReceived": "0",
+      "baseBought": "0",
+      "baseSold": "0",
+      "quotePnL": "0"
+    },
+    {
+      "name": "attacker",
+      "base": "39542386829275",
+      "quote": "9000000000",
+      "quoteSpent": "1000000000",
+      "quoteReceived": "0",
+      "baseBought": "39542386829275",
+      "baseSold": "0",
+      "quotePnL": "-1000000000"
+    }
+  ],
+  "reconciliation": {
+    "ok": true,
+    "expected": {
+      "vaultBase": "860457613170725",
+      "vaultQuote": "20995000000",
+      "feeVaultBase": "0",
+      "feeVaultQuote": "5000000",
+      "binSeedBase": "860457613170725",
+      "binSeedQuote": "20980000000",
+      "binScarBase": "0",
+      "binScarQuote": "0",
+      "pendingBaseEligible": "0",
+      "pendingQuoteEligible": "15000000",
+      "pendingBaseIneligible": "0",
+      "pendingQuoteIneligible": "0"
+    },
+    "ledgerBase": "860457613170725",
+    "ledgerQuote": "21000000000"
+  },
+  "volume": {
+    "buyQuote": "1000000000",
+    "sellBase": "0",
+    "swapCount": "1"
+  },
+  "findings": [
+    "Victim quoted 20875528746031 POP-atomic; with 1% tolerance min_output 20666773458570. After a 1 SOL front-run the victim swap REVERTED (OutputBelowMinimum: output 16883954047670 < min_output 20666773458570).",
+    "See run 'sandwich-loose' for the loose-tolerance case. Slippage protection is min_output on-chain; the UI must never raise it silently."
+  ],
+  "binsWithScars": 0,
+  "binsWithCurrentQuote": 87
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@pop/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic event-based simulator for the POP market using the exact integer math of @pop/math.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "default": "./dist/index.js" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "scenarios": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@pop/math": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

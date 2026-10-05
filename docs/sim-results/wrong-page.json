@@ -1,0 +1,219 @@
+{
+  "name": "wrong-page",
+  "description": "Only page 0 initialized; a sell that needs page -1 fails without state change; later lazy initialization recovers.",
+  "configLabel": "pilot defaults",
+  "config": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "binMin": -64,
+    "binMax": 511,
+    "maxBinsPerSwap": 32,
+    "scarFeeBps": 150,
+    "protocolFeeBps": 25,
+    "creatorFeeBps": 25,
+    "maturityQuoteTarget": "100000000000",
+    "bandQuoteTarget": "1000000000",
+    "bandsRequired": 10,
+    "isPopMarket": true,
+    "configVersion": 1,
+    "p0HumanQuotePerBase": 2.2222222222222197e-8
+  },
+  "startingInventory": {
+    "seedBase": "0",
+    "seedQuote": "0",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "900000000000000",
+    "unmaterializedSeedQuote": "20000000000",
+    "vaultBase": "900000000000000",
+    "vaultQuote": "20000000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "0",
+    "cursor": 0,
+    "cursorPriceHuman": 2.2222222222222197e-8
+  },
+  "endingInventory": {
+    "seedBase": "29105000000000",
+    "seedQuote": "4978437844",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "15000000000",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "871875000000000",
+    "unmaterializedSeedQuote": "15000000000",
+    "vaultBase": "900995000000000",
+    "vaultQuote": "19978437844",
+    "feeVaultBase": "5000000000",
+    "feeVaultQuote": "0",
+    "cursor": -1,
+    "cursorPriceHuman": 2.2002200220021955e-8
+  },
+  "deposits": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000"
+  },
+  "trades": [
+    {
+      "seq": 1,
+      "slot": 1,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "1000000000000",
+      "ok": false,
+      "minOutput": "0",
+      "error": "PageNotInitialized: page -1 for bin -1 not initialized",
+      "binsInspected": 2
+    },
+    {
+      "seq": 2,
+      "slot": 2,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "1000000000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "21562156",
+      "scarFee": "15000000000",
+      "protocolFee": "2500000000",
+      "creatorFee": "2500000000",
+      "binsInspected": 2,
+      "fills": [
+        {
+          "bin": -1,
+          "input": "980000000000",
+          "output": "21562156",
+          "seedOut": "21562156",
+          "scarOut": "0",
+          "surplus": "9799"
+        }
+      ],
+      "startBin": -1,
+      "endBin": -1,
+      "avgPrice": 2.2002199999999985e-8,
+      "scarsFormed": [],
+      "graduated": false,
+      "internalBuyback": false
+    }
+  ],
+  "tradeCount": {
+    "attempted": 2,
+    "succeeded": 1,
+    "failed": 1
+  },
+  "feesByDestination": {
+    "scarEligibleQuote": "0",
+    "scarEligibleBase": "15000000000",
+    "scarIneligibleQuote": "0",
+    "scarIneligibleBase": "0",
+    "protocolQuoteOperating": "0",
+    "protocolQuoteBuybackEarmark": "0",
+    "protocolBase": "2500000000",
+    "creatorQuote": "0",
+    "creatorBase": "2500000000"
+  },
+  "withdrawals": [],
+  "buybacks": [],
+  "burnedBase": "0",
+  "outstandingSupply": "900000000000000",
+  "matched": {
+    "pairedQuoteLifetime": "0",
+    "hardenedBands": 0,
+    "graduationProgress": 0,
+    "status": "active",
+    "graduationEvents": 0,
+    "bands": []
+  },
+  "depth": [
+    {
+      "direction": "buy",
+      "bps": 500,
+      "input": "180171572",
+      "output": "8011250000000",
+      "bins": 5
+    },
+    {
+      "direction": "buy",
+      "bps": 1000,
+      "input": "387520258",
+      "output": "16800312500000",
+      "bins": 10
+    },
+    {
+      "direction": "buy",
+      "bps": 2000,
+      "input": "695697495",
+      "output": "29105000000000",
+      "bins": 17
+    },
+    {
+      "direction": "sell",
+      "bps": 500,
+      "input": "86397838910288",
+      "output": "1853437844",
+      "bins": 6
+    },
+    {
+      "direction": "sell",
+      "bps": 1000,
+      "input": "163305198632890",
+      "output": "3415937844",
+      "bins": 11
+    },
+    {
+      "direction": "sell",
+      "bps": 2000,
+      "input": "244135606628001",
+      "output": "4978437844",
+      "bins": 16
+    }
+  ],
+  "actors": [
+    {
+      "name": "t",
+      "base": "0",
+      "quote": "10021562156",
+      "quoteSpent": "0",
+      "quoteReceived": "21562156",
+      "baseBought": "0",
+      "baseSold": "1000000000000",
+      "quotePnL": "21562156"
+    }
+  ],
+  "reconciliation": {
+    "ok": true,
+    "expected": {
+      "vaultBase": "900995000000000",
+      "vaultQuote": "19978437844",
+      "feeVaultBase": "5000000000",
+      "feeVaultQuote": "0",
+      "binSeedBase": "29105000000000",
+      "binSeedQuote": "4978437844",
+      "binScarBase": "0",
+      "binScarQuote": "0",
+      "pendingBaseEligible": "15000000000",
+      "pendingQuoteEligible": "0",
+      "pendingBaseIneligible": "0",
+      "pendingQuoteIneligible": "0"
+    },
+    "ledgerBase": "901000000000000",
+    "ledgerQuote": "19978437844"
+  },
+  "volume": {
+    "buyQuote": "0",
+    "sellBase": "1000000000000",
+    "swapCount": "1"
+  },
+  "findings": [
+    "Sell with page -1 missing: ok=false error=PageNotInitialized: page -1 for bin -1 not initialized. Vault base/quote before 900000000000000/20000000000, after 900000000000000/20000000000.",
+    "After initializing page -1: duplicate init rejected (page -1 already initialized); retry ok=true. Unmaterialized seed quote now 15.000000 SOL.",
+    "Mint, token-program and vault substitution checks are account constraints in the Anchor program (tests/integration), not simulator behavior."
+  ],
+  "binsWithScars": 0,
+  "binsWithCurrentQuote": 16
+}

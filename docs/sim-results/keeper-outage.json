@@ -1,0 +1,3132 @@
+{
+  "name": "keeper-outage",
+  "description": "Trade normally (matching is part of swap_exact_in), then run the permissionless match_bins pass twice and show it changes nothing and emits nothing new.",
+  "configLabel": "pilot defaults",
+  "config": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "binMin": -64,
+    "binMax": 511,
+    "maxBinsPerSwap": 32,
+    "scarFeeBps": 150,
+    "protocolFeeBps": 25,
+    "creatorFeeBps": 25,
+    "maturityQuoteTarget": "100000000000",
+    "bandQuoteTarget": "1000000000",
+    "bandsRequired": 10,
+    "isPopMarket": true,
+    "configVersion": 1,
+    "p0HumanQuotePerBase": 2.2222222222222197e-8
+  },
+  "startingInventory": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "900000000000000",
+    "vaultQuote": "20000000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "0",
+    "cursor": 0,
+    "cursorPriceHuman": 2.2222222222222197e-8
+  },
+  "endingInventory": {
+    "seedBase": "876690525013959",
+    "seedQuote": "20551008010",
+    "scarBase": "3745137390113",
+    "scarQuote": "34666927",
+    "pendingBaseEligible": "23980707926",
+    "pendingQuoteEligible": "8578699",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "880459643111998",
+    "vaultQuote": "20594253636",
+    "feeVaultBase": "863305169454",
+    "feeVaultQuote": "25000000",
+    "cursor": 13,
+    "cursorPriceHuman": 2.5290961787406307e-8
+  },
+  "deposits": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000"
+  },
+  "trades": [
+    {
+      "seq": 1,
+      "slot": 1,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "20875528746031",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 12,
+      "fills": [
+        {
+          "bin": 0,
+          "input": "39062500",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 1,
+          "input": "39453125",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 2,
+          "input": "39847657",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 3,
+          "input": "40246133",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 4,
+          "input": "40648595",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 5,
+          "input": "41055081",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 6,
+          "input": "41465631",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 7,
+          "input": "41880288",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 8,
+          "input": "42299091",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "42722081",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "43149302",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "38170516",
+          "output": "1539591246031",
+          "seedOut": "1539591246031",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 0,
+      "endBin": 11,
+      "avgPrice": 2.3472459354743828e-8,
+      "scarsFormed": [],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 2,
+      "slot": 2,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "10437764373015",
+      "ok": true,
+      "minOutput": "0",
+      "output": "247336355",
+      "scarFee": "156566465595",
+      "protocolFee": "26094410932",
+      "creatorFee": "26094410932",
+      "binsInspected": 6,
+      "fills": [
+        {
+          "bin": 11,
+          "input": "1539591246032",
+          "output": "38170516",
+          "seedOut": "38170516",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "1757812509212",
+          "output": "43149302",
+          "seedOut": "43149302",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "1757812501472",
+          "output": "42722081",
+          "seedOut": "42722081",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 8,
+          "input": "1757812538914",
+          "output": "42299091",
+          "seedOut": "42299091",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 7,
+          "input": "1757812533928",
+          "output": "41880288",
+          "seedOut": "41880288",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 6,
+          "input": "1658167755998",
+          "output": "39115077",
+          "seedOut": "39115077",
+          "scarOut": "0",
+          "surplus": "19847"
+        }
+      ],
+      "startBin": 11,
+      "endBin": 6,
+      "avgPrice": 2.4179893959548246e-8,
+      "scarsFormed": [
+        {
+          "bin": 11,
+          "base": "23565172133",
+          "quote": "584243"
+        },
+        {
+          "bin": 10,
+          "base": "26905293508",
+          "quote": "660449"
+        },
+        {
+          "bin": 9,
+          "base": "26905276805",
+          "quote": "653909"
+        },
+        {
+          "bin": 8,
+          "base": "26905291206",
+          "quote": "647435"
+        },
+        {
+          "bin": 7,
+          "base": "26905293887",
+          "quote": "641025"
+        },
+        {
+          "bin": 6,
+          "base": "25380118714",
+          "quote": "598701"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 3,
+      "slot": 3,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "19732502610876",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 12,
+      "fills": [
+        {
+          "bin": 6,
+          "input": "39713778",
+          "output": "1683547874712",
+          "seedOut": "1658167755998",
+          "scarOut": "25380118714",
+          "surplus": "0"
+        },
+        {
+          "bin": 7,
+          "input": "42521313",
+          "output": "1784717827815",
+          "seedOut": "1757812533928",
+          "scarOut": "26905293887",
+          "surplus": "0"
+        },
+        {
+          "bin": 8,
+          "input": "42946526",
+          "output": "1784717830120",
+          "seedOut": "1757812538914",
+          "scarOut": "26905291206",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "43375990",
+          "output": "1784717778277",
+          "seedOut": "1757812501472",
+          "scarOut": "26905276805",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "43809751",
+          "output": "1784717802720",
+          "seedOut": "1757812509212",
+          "scarOut": "26905293508",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "44165038",
+          "output": "1781377672134",
+          "seedOut": "1757812500001",
+          "scarOut": "23565172133",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "44016603",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "44456769",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "44901337",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "45350350",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "45803854",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "8938691",
+          "output": "339643325098",
+          "seedOut": "339643325098",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 6,
+      "endBin": 17,
+      "avgPrice": 2.4832126449582977e-8,
+      "scarsFormed": [
+        {
+          "bin": 8,
+          "base": "2757",
+          "quote": "1"
+        },
+        {
+          "bin": 9,
+          "base": "16585",
+          "quote": "1"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 4,
+      "slot": 4,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "15085133491946",
+      "ok": true,
+      "minOutput": "0",
+      "output": "372168225",
+      "scarFee": "226277002379",
+      "protocolFee": "37712833729",
+      "creatorFee": "37712833729",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 17,
+          "input": "339643325099",
+          "output": "8938691",
+          "seedOut": "8938691",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "1757812526199",
+          "output": "45803854",
+          "seedOut": "45803854",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "1757812507011",
+          "output": "45350350",
+          "seedOut": "45350350",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "1757812521352",
+          "output": "44901337",
+          "seedOut": "44901337",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1757812509216",
+          "output": "44456769",
+          "seedOut": "44456769",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1757812510402",
+          "output": "44016603",
+          "seedOut": "44016603",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "1804942885598",
+          "output": "44749281",
+          "seedOut": "43580796",
+          "scarOut": "1168485",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "1811623136967",
+          "output": "44470200",
+          "seedOut": "43149303",
+          "scarOut": "1320897",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "1811623096229",
+          "output": "44029900",
+          "seedOut": "42722082",
+          "scarOut": "1307818",
+          "surplus": "0"
+        },
+        {
+          "bin": 8,
+          "input": "226535804036",
+          "output": "5451240",
+          "seedOut": "5289323",
+          "scarOut": "161917",
+          "surplus": "13358"
+        }
+      ],
+      "startBin": 17,
+      "endBin": 8,
+      "avgPrice": 2.5174685732855197e-8,
+      "scarsFormed": [
+        {
+          "bin": 17,
+          "base": "5198622323",
+          "quote": "136817"
+        },
+        {
+          "bin": 16,
+          "base": "26905278495",
+          "quote": "701079"
+        },
+        {
+          "bin": 15,
+          "base": "26905293079",
+          "quote": "694138"
+        },
+        {
+          "bin": 14,
+          "base": "26905279512",
+          "quote": "687265"
+        },
+        {
+          "bin": 13,
+          "base": "26905293508",
+          "quote": "680461"
+        },
+        {
+          "bin": 12,
+          "base": "26905293527",
+          "quote": "673724"
+        },
+        {
+          "bin": 11,
+          "base": "27266006148",
+          "quote": "675996"
+        },
+        {
+          "bin": 10,
+          "base": "27317092701",
+          "quote": "670557"
+        },
+        {
+          "bin": 9,
+          "base": "27317058889",
+          "quote": "663917"
+        },
+        {
+          "bin": 8,
+          "base": "3467384756",
+          "quote": "83438"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 5,
+      "slot": 5,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "19231803096460",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 12,
+      "fills": [
+        {
+          "bin": 8,
+          "input": "5534678",
+          "output": "230003191549",
+          "seedOut": "219807018601",
+          "scarOut": "10196172948",
+          "surplus": "0"
+        },
+        {
+          "bin": 9,
+          "input": "44693818",
+          "output": "1838940171703",
+          "seedOut": "1757812542618",
+          "scarOut": "81127629085",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "45140758",
+          "output": "1838940229668",
+          "seedOut": "1757812549951",
+          "scarOut": "81127679717",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "45425277",
+          "output": "1832208891746",
+          "seedOut": "1757812548741",
+          "scarOut": "74396343005",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "44690327",
+          "output": "1784717803929",
+          "seedOut": "1757812510402",
+          "scarOut": "26905293527",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "45137230",
+          "output": "1784717802724",
+          "seedOut": "1757812509216",
+          "scarOut": "26905293508",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "45588602",
+          "output": "1784717800864",
+          "seedOut": "1757812521352",
+          "scarOut": "26905279512",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "46044489",
+          "output": "1784717800090",
+          "seedOut": "1757812507011",
+          "scarOut": "26905293079",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "46504933",
+          "output": "1784717804694",
+          "seedOut": "1757812526199",
+          "scarOut": "26905278495",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "46398709",
+          "output": "1763011122324",
+          "seedOut": "1757812500001",
+          "scarOut": "5198622323",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "46724511",
+          "output": "1757812500000",
+          "seedOut": "1757812500000",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "28116668",
+          "output": "1047297977169",
+          "seedOut": "1047297977169",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 8,
+      "endBin": 19,
+      "avgPrice": 2.5478630242953855e-8,
+      "scarsFormed": [
+        {
+          "bin": 9,
+          "base": "411866053",
+          "quote": "10011"
+        },
+        {
+          "bin": 10,
+          "base": "411832865",
+          "quote": "10110"
+        },
+        {
+          "bin": 11,
+          "base": "360670672",
+          "quote": "8942"
+        },
+        {
+          "bin": 14,
+          "base": "14182",
+          "quote": "1"
+        },
+        {
+          "bin": 15,
+          "base": "396",
+          "quote": "1"
+        },
+        {
+          "bin": 16,
+          "base": "15273",
+          "quote": "1"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 6,
+      "slot": 6,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "17158468294203",
+      "ok": true,
+      "minOutput": "0",
+      "output": "431390282",
+      "scarFee": "257377024413",
+      "protocolFee": "42896170735",
+      "creatorFee": "42896170735",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 19,
+          "input": "1047297977170",
+          "output": "28116668",
+          "seedOut": "28116668",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "1757812508691",
+          "output": "46724511",
+          "seedOut": "46724511",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "1768209773202",
+          "output": "46535526",
+          "seedOut": "46261893",
+          "scarOut": "273633",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "1811623121568",
+          "output": "47206013",
+          "seedOut": "45803855",
+          "scarOut": "1402158",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "1811623170690",
+          "output": "46738628",
+          "seedOut": "45350351",
+          "scarOut": "1388277",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "1811623119526",
+          "output": "46275868",
+          "seedOut": "44901338",
+          "scarOut": "1374530",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1811623116003",
+          "output": "45817691",
+          "seedOut": "44456770",
+          "scarOut": "1360921",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1811623136168",
+          "output": "45364051",
+          "seedOut": "44016604",
+          "scarOut": "1347447",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "1859835569596",
+          "output": "46110215",
+          "seedOut": "43580797",
+          "scarOut": "2529418",
+          "surplus": "0"
+        },
+        {
+          "bin": 10,
+          "input": "1324027435706",
+          "output": "32501111",
+          "seedOut": "30605778",
+          "scarOut": "1895333",
+          "surplus": "4646"
+        }
+      ],
+      "startBin": 19,
+      "endBin": 10,
+      "avgPrice": 2.565463057415296e-8,
+      "scarsFormed": [
+        {
+          "bin": 19,
+          "base": "16030064997",
+          "quote": "430357"
+        },
+        {
+          "bin": 18,
+          "base": "26905290237",
+          "quote": "715171"
+        },
+        {
+          "bin": 17,
+          "base": "26984852165",
+          "quote": "710184"
+        },
+        {
+          "bin": 16,
+          "base": "27317063242",
+          "quote": "711809"
+        },
+        {
+          "bin": 15,
+          "base": "27317087036",
+          "quote": "704762"
+        },
+        {
+          "bin": 14,
+          "base": "27317080834",
+          "quote": "697784"
+        },
+        {
+          "bin": 13,
+          "base": "27317110587",
+          "quote": "690876"
+        },
+        {
+          "bin": 12,
+          "base": "27317124821",
+          "quote": "684036"
+        },
+        {
+          "bin": 11,
+          "base": "27683347916",
+          "quote": "686343"
+        },
+        {
+          "bin": 10,
+          "base": "20265726057",
+          "quote": "497466"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 7,
+      "slot": 7,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18997576908273",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 11,
+      "fills": [
+        {
+          "bin": 10,
+          "input": "33008687",
+          "output": "1344704994628",
+          "seedOut": "1246815487027",
+          "scarOut": "97889507601",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "46805500",
+          "output": "1887879588184",
+          "seedOut": "1757812589075",
+          "scarOut": "130066999109",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "46048087",
+          "output": "1838940260989",
+          "seedOut": "1757812550338",
+          "scarOut": "81127710651",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "46508568",
+          "output": "1838940226590",
+          "seedOut": "1757812548757",
+          "scarOut": "81127677833",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "46973653",
+          "output": "1838940214542",
+          "seedOut": "1757812560501",
+          "scarOut": "81127654041",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "47443391",
+          "output": "1838940258122",
+          "seedOut": "1757812545772",
+          "scarOut": "81127712350",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "47917823",
+          "output": "1838940200083",
+          "seedOut": "1757812564577",
+          "scarOut": "81127635506",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "47245710",
+          "output": "1795194625367",
+          "seedOut": "1757812543678",
+          "scarOut": "37382081689",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "47439683",
+          "output": "1784717798928",
+          "seedOut": "1757812508691",
+          "scarOut": "26905290237",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "47622113",
+          "output": "1773842564998",
+          "seedOut": "1757812500001",
+          "scarOut": "16030064997",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "32986785",
+          "output": "1216536175842",
+          "seedOut": "1216536175842",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 10,
+      "endBin": 20,
+      "avgPrice": 2.5792763064778858e-8,
+      "scarsFormed": [
+        {
+          "bin": 11,
+          "base": "783523047",
+          "quote": "19426"
+        },
+        {
+          "bin": 12,
+          "base": "411800733",
+          "quote": "10312"
+        },
+        {
+          "bin": 13,
+          "base": "411814658",
+          "quote": "10416"
+        },
+        {
+          "bin": 14,
+          "base": "411844465",
+          "quote": "10521"
+        },
+        {
+          "bin": 15,
+          "base": "411839046",
+          "quote": "10626"
+        },
+        {
+          "bin": 16,
+          "base": "411862088",
+          "quote": "10733"
+        },
+        {
+          "bin": 17,
+          "base": "79583139",
+          "quote": "2095"
+        },
+        {
+          "bin": 18,
+          "base": "3263",
+          "quote": "1"
+        },
+        {
+          "bin": 19,
+          "base": "6082",
+          "quote": "1"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 8,
+      "slot": 8,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18078022601238",
+      "ok": true,
+      "minOutput": "0",
+      "output": "458794712",
+      "scarFee": "271170339018",
+      "protocolFee": "45195056503",
+      "creatorFee": "45195056503",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 20,
+          "input": "1216536175843",
+          "output": "32986785",
+          "seedOut": "32986785",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "1789872671837",
+          "output": "48052471",
+          "seedOut": "47191756",
+          "scarOut": "860715",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "1811623164407",
+          "output": "48154855",
+          "seedOut": "46724512",
+          "scarOut": "1430343",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "1822259081222",
+          "output": "47957989",
+          "seedOut": "46261894",
+          "scarOut": "1696095",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "1866669186307",
+          "output": "48640365",
+          "seedOut": "45803856",
+          "scarOut": "2836509",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "1866669255002",
+          "output": "48158779",
+          "seedOut": "45350352",
+          "scarOut": "2808427",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "1866669199961",
+          "output": "47681958",
+          "seedOut": "44901339",
+          "scarOut": "2780619",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1866669223450",
+          "output": "47209860",
+          "seedOut": "44456771",
+          "scarOut": "2753089",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1866669197750",
+          "output": "46742435",
+          "seedOut": "44016605",
+          "scarOut": "2725830",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "1742824993435",
+          "output": "43209215",
+          "seedOut": "39634641",
+          "scarOut": "3574574",
+          "surplus": "3542"
+        }
+      ],
+      "startBin": 20,
+      "endBin": 11,
+      "avgPrice": 2.5896519752977554e-8,
+      "scarsFormed": [
+        {
+          "bin": 20,
+          "base": "18620451671",
+          "quote": "504900"
+        },
+        {
+          "bin": 19,
+          "base": "27150618317",
+          "quote": "728909"
+        },
+        {
+          "bin": 18,
+          "base": "27317049665",
+          "quote": "726116"
+        },
+        {
+          "bin": 17,
+          "base": "27397879413",
+          "quote": "721054"
+        },
+        {
+          "bin": 16,
+          "base": "27735141809",
+          "quote": "722703"
+        },
+        {
+          "bin": 15,
+          "base": "27735160230",
+          "quote": "715548"
+        },
+        {
+          "bin": 14,
+          "base": "27735145889",
+          "quote": "708463"
+        },
+        {
+          "bin": 13,
+          "base": "27735204611",
+          "quote": "701450"
+        },
+        {
+          "bin": 12,
+          "base": "27735246523",
+          "quote": "694506"
+        },
+        {
+          "bin": 11,
+          "base": "26675892757",
+          "quote": "661366"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 9,
+      "slot": 9,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18875913666682",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 11,
+      "fills": [
+        {
+          "bin": 11,
+          "input": "43890007",
+          "output": "1770284409239",
+          "seedOut": "1598646080960",
+          "scarOut": "171638328279",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "47447253",
+          "output": "1894816245006",
+          "seedOut": "1757812590274",
+          "scarOut": "137003654732",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "47921726",
+          "output": "1894816242719",
+          "seedOut": "1757812588296",
+          "scarOut": "137003654423",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "48400942",
+          "output": "1894816190315",
+          "seedOut": "1757812599649",
+          "scarOut": "137003590666",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "48884953",
+          "output": "1894816254278",
+          "seedOut": "1757812584533",
+          "scarOut": "137003669745",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "49373801",
+          "output": "1894816190204",
+          "seedOut": "1757812602954",
+          "scarOut": "137003587250",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "48681138",
+          "output": "1849736543774",
+          "seedOut": "1757812581675",
+          "scarOut": "91923962099",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "48880972",
+          "output": "1838940217335",
+          "seedOut": "1757812546312",
+          "scarOut": "81127671023",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "48781381",
+          "output": "1817023296236",
+          "seedOut": "1757812504594",
+          "scarOut": "59210791642",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "48168574",
+          "output": "1776432951672",
+          "seedOut": "1757812500001",
+          "scarOut": "18620451671",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "9569253",
+          "output": "349415125904",
+          "seedOut": "349415125904",
+          "scarOut": "0",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 11,
+      "endBin": 21,
+      "avgPrice": 2.595900832418524e-8,
+      "scarsFormed": [
+        {
+          "bin": 12,
+          "base": "836220789",
+          "quote": "20940"
+        },
+        {
+          "bin": 13,
+          "base": "836263095",
+          "quote": "21150"
+        },
+        {
+          "bin": 14,
+          "base": "836321457",
+          "quote": "21363"
+        },
+        {
+          "bin": 15,
+          "base": "836307959",
+          "quote": "21577"
+        },
+        {
+          "bin": 16,
+          "base": "836325328",
+          "quote": "21793"
+        },
+        {
+          "bin": 17,
+          "base": "493841218",
+          "quote": "12997"
+        },
+        {
+          "bin": 18,
+          "base": "411876321",
+          "quote": "10949"
+        },
+        {
+          "bin": 19,
+          "base": "245391966",
+          "quote": "6589"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 10,
+      "slot": 10,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18476968133960",
+      "ok": true,
+      "minOutput": "0",
+      "output": "471246573",
+      "scarFee": "277154522009",
+      "protocolFee": "46192420334",
+      "creatorFee": "46192420334",
+      "binsInspected": 11,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "349415125905",
+          "output": "9569253",
+          "seedOut": "9569253",
+          "scarOut": "0",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "1795053441097",
+          "output": "48673474",
+          "seedOut": "47663675",
+          "scarOut": "1009799",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "1844419374745",
+          "output": "49516879",
+          "seedOut": "47191757",
+          "scarOut": "2325122",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "1866669211268",
+          "output": "49618037",
+          "seedOut": "46724513",
+          "scarOut": "2893524",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "1877628290576",
+          "output": "49415189",
+          "seedOut": "46261895",
+          "scarOut": "3153294",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "1923387718823",
+          "output": "50118297",
+          "seedOut": "45803857",
+          "scarOut": "4314440",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "1923387787134",
+          "output": "49622078",
+          "seedOut": "45350353",
+          "scarOut": "4271725",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "1923387697209",
+          "output": "49130768",
+          "seedOut": "44901340",
+          "scarOut": "4229428",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1923387746536",
+          "output": "48644326",
+          "seedOut": "44456772",
+          "scarOut": "4187554",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1923387746141",
+          "output": "48162699",
+          "seedOut": "44016606",
+          "scarOut": "4146093",
+          "surplus": "0"
+        },
+        {
+          "bin": 11,
+          "input": "757304631849",
+          "output": "18775573",
+          "seedOut": "16749173",
+          "scarOut": "2026400",
+          "surplus": "19304"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 11,
+      "avgPrice": 2.6025040824534994e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "5348184927",
+          "quote": "146468"
+        },
+        {
+          "bin": 20,
+          "base": "27190297342",
+          "quote": "737274"
+        },
+        {
+          "bin": 19,
+          "base": "27566160310",
+          "quote": "740065"
+        },
+        {
+          "bin": 18,
+          "base": "27735129383",
+          "quote": "737229"
+        },
+        {
+          "bin": 17,
+          "base": "27818430065",
+          "quote": "732122"
+        },
+        {
+          "bin": 16,
+          "base": "28165923149",
+          "quote": "733928"
+        },
+        {
+          "bin": 15,
+          "base": "28165946943",
+          "quote": "726662"
+        },
+        {
+          "bin": 14,
+          "base": "28165973300",
+          "quote": "719468"
+        },
+        {
+          "bin": 13,
+          "base": "28166030457",
+          "quote": "712346"
+        },
+        {
+          "bin": 12,
+          "base": "28166067624",
+          "quote": "705294"
+        },
+        {
+          "bin": 11,
+          "base": "11591397426",
+          "quote": "287382"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 11,
+      "slot": 11,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18805788746525",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 11,
+      "fills": [
+        {
+          "bin": 11,
+          "input": "19062955",
+          "output": "768896029275",
+          "seedOut": "675570639955",
+          "scarOut": "93325389320",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "48888933",
+          "output": "1952390034554",
+          "seedOut": "1757812630209",
+          "scarOut": "194577404345",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "49377822",
+          "output": "1952390040088",
+          "seedOut": "1757812627836",
+          "scarOut": "194577412252",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "49871599",
+          "output": "1952389991966",
+          "seedOut": "1757812638797",
+          "scarOut": "194577353169",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "50370317",
+          "output": "1952390042036",
+          "seedOut": "1757812623293",
+          "scarOut": "194577418743",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "50874018",
+          "output": "1952389967300",
+          "seedOut": "1757812641330",
+          "scarOut": "194577325970",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "50160308",
+          "output": "1905940561859",
+          "seedOut": "1757812619672",
+          "scarOut": "148127942187",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "50366215",
+          "output": "1894816216972",
+          "seedOut": "1757812583932",
+          "scarOut": "137003633040",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "50263533",
+          "output": "1872230927021",
+          "seedOut": "1757812541842",
+          "scarOut": "114418385179",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "49410749",
+          "output": "1822243738439",
+          "seedOut": "1757812557700",
+          "scarOut": "64431180739",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "21353551",
+          "output": "779711197015",
+          "seedOut": "777346103631",
+          "scarOut": "2365093384",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 11,
+      "endBin": 21,
+      "avgPrice": 2.6055806890340818e-8,
+      "scarsFormed": [
+        {
+          "bin": 12,
+          "base": "1273540735",
+          "quote": "31891"
+        },
+        {
+          "bin": 13,
+          "base": "1273577908",
+          "quote": "32211"
+        },
+        {
+          "bin": 14,
+          "base": "1273634310",
+          "quote": "32534"
+        },
+        {
+          "bin": 15,
+          "base": "1273662044",
+          "quote": "32860"
+        },
+        {
+          "bin": 16,
+          "base": "1273684792",
+          "quote": "33189"
+        },
+        {
+          "bin": 17,
+          "base": "920778464",
+          "quote": "24233"
+        },
+        {
+          "bin": 18,
+          "base": "836338137",
+          "quote": "22231"
+        },
+        {
+          "bin": 19,
+          "base": "664748487",
+          "quote": "17847"
+        },
+        {
+          "bin": 20,
+          "base": "285010430",
+          "quote": "7729"
+        },
+        {
+          "bin": 21,
+          "base": "5776",
+          "quote": "1"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 12,
+      "slot": 12,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18641378440242",
+      "ok": true,
+      "minOutput": "0",
+      "output": "477013617",
+      "scarFee": "279620676603",
+      "protocolFee": "46603446100",
+      "creatorFee": "46603446100",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "785059418457",
+          "output": "21500020",
+          "seedOut": "21288780",
+          "scarOut": "211240",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "1849719114325",
+          "output": "50155752",
+          "seedOut": "47663676",
+          "scarOut": "2492076",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "1900461894730",
+          "output": "51021445",
+          "seedOut": "47191758",
+          "scarOut": "3829687",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "1923387727487",
+          "output": "51125675",
+          "seedOut": "46724514",
+          "scarOut": "4401161",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "1934679778530",
+          "output": "50916663",
+          "seedOut": "46261896",
+          "scarOut": "4654767",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "1981829606962",
+          "output": "51641135",
+          "seedOut": "45803858",
+          "scarOut": "5837277",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "1981829698682",
+          "output": "51129839",
+          "seedOut": "45350354",
+          "scarOut": "5779485",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "1981829621549",
+          "output": "50623601",
+          "seedOut": "44901341",
+          "scarOut": "5722260",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1981829691624",
+          "output": "50122379",
+          "seedOut": "44456773",
+          "scarOut": "5665606",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1947924319093",
+          "output": "48777108",
+          "seedOut": "43263566",
+          "scarOut": "5513542",
+          "surplus": "17355"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 12,
+      "avgPrice": 2.6111190775715045e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "11934316120",
+          "quote": "326839"
+        },
+        {
+          "bin": 20,
+          "base": "27606445633",
+          "quote": "748558"
+        },
+        {
+          "bin": 19,
+          "base": "27991833838",
+          "quote": "751493"
+        },
+        {
+          "bin": 18,
+          "base": "28165924925",
+          "quote": "748680"
+        },
+        {
+          "bin": 17,
+          "base": "28251785701",
+          "quote": "743527"
+        },
+        {
+          "bin": 16,
+          "base": "28609829409",
+          "quote": "745495"
+        },
+        {
+          "bin": 15,
+          "base": "28609834781",
+          "quote": "738114"
+        },
+        {
+          "bin": 14,
+          "base": "28609876255",
+          "quote": "730807"
+        },
+        {
+          "bin": 13,
+          "base": "28609904442",
+          "quote": "723572"
+        },
+        {
+          "bin": 12,
+          "base": "28609947541",
+          "quote": "716409"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 13,
+      "slot": 13,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18755611491896",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 12,
+          "input": "49525408",
+          "output": "1977807807369",
+          "seedOut": "1727739800628",
+          "scarOut": "250068006741",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "50878162",
+          "output": "2011713173974",
+          "seedOut": "1757812667376",
+          "scarOut": "253900506598",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "51386942",
+          "output": "2011713132114",
+          "seedOut": "1757812677946",
+          "scarOut": "253900454168",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "51900813",
+          "output": "2011713195507",
+          "seedOut": "1757812662054",
+          "scarOut": "253900533453",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "52419819",
+          "output": "2011713121163",
+          "seedOut": "1757812679708",
+          "scarOut": "253900441455",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "51684423",
+          "output": "1963852342695",
+          "seedOut": "1757812657669",
+          "scarOut": "206039685026",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "51896586",
+          "output": "1952389990549",
+          "seedOut": "1757812621553",
+          "scarOut": "194577368996",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "51790785",
+          "output": "1929118477055",
+          "seedOut": "1757812579090",
+          "scarOut": "171305897965",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "50912039",
+          "output": "1877610570388",
+          "seedOut": "1757812594580",
+          "scarOut": "119797975808",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "27605023",
+          "output": "1007979681082",
+          "seedOut": "995167538694",
+          "scarOut": "12812142388",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 12,
+      "endBin": 21,
+      "avgPrice": 2.6125514500645374e-8,
+      "scarsFormed": [
+        {
+          "bin": 12,
+          "base": "1205220608",
+          "quote": "30180"
+        },
+        {
+          "bin": 13,
+          "base": "1724223491",
+          "quote": "43608"
+        },
+        {
+          "bin": 14,
+          "base": "1724250605",
+          "quote": "44045"
+        },
+        {
+          "bin": 15,
+          "base": "1724293260",
+          "quote": "44486"
+        },
+        {
+          "bin": 16,
+          "base": "1724297228",
+          "quote": "44931"
+        },
+        {
+          "bin": 17,
+          "base": "1360659889",
+          "quote": "35810"
+        },
+        {
+          "bin": 18,
+          "base": "1273683149",
+          "quote": "33856"
+        },
+        {
+          "bin": 19,
+          "base": "1096868632",
+          "quote": "29448"
+        },
+        {
+          "bin": 20,
+          "base": "705581627",
+          "quote": "19133"
+        },
+        {
+          "bin": 21,
+          "base": "81899469",
+          "quote": "2243"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 14,
+      "slot": 14,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18698494966069",
+      "ok": true,
+      "minOutput": "0",
+      "output": "479504723",
+      "scarFee": "280477424491",
+      "protocolFee": "46746237415",
+      "creatorFee": "46746237415",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "1019995898907",
+          "output": "27934105",
+          "seedOut": "27254144",
+          "scarOut": "679961",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "1905922662752",
+          "output": "51679730",
+          "seedOut": "47663677",
+          "scarOut": "4016053",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "1958207220576",
+          "output": "52571726",
+          "seedOut": "47191759",
+          "scarOut": "5379967",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "1981829613978",
+          "output": "52679122",
+          "seedOut": "46724515",
+          "scarOut": "5954607",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "1993464803018",
+          "output": "52463760",
+          "seedOut": "46261897",
+          "scarOut": "6201863",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "2042047273645",
+          "output": "53210245",
+          "seedOut": "45803859",
+          "scarOut": "7406386",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "2042047355388",
+          "output": "52683413",
+          "seedOut": "45350355",
+          "scarOut": "7333058",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "2042047314301",
+          "output": "52161794",
+          "seedOut": "44901342",
+          "scarOut": "7260452",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "2042047369892",
+          "output": "51645342",
+          "seedOut": "44456774",
+          "scarOut": "7188568",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "1296915554291",
+          "output": "32475486",
+          "seedOut": "27962296",
+          "scarOut": "4513190",
+          "surplus": "34204"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 12,
+      "avgPrice": 2.6167375211820175e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "15346363750",
+          "quote": "420283"
+        },
+        {
+          "bin": 20,
+          "base": "28033325859",
+          "quote": "760133"
+        },
+        {
+          "bin": 19,
+          "base": "28430432526",
+          "quote": "763268"
+        },
+        {
+          "bin": 18,
+          "base": "28609850119",
+          "quote": "760480"
+        },
+        {
+          "bin": 17,
+          "base": "28698288294",
+          "quote": "755278"
+        },
+        {
+          "bin": 16,
+          "base": "29067205980",
+          "quote": "757413"
+        },
+        {
+          "bin": 15,
+          "base": "29067211352",
+          "quote": "749914"
+        },
+        {
+          "bin": 14,
+          "base": "29067246237",
+          "quote": "742490"
+        },
+        {
+          "bin": 13,
+          "base": "29067261505",
+          "quote": "735139"
+        },
+        {
+          "bin": 12,
+          "base": "19850748280",
+          "quote": "497074"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 15,
+      "slot": 15,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18720181635345",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 12,
+          "input": "33002741",
+          "output": "1317971523179",
+          "seedOut": "1116680316282",
+          "scarOut": "201291206897",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "52424089",
+          "output": "2072838854888",
+          "seedOut": "1757812706916",
+          "scarOut": "315026147972",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "52948329",
+          "output": "2072838811143",
+          "seedOut": "1757812717094",
+          "scarOut": "315026094049",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "53477813",
+          "output": "2072838860000",
+          "seedOut": "1757812700815",
+          "scarOut": "315026159185",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "54012589",
+          "output": "2072838776853",
+          "seedOut": "1757812718085",
+          "scarOut": "315026058768",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "53254848",
+          "output": "2023523751201",
+          "seedOut": "1757812695666",
+          "scarOut": "265711055535",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "53473458",
+          "output": "2011713147246",
+          "seedOut": "1757812659174",
+          "scarOut": "253900488072",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "53364442",
+          "output": "1987734521734",
+          "seedOut": "1757812616339",
+          "scarOut": "229921905395",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "52458996",
+          "output": "1934661570238",
+          "seedOut": "1757812631460",
+          "scarOut": "176848938778",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "31582695",
+          "output": "1153221818863",
+          "seedOut": "1121279694347",
+          "scarOut": "31942124516",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 12,
+      "endBin": 21,
+      "avgPrice": 2.61749597063121e-8,
+      "scarsFormed": [
+        {
+          "bin": 13,
+          "base": "2188565585",
+          "quote": "55351"
+        },
+        {
+          "bin": 14,
+          "base": "2188580002",
+          "quote": "55905"
+        },
+        {
+          "bin": 15,
+          "base": "2188615516",
+          "quote": "56465"
+        },
+        {
+          "bin": 16,
+          "base": "2188619637",
+          "quote": "57030"
+        },
+        {
+          "bin": 17,
+          "base": "1813928079",
+          "quote": "47739"
+        },
+        {
+          "bin": 18,
+          "base": "1724276626",
+          "quote": "45834"
+        },
+        {
+          "bin": 19,
+          "base": "1542126973",
+          "quote": "41402"
+        },
+        {
+          "bin": 20,
+          "base": "1138959795",
+          "quote": "30884"
+        },
+        {
+          "bin": 21,
+          "base": "265818376",
+          "quote": "7280"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 16,
+      "slot": 16,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18709338300707",
+      "ok": true,
+      "minOutput": "0",
+      "output": "480674674",
+      "scarFee": "280640074510",
+      "protocolFee": "46773345751",
+      "creatorFee": "46773345751",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "1168834007138",
+          "output": "32010258",
+          "seedOut": "30707913",
+          "scarOut": "1302345",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "1963833916480",
+          "output": "53250013",
+          "seedOut": "47663678",
+          "scarOut": "5586335",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "2017707127412",
+          "output": "54169112",
+          "seedOut": "47191760",
+          "scarOut": "6977352",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "2042047314106",
+          "output": "54279772",
+          "seedOut": "46724516",
+          "scarOut": "7555256",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "2054035989868",
+          "output": "54057865",
+          "seedOut": "46261898",
+          "scarOut": "7795967",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "2104094638497",
+          "output": "54827032",
+          "seedOut": "45803860",
+          "scarOut": "9023172",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "2104094712181",
+          "output": "54284192",
+          "seedOut": "45350356",
+          "scarOut": "8933836",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "2104094682723",
+          "output": "53746724",
+          "seedOut": "44901343",
+          "scarOut": "8845381",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "2104094713650",
+          "output": "53214579",
+          "seedOut": "44456775",
+          "scarOut": "8757804",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "672314432640",
+          "output": "16835127",
+          "seedOut": "14210767",
+          "scarOut": "2624360",
+          "surplus": "14037"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 12,
+      "avgPrice": 2.6216018618140958e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "17385544564",
+          "quote": "476129"
+        },
+        {
+          "bin": 20,
+          "base": "28473187669",
+          "quote": "772060"
+        },
+        {
+          "bin": 19,
+          "base": "28882366103",
+          "quote": "775401"
+        },
+        {
+          "bin": 18,
+          "base": "29067205931",
+          "quote": "772637"
+        },
+        {
+          "bin": 17,
+          "base": "29158355812",
+          "quote": "767386"
+        },
+        {
+          "bin": 16,
+          "base": "29538475009",
+          "quote": "769693"
+        },
+        {
+          "bin": 15,
+          "base": "29538503024",
+          "quote": "762073"
+        },
+        {
+          "bin": 14,
+          "base": "29538553026",
+          "quote": "754529"
+        },
+        {
+          "bin": 13,
+          "base": "29538536583",
+          "quote": "747058"
+        },
+        {
+          "bin": 12,
+          "base": "10290527030",
+          "quote": "257681"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 17,
+      "slot": 17,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18687488844935",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 12,
+          "input": "17092808",
+          "output": "682604959670",
+          "seedOut": "567510035923",
+          "scarOut": "115094923747",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "54016988",
+          "output": "2135821815818",
+          "seedOut": "1757812746455",
+          "scarOut": "378009069363",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "54557158",
+          "output": "2135821815751",
+          "seedOut": "1757812756243",
+          "scarOut": "378009059508",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "55102730",
+          "output": "2135821830721",
+          "seedOut": "1757812739575",
+          "scarOut": "378009091146",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "55653755",
+          "output": "2135821733143",
+          "seedOut": "1757812756461",
+          "scarOut": "378008976682",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "54872990",
+          "output": "2085008273759",
+          "seedOut": "1757812733663",
+          "scarOut": "327195540096",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "55098243",
+          "output": "2072838796663",
+          "seedOut": "1757812696795",
+          "scarOut": "315026099868",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "54985915",
+          "output": "2048131620488",
+          "seedOut": "1757812653586",
+          "scarOut": "290318966902",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "54052957",
+          "output": "1993446063944",
+          "seedOut": "1757812668339",
+          "scarOut": "235633395605",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "34566456",
+          "output": "1262171934978",
+          "seedOut": "1205040418901",
+          "scarOut": "57131516077",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 12,
+      "endBin": 21,
+      "avgPrice": 2.6220751437815972e-8,
+      "scarsFormed": [
+        {
+          "bin": 13,
+          "base": "2666994748",
+          "quote": "67451"
+        },
+        {
+          "bin": 14,
+          "base": "2666977832",
+          "quote": "68125"
+        },
+        {
+          "bin": 15,
+          "base": "2667028285",
+          "quote": "68808"
+        },
+        {
+          "bin": 16,
+          "base": "2667055172",
+          "quote": "69497"
+        },
+        {
+          "bin": 17,
+          "base": "2280970564",
+          "quote": "60031"
+        },
+        {
+          "bin": 18,
+          "base": "2188620305",
+          "quote": "58176"
+        },
+        {
+          "bin": 19,
+          "base": "2000906255",
+          "quote": "53719"
+        },
+        {
+          "bin": 20,
+          "base": "1585494726",
+          "quote": "42992"
+        },
+        {
+          "bin": 21,
+          "base": "504771872",
+          "quote": "13824"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 18,
+      "slot": 18,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18698413572821",
+      "ok": true,
+      "minOutput": "0",
+      "output": "481239066",
+      "scarFee": "280476203592",
+      "protocolFee": "46746033932",
+      "creatorFee": "46746033932",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "1280062254023",
+          "output": "35056409",
+          "seedOut": "33001825",
+          "scarOut": "2054584",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "2023504801847",
+          "output": "54868009",
+          "seedOut": "47663679",
+          "scarOut": "7204330",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "2079014954801",
+          "output": "55815035",
+          "seedOut": "47191761",
+          "scarOut": "8623274",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "2104094663207",
+          "output": "55929056",
+          "seedOut": "46724517",
+          "scarOut": "9204539",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "2116447636774",
+          "output": "55700407",
+          "seedOut": "46261899",
+          "scarOut": "9438508",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "2168027309730",
+          "output": "56492945",
+          "seedOut": "45803861",
+          "scarOut": "10689084",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "2168027390705",
+          "output": "55933611",
+          "seedOut": "45350357",
+          "scarOut": "10583254",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "2168027356596",
+          "output": "55379812",
+          "seedOut": "44901344",
+          "scarOut": "10478468",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "2168027355421",
+          "output": "54831497",
+          "seedOut": "44456776",
+          "scarOut": "10374721",
+          "surplus": "0"
+        },
+        {
+          "bin": 12,
+          "input": "49211578261",
+          "output": "1232285",
+          "seedOut": "1030010",
+          "scarOut": "202275",
+          "surplus": "11675"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 12,
+      "avgPrice": 2.6262135529098456e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "18814168805",
+          "quote": "515254"
+        },
+        {
+          "bin": 20,
+          "base": "28926399859",
+          "quote": "784349"
+        },
+        {
+          "bin": 19,
+          "base": "29348007054",
+          "quote": "787902"
+        },
+        {
+          "bin": 18,
+          "base": "29538481431",
+          "quote": "785164"
+        },
+        {
+          "bin": 17,
+          "base": "29632406221",
+          "quote": "779862"
+        },
+        {
+          "bin": 16,
+          "base": "30024058644",
+          "quote": "782346"
+        },
+        {
+          "bin": 15,
+          "base": "30024097404",
+          "quote": "774601"
+        },
+        {
+          "bin": 14,
+          "base": "30024188104",
+          "quote": "766934"
+        },
+        {
+          "bin": 13,
+          "base": "30024164615",
+          "quote": "759340"
+        },
+        {
+          "bin": 12,
+          "base": "753238443",
+          "quote": "18862"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 19,
+      "slot": 19,
+      "actor": "t",
+      "direction": "buy",
+      "grossInput": "500000000",
+      "ok": true,
+      "minOutput": "0",
+      "output": "18655689864274",
+      "scarFee": "7500000",
+      "protocolFee": "1250000",
+      "creatorFee": "1250000",
+      "binsInspected": 10,
+      "fills": [
+        {
+          "bin": 12,
+          "input": "1251147",
+          "output": "49964816704",
+          "seedOut": "41133652422",
+          "scarOut": "8831164282",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "55658288",
+          "output": "2200718514784",
+          "seedOut": "1757812785995",
+          "scarOut": "442905728789",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "56214871",
+          "output": "2200718522532",
+          "seedOut": "1757812795391",
+          "scarOut": "442905727141",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "56777020",
+          "output": "2200718516394",
+          "seedOut": "1757812778336",
+          "scarOut": "442905738058",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "57344788",
+          "output": "2200718423546",
+          "seedOut": "1757812794838",
+          "scarOut": "442905628708",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "56540300",
+          "output": "2148361013559",
+          "seedOut": "1757812771660",
+          "scarOut": "390548241899",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "56772396",
+          "output": "2135821764943",
+          "seedOut": "1757812734416",
+          "scarOut": "378009030527",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "56656656",
+          "output": "2110363868110",
+          "seedOut": "1757812690835",
+          "scarOut": "352551177275",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "55695350",
+          "output": "2054016696432",
+          "seedOut": "1757812705218",
+          "scarOut": "296203991214",
+          "surplus": "0"
+        },
+        {
+          "bin": 21,
+          "input": "37089184",
+          "output": "1354287727270",
+          "seedOut": "1267373321103",
+          "scarOut": "86914406167",
+          "surplus": "0"
+        }
+      ],
+      "startBin": 12,
+      "endBin": 21,
+      "avgPrice": 2.626544521081253e-8,
+      "scarsFormed": [
+        {
+          "bin": 13,
+          "base": "3159927560",
+          "quote": "79918"
+        },
+        {
+          "bin": 14,
+          "base": "3159904089",
+          "quote": "80717"
+        },
+        {
+          "bin": 15,
+          "base": "3159995311",
+          "quote": "81526"
+        },
+        {
+          "bin": 16,
+          "base": "3160032832",
+          "quote": "82342"
+        },
+        {
+          "bin": 17,
+          "base": "2762200464",
+          "quote": "72696"
+        },
+        {
+          "bin": 18,
+          "base": "2667049128",
+          "quote": "70893"
+        },
+        {
+          "bin": 19,
+          "base": "2473650417",
+          "quote": "66410"
+        },
+        {
+          "bin": 20,
+          "base": "2045612414",
+          "quote": "55468"
+        },
+        {
+          "bin": 21,
+          "base": "778620797",
+          "quote": "21324"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    },
+    {
+      "seq": 20,
+      "slot": 20,
+      "actor": "t",
+      "direction": "sell",
+      "grossInput": "18677051718548",
+      "ok": true,
+      "minOutput": "0",
+      "output": "481378137",
+      "scarFee": "280155775778",
+      "protocolFee": "46692629296",
+      "creatorFee": "46692629296",
+      "binsInspected": 9,
+      "fills": [
+        {
+          "bin": 21,
+          "input": "1373880528238",
+          "output": "37625762",
+          "seedOut": "34708904",
+          "scarOut": "2916858",
+          "surplus": "0"
+        },
+        {
+          "bin": 20,
+          "input": "2084988757251",
+          "output": "56535167",
+          "seedOut": "47663680",
+          "scarOut": "8871487",
+          "surplus": "0"
+        },
+        {
+          "bin": 19,
+          "input": "2142185569481",
+          "output": "57510968",
+          "seedOut": "47191762",
+          "scarOut": "10319206",
+          "surplus": "0"
+        },
+        {
+          "bin": 18,
+          "input": "2168027302413",
+          "output": "57628453",
+          "seedOut": "46724518",
+          "scarOut": "10903935",
+          "surplus": "0"
+        },
+        {
+          "bin": 17,
+          "input": "2180755675301",
+          "output": "57392858",
+          "seedOut": "46261900",
+          "scarOut": "11130958",
+          "surplus": "0"
+        },
+        {
+          "bin": 16,
+          "input": "2233902545761",
+          "output": "58209476",
+          "seedOut": "45803862",
+          "scarOut": "12405614",
+          "surplus": "0"
+        },
+        {
+          "bin": 15,
+          "input": "2233902640553",
+          "output": "57633147",
+          "seedOut": "45350358",
+          "scarOut": "12282789",
+          "surplus": "0"
+        },
+        {
+          "bin": 14,
+          "input": "2233902649080",
+          "output": "57062522",
+          "seedOut": "44901345",
+          "scarOut": "12161177",
+          "surplus": "0"
+        },
+        {
+          "bin": 13,
+          "input": "1651965016100",
+          "output": "41779784",
+          "seedOut": "32875668",
+          "scarOut": "8904116",
+          "surplus": "3808"
+        }
+      ],
+      "startBin": 21,
+      "endBin": 13,
+      "avgPrice": 2.629977086396405e-8,
+      "scarsFormed": [
+        {
+          "bin": 21,
+          "base": "19950276527",
+          "quote": "546368"
+        },
+        {
+          "bin": 20,
+          "base": "29393404982",
+          "quote": "797012"
+        },
+        {
+          "bin": 19,
+          "base": "29827839605",
+          "quote": "800784"
+        },
+        {
+          "bin": 18,
+          "base": "30024090448",
+          "quote": "798072"
+        },
+        {
+          "bin": 17,
+          "base": "30120857488",
+          "quote": "792717"
+        },
+        {
+          "bin": 16,
+          "base": "30524417406",
+          "quote": "795384"
+        },
+        {
+          "bin": 15,
+          "base": "30524459621",
+          "quote": "787510"
+        },
+        {
+          "bin": 14,
+          "base": "30524542957",
+          "quote": "779715"
+        },
+        {
+          "bin": 13,
+          "base": "25285178818",
+          "quote": "639487"
+        }
+      ],
+      "graduated": false,
+      "internalBuyback": false
+    }
+  ],
+  "tradeCount": {
+    "attempted": 20,
+    "succeeded": 20,
+    "failed": 0
+  },
+  "feesByDestination": {
+    "scarEligibleQuote": "75000000",
+    "scarEligibleBase": "2589915508388",
+    "scarIneligibleQuote": "0",
+    "scarIneligibleBase": "0",
+    "protocolQuoteOperating": "12500000",
+    "protocolQuoteBuybackEarmark": "0",
+    "protocolBase": "431652584727",
+    "creatorQuote": "12500000",
+    "creatorBase": "431652584727"
+  },
+  "withdrawals": [],
+  "buybacks": [],
+  "burnedBase": "0",
+  "outstandingSupply": "900000000000000",
+  "matched": {
+    "pairedQuoteLifetime": "66421301",
+    "hardenedBands": 0,
+    "graduationProgress": 0,
+    "status": "active",
+    "graduationEvents": 0,
+    "bands": [
+      {
+        "band": 0,
+        "pairedQuote": "3298438",
+        "hardened": false
+      },
+      {
+        "band": 1,
+        "pairedQuote": "55386358",
+        "hardened": false
+      },
+      {
+        "band": 2,
+        "pairedQuote": "7736505",
+        "hardened": false
+      }
+    ]
+  },
+  "depth": [
+    {
+      "direction": "buy",
+      "bps": 500,
+      "input": "276269799",
+      "output": "10696810043341",
+      "bins": 5
+    },
+    {
+      "direction": "buy",
+      "bps": 1000,
+      "input": "551700707",
+      "output": "20864938038019",
+      "bins": 10
+    },
+    {
+      "direction": "buy",
+      "bps": 2000,
+      "input": "1011769696",
+      "output": "36685250538019",
+      "bins": 19
+    },
+    {
+      "direction": "sell",
+      "bps": 500,
+      "input": "10298250014220",
+      "output": "253438913",
+      "bins": 6
+    },
+    {
+      "direction": "sell",
+      "bps": 1000,
+      "input": "19191883549158",
+      "output": "461214093",
+      "bins": 11
+    },
+    {
+      "direction": "sell",
+      "bps": 2000,
+      "input": "157527684941757",
+      "output": "3392077375",
+      "bins": 23
+    }
+  ],
+  "actors": [
+    {
+      "name": "t",
+      "base": "18677051718548",
+      "quote": "9380746364",
+      "quoteSpent": "5000000000",
+      "quoteReceived": "4380746364",
+      "baseBought": "191338085611297",
+      "baseSold": "172661033892749",
+      "quotePnL": "-619253636"
+    }
+  ],
+  "reconciliation": {
+    "ok": true,
+    "expected": {
+      "vaultBase": "880459643111998",
+      "vaultQuote": "20594253636",
+      "feeVaultBase": "863305169454",
+      "feeVaultQuote": "25000000",
+      "binSeedBase": "876690525013959",
+      "binSeedQuote": "20551008010",
+      "binScarBase": "3745137390113",
+      "binScarQuote": "34666927",
+      "pendingBaseEligible": "23980707926",
+      "pendingQuoteEligible": "8578699",
+      "pendingBaseIneligible": "0",
+      "pendingQuoteIneligible": "0"
+    },
+    "ledgerBase": "881322948281452",
+    "ledgerQuote": "20619253636"
+  },
+  "volume": {
+    "buyQuote": "5000000000",
+    "sellBase": "172661033892749",
+    "swapCount": "20"
+  },
+  "findings": [
+    "match_bins pass 1 events: 0; pass 2 events: 0. Paired lifetime 0.066421 SOL -> 0.066421 SOL. Pending quote 8578699 -> 8578699.",
+    "Matching is executed inside swap_exact_in at the visited bins, so no keeper is required for correctness; match_bins exists for recovery and is idempotent. Indexer downtime only delays display: chain state is authoritative."
+  ],
+  "binsWithScars": 16,
+  "binsWithCurrentQuote": 86
+}

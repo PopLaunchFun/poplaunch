@@ -1,0 +1,177 @@
+{
+  "name": "launch-calibration",
+  "description": "Binary search the largest gross buy that fills within 32 bins on a fresh pilot market; also measure the largest sell.",
+  "configLabel": "pilot defaults",
+  "config": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "binMin": -64,
+    "binMax": 511,
+    "maxBinsPerSwap": 32,
+    "scarFeeBps": 150,
+    "protocolFeeBps": 25,
+    "creatorFeeBps": 25,
+    "maturityQuoteTarget": "100000000000",
+    "bandQuoteTarget": "1000000000",
+    "bandsRequired": 10,
+    "isPopMarket": true,
+    "configVersion": 1,
+    "p0HumanQuotePerBase": 2.2222222222222197e-8
+  },
+  "startingInventory": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "900000000000000",
+    "vaultQuote": "20000000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "0",
+    "cursor": 0,
+    "cursorPriceHuman": 2.2222222222222197e-8
+  },
+  "endingInventory": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000",
+    "scarBase": "0",
+    "scarQuote": "0",
+    "pendingBaseEligible": "0",
+    "pendingQuoteEligible": "0",
+    "pendingBaseIneligible": "0",
+    "pendingQuoteIneligible": "0",
+    "unmaterializedSeedBase": "0",
+    "unmaterializedSeedQuote": "0",
+    "vaultBase": "900000000000000",
+    "vaultQuote": "20000000000",
+    "feeVaultBase": "0",
+    "feeVaultQuote": "0",
+    "cursor": 0,
+    "cursorPriceHuman": 2.2222222222222197e-8
+  },
+  "deposits": {
+    "seedBase": "900000000000000",
+    "seedQuote": "20000000000"
+  },
+  "trades": [],
+  "tradeCount": {
+    "attempted": 0,
+    "succeeded": 0,
+    "failed": 0
+  },
+  "feesByDestination": {
+    "scarEligibleQuote": "0",
+    "scarEligibleBase": "0",
+    "scarIneligibleQuote": "0",
+    "scarIneligibleBase": "0",
+    "protocolQuoteOperating": "0",
+    "protocolQuoteBuybackEarmark": "0",
+    "protocolBase": "0",
+    "creatorQuote": "0",
+    "creatorBase": "0"
+  },
+  "withdrawals": [],
+  "buybacks": [],
+  "burnedBase": "0",
+  "outstandingSupply": "900000000000000",
+  "matched": {
+    "pairedQuoteLifetime": "0",
+    "hardenedBands": 0,
+    "graduationProgress": 0,
+    "status": "active",
+    "graduationEvents": 0,
+    "bands": []
+  },
+  "depth": [
+    {
+      "direction": "buy",
+      "bps": 500,
+      "input": "199258010",
+      "output": "8789062500000",
+      "bins": 5
+    },
+    {
+      "direction": "buy",
+      "bps": 1000,
+      "input": "408680182",
+      "output": "17578125000000",
+      "bins": 10
+    },
+    {
+      "direction": "buy",
+      "bps": 2000,
+      "input": "812925595",
+      "output": "33398437500000",
+      "bins": 19
+    },
+    {
+      "direction": "sell",
+      "bps": 500,
+      "input": "72450211782661",
+      "output": "1562500000",
+      "bins": 5
+    },
+    {
+      "direction": "sell",
+      "bps": 1000,
+      "input": "148596112498108",
+      "output": "3125000000",
+      "bins": 10
+    },
+    {
+      "direction": "sell",
+      "bps": 2000,
+      "input": "347572994552494",
+      "output": "6875000000",
+      "bins": 22
+    }
+  ],
+  "actors": [
+    {
+      "name": "probe",
+      "base": "500000000000000",
+      "quote": "10000000000000",
+      "quoteSpent": "0",
+      "quoteReceived": "0",
+      "baseBought": "0",
+      "baseSold": "0",
+      "quotePnL": "0"
+    }
+  ],
+  "reconciliation": {
+    "ok": true,
+    "expected": {
+      "vaultBase": "900000000000000",
+      "vaultQuote": "20000000000",
+      "feeVaultBase": "0",
+      "feeVaultQuote": "0",
+      "binSeedBase": "900000000000000",
+      "binSeedQuote": "20000000000",
+      "binScarBase": "0",
+      "binScarQuote": "0",
+      "pendingBaseEligible": "0",
+      "pendingQuoteEligible": "0",
+      "pendingBaseIneligible": "0",
+      "pendingQuoteIneligible": "0"
+    },
+    "ledgerBase": "900000000000000",
+    "ledgerQuote": "20000000000"
+  },
+  "volume": {
+    "buyQuote": "0",
+    "sellBase": "0",
+    "swapCount": "0"
+  },
+  "findings": [
+    "Seed base per bin: 1,757,812.5 POP (~0.039062 SOL at P0). Seed quote per bin: 0.312500 SOL.",
+    "Largest single buy on a fresh market within 32 bins: 1.493769 SOL gross. Largest single sell: 499,999,999.07 POP (~11.111111 SOL at P0).",
+    "Calibration note: with 20 SOL seed quote over 64 bins the sell side holds 0.3125 SOL per bin, but the buy side at P0 holds only ~0.039 SOL of POP per bin because 900M POP valued at P0 is 20 SOL spread over 512 bins. Larger buys must be split into separate signed transactions (the UI offers this). Consider a denser base schedule near the cursor or a smaller binMax in a new config version before mainnet; this is an experimental calibration choice."
+  ],
+  "binsWithScars": 0,
+  "binsWithCurrentQuote": 64
+}
