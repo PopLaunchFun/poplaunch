@@ -49,7 +49,7 @@ export default function Terms() {
         <p>These terms may change. The date at the top shows the current version. Continued use after a change means you accept it. Changes never alter the on-chain terms of a launch that already exists.</p>
       </S>
       <S t="11. Contact">
-        <p>Questions about these terms: the contact address will be published on this page before mainnet.</p>
+        <p>Questions about these terms: <a className="link" href="mailto:hello@poplaunch.fun">hello@poplaunch.fun</a>.</p>
       </S>
     </div>
   );

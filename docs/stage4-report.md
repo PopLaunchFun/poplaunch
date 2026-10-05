@@ -135,6 +135,6 @@ Creator setup reserve quoted at 0.2042 SOL (Raydium's 0.15 SOL pool-creation fee
 2. **Devnet deployment** and a Phantom / Solflare desktop and mobile test with real wallets. The sandbox
    has no public RPC access and no browser extensions.
 3. **Mainnet multisig** (Squads) with members, threshold and timelock chosen by the owner.
-4. ~~Counsel review~~ Done per the owner (October 2026). Contact details still to be added to both pages.
+4. ~~Counsel review~~ Done per the owner (October 2026); contact hello@poplaunch.fun on both pages.
 5. **Production hosting** accounts (RPC provider, database, web host) and the `poplaunch.fun` DNS.
 6. **Owner's production release decision**, after the gates in the deployment plan.

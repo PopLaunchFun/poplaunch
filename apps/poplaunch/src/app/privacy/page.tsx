@@ -36,7 +36,7 @@ export default function Privacy() {
         <p>Reading and sending transactions goes through a Solana RPC provider, which sees your IP address and the transactions you send, as any website using the blockchain does. Trading links open Raydium's site, which has its own privacy notice.</p>
       </S>
       <S t="Your choices">
-        <p>You can use the interface without connecting a wallet. You can ask for an uploaded image or description to be removed from Pop Launch's servers; the on-chain record, including the metadata hash, cannot be removed by anyone. Contact details will be published on this page before mainnet.</p>
+        <p>You can use the interface without connecting a wallet. You can ask for an uploaded image or description to be removed from Pop Launch's servers; the on-chain record, including the metadata hash, cannot be removed by anyone. Requests and questions: <a className="link" href="mailto:hello@poplaunch.fun">hello@poplaunch.fun</a>.</p>
       </S>
     </div>
   );
