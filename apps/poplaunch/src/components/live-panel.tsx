@@ -280,8 +280,10 @@ export function PositionPanel({ l, onDone }: { l: Launch; onDone: () => void }) 
           <button type="button" className="btn btn-red btn-lg w-full" disabled={!wallet.connected || claimable === 0n || busy} onClick={() => void claim()}>
             {busy ? (tx.stage === "signing" ? "Approve in wallet…" : "Claiming…") : claimable > 0n ? `Claim ${fmtTokens(claimable, dec)} ${l.ticker}` : "Nothing to claim"}
           </button>
-          <a className="btn btn-lg w-full" href={raydiumSwapUrl(new PublicKey(l.mint), NETWORK)} target="_blank" rel="noreferrer noopener">Trade {l.ticker}</a>
-          <p className="label">Claims never expire and stay available even if you already traded elsewhere. Claim status comes from your on-chain receipt. Trading happens on Raydium, outside Pop Launch{NETWORK === "localnet" ? "; on localnet the Raydium site cannot see this pool" : ""}.</p>
+          {NETWORK === "localnet"
+            ? <span className="btn btn-lg w-full" aria-disabled="true">Trade {l.ticker} (not on localnet)</span>
+            : <a className="btn btn-lg w-full" href={raydiumSwapUrl(new PublicKey(l.mint), NETWORK)} target="_blank" rel="noreferrer noopener">Trade {l.ticker}</a>}
+          <p className="label">Claims never expire and stay available even if you already traded elsewhere. Claim status comes from your on-chain receipt. Trading happens on Raydium, outside Pop Launch{NETWORK === "localnet" ? "; the Raydium site cannot see a localnet pool" : ""}.</p>
         </div>
       )}
       {l.state === "refundable" && (

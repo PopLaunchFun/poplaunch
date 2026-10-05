@@ -8,6 +8,7 @@ export function Footer() {
         <span className="wordmark text-[22px]">pop launch</span>
         <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
           <Link href="/how-it-works" className="link">How it works</Link>
+          <Link href="/authority" className="link">Who controls what</Link>
           <Link href="/terms" className="link">Terms</Link>
           <Link href="/privacy" className="link">Privacy</Link>
         </nav>

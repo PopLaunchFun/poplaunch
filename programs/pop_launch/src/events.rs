@@ -76,3 +76,9 @@ pub struct SetupReserveReclaimed {
     pub creator: Pubkey,
     pub amount: u64,
 }
+
+#[event]
+pub struct SettingsUpdated {
+    pub authority: Pubkey,
+    pub version: u16,
+}

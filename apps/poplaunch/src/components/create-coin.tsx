@@ -15,13 +15,28 @@ import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import { PopLaunchClient, launchPda } from "@pop/sdk";
 import { api } from "@/lib/api";
-import { SIGN_DOMAIN, explorerTx } from "@/lib/config";
+import { API_URL, NETWORK, SIGN_DOMAIN, explorerTx } from "@/lib/config";
 import { V1, fmtSol, fmtTokens, launchPriceSolPerToken } from "@/lib/launch";
-import { draftMessage, hexToBytes, sha256Hex } from "@/lib/sign";
+import { canonical, draftMessage, hexToBytes, sha256Hex } from "@/lib/sign";
 import { IDLE, runTx, type TxState } from "@/lib/tx";
 
 const KEY = "poplaunch.create.pending";
-interface Pending { mintSecret: number[]; name: string; symbol: string; uri: string; metadataHash: string; image: string }
+interface Pending { mintSecret: number[]; name: string; symbol: string; uri: string; metadataHash: string; image: string; network: string; apiUrl: string; programId: string }
+
+/**
+ * The only server-produced values that go on chain are the metadata uri and its hash. Re-derive both in the
+ * browser from the document the uri serves, and check it says what the wallet signed, so a compromised or
+ * mis-pointed backend cannot pin someone else's metadata on a launch.
+ */
+async function verifyDraft(d: { uri: string; metadataHash: string }, expect: { name: string; symbol: string; mint: string }) {
+  if (!d.uri.startsWith(`${API_URL}/api/launches/`)) throw new Error("metadata uri points outside this Pop Launch backend");
+  const r = await fetch(d.uri, { cache: "no-store" });
+  if (!r.ok) throw new Error("metadata document could not be read back");
+  const json = (await r.json()) as { name?: string; symbol?: string; properties?: { launch?: { mint?: string; network?: string } } };
+  if ((await sha256Hex(canonical(json))) !== d.metadataHash) throw new Error("metadata hash does not match the document");
+  if (json.name !== expect.name || json.symbol !== expect.symbol || json.properties?.launch?.mint !== expect.mint) throw new Error("metadata document does not match what you signed");
+  if (json.properties?.launch?.network !== NETWORK) throw new Error(`metadata is for ${json.properties?.launch?.network}, this app is on ${NETWORK}`);
+}
 
 const fmtDuration = (secs: number) => (secs >= 3600 ? `${+(secs / 3600).toFixed(2)} hours` : `${+(secs / 60).toFixed(1)} minutes`);
 const clean = (s: string, max: number) => s.replace(/[\u0000-\u001f\u007f<>]/g, "").slice(0, max);
@@ -48,7 +63,14 @@ export function CreateCoin() {
   const [pending, setPending] = useState<Pending | null>(null);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); if (raw) setPending(JSON.parse(raw) as Pending); } catch { /* ignore */ }
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as Pending;
+      // A draft made for another cluster or backend must never be published here.
+      if (p.network !== NETWORK || p.apiUrl !== API_URL || p.programId !== PopLaunchClient.readOnly(connection).programId.toBase58()) { localStorage.removeItem(KEY); return; }
+      setPending(p);
+    } catch { /* ignore */ }
   }, []);
   useEffect(() => {
     const c = PopLaunchClient.readOnly(connection);
@@ -106,7 +128,8 @@ export function CreateCoin() {
         form.set("signedAt", String(signedAt));
         form.set("image", file);
         const d = await api.postDraft(form);
-        p = { mintSecret: [...mint.secretKey], name: name.trim(), symbol, uri: d.uri, metadataHash: d.metadataHash, image: d.image };
+        await verifyDraft(d, { name: name.trim(), symbol, mint: mint.publicKey.toBase58() });
+        p = { mintSecret: [...mint.secretKey], name: name.trim(), symbol, uri: d.uri, metadataHash: d.metadataHash, image: d.image, network: NETWORK, apiUrl: API_URL, programId: PopLaunchClient.readOnly(connection).programId.toBase58() };
         localStorage.setItem(KEY, JSON.stringify(p));
         setPending(p);
       }

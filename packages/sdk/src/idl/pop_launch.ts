@@ -282,24 +282,6 @@ export type PopLaunch = {
           "signer": true
         },
         {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "launch",
           "writable": true,
           "pda": {
@@ -562,6 +544,14 @@ export type PopLaunch = {
           "writable": true
         },
         {
+          "name": "metadata",
+          "writable": true
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+        },
+        {
           "name": "tokenProgram",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
@@ -655,7 +645,6 @@ export type PopLaunch = {
           "docs": [
             "Anyone: the operated keeper normally, or any backer if the keeper is late. Pays only the network fee."
           ],
-          "writable": true,
           "signer": true
         },
         {
@@ -840,6 +829,9 @@ export type PopLaunch = {
       "accounts": [
         {
           "name": "authority",
+          "docs": [
+            "Must be the program's upgrade authority, so the singleton config cannot be claimed by a front-runner at deployment."
+          ],
           "writable": true,
           "signer": true
         },
@@ -861,6 +853,13 @@ export type PopLaunch = {
               }
             ]
           }
+        },
+        {
+          "name": "program",
+          "address": "Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy"
+        },
+        {
+          "name": "programData"
         },
         {
           "name": "systemProgram",
@@ -1372,6 +1371,19 @@ export type PopLaunch = {
       ]
     },
     {
+      "name": "settingsUpdated",
+      "discriminator": [
+        35,
+        115,
+        95,
+        212,
+        3,
+        206,
+        67,
+        222
+      ]
+    },
+    {
       "name": "setupReserveReclaimed",
       "discriminator": [
         88,
@@ -1541,6 +1553,21 @@ export type PopLaunch = {
       "code": 6025,
       "name": "overflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6026,
+      "name": "notUpgradeAuthority",
+      "msg": "Only the program's upgrade authority may initialize the protocol"
+    },
+    {
+      "code": 6027,
+      "name": "wrongMetadataAccount",
+      "msg": "Wrong token metadata account or program"
+    },
+    {
+      "code": 6028,
+      "name": "lpSupplyNotZero",
+      "msg": "LP mint still has supply after the burn"
     }
   ],
   "types": [
@@ -1738,6 +1765,13 @@ export type PopLaunch = {
           },
           {
             "name": "creationFeePaid",
+            "type": "u64"
+          },
+          {
+            "name": "minContributionLamports",
+            "docs": [
+              "Minimum contribution for this launch (copied at opening; the exact remainder may be smaller)."
+            ],
             "type": "u64"
           },
           {
@@ -2115,6 +2149,22 @@ export type PopLaunch = {
           {
             "name": "amount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "settingsUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "version",
+            "type": "u16"
           }
         ]
       }

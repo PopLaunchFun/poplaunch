@@ -1,4 +1,5 @@
 import { type Launch, V1, fmtSol, fmtTokens, launchPriceSolPerToken, short } from "@/lib/launch";
+import { DEMO, explorerAddress } from "@/lib/config";
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
@@ -29,8 +30,9 @@ export function LaunchDetails({ l }: { l: Launch }) {
         <Row k="Approved DEX" v={V1.dex} />
         <Row k="LP protection" v={<>{lpText}. <span className="text-muted">Burning the LP tokens means nobody, including Pop Launch or the creator, can withdraw the pooled SOL and tokens. It does not prevent price declines or holders selling.</span></>} />
         <Row k="Fees" v={`No fee is deducted from backing. The creator pays a ${fmtSol(V1.creationFeeLamports)} SOL creation fee and a separately quoted setup reserve. Backers pay network fees and token-account rent on claim.`} />
-        <Row k="Mint" v={<><span className="addr">{l.mint}</span> <span className="label">(demo address, no explorer link)</span></>} />
-        <Row k="Creator" v={<span className="addr">{short(l.creator, 6)}</span>} />
+        <Row k="Mint" v={DEMO ? <><span className="addr">{l.mint}</span> <span className="label">(demo address, no explorer link)</span></> : <a className="link addr" href={explorerAddress(l.mint)} target="_blank" rel="noreferrer noopener">{l.mint}</a>} />
+        <Row k="Creator" v={DEMO ? <span className="addr">{short(l.creator, 6)}</span> : <a className="link addr" href={explorerAddress(l.creator)} target="_blank" rel="noreferrer noopener">{short(l.creator, 6)}</a>} />
+        {l.poolState && !DEMO && <Row k="Pool" v={<a className="link addr" href={explorerAddress(l.poolState)} target="_blank" rel="noreferrer noopener">{l.poolState}</a>} />}
         <Row k="Protocol settings" v={`Version ${V1.version}. Terms are fixed at opening and cannot be changed, extended or canceled.`} />
       </dl>
     </details>

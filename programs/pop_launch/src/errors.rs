@@ -54,4 +54,10 @@ pub enum LaunchError {
     ReserveLocked,
     #[msg("Arithmetic overflow")]
     Overflow,
+    #[msg("Only the program's upgrade authority may initialize the protocol")]
+    NotUpgradeAuthority,
+    #[msg("Wrong token metadata account or program")]
+    WrongMetadataAccount,
+    #[msg("LP mint still has supply after the burn")]
+    LpSupplyNotZero,
 }

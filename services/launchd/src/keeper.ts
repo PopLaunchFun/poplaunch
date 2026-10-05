@@ -39,6 +39,17 @@ export class Keeper {
   get address(): string | null {
     return this.keypair?.publicKey.toBase58() ?? null;
   }
+  lastSuccessAt: string | null = null;
+
+  /** Operational health for /api/status and alerting. */
+  async health(): Promise<{ address: string | null; enabled: boolean; balanceSol: number | null; readyLaunches: { address: string; ageSec: number }[]; failedAttempts15m: number; lastSuccessAt: string | null }> {
+    let balanceSol: number | null = null;
+    if (this.keypair) { try { balanceSol = (await this.connection.getBalance(this.keypair.publicKey, "confirmed")) / LAMPORTS_PER_SOL; } catch { /* rpc down: reported separately */ } }
+    const now = Math.floor(Date.now() / 1000);
+    const ready = await query<{ address: string; filled_at: string }>(`SELECT address, filled_at FROM launches WHERE chain_state = 1 AND settlement_deadline > $1`, [now]);
+    const [failed] = await query<{ n: string }>(`SELECT count(*) AS n FROM settlement_attempts WHERE status = 'failed' AND created_at > now() - interval '15 minutes'`);
+    return { address: this.address, enabled: !!this.keypair, balanceSol, readyLaunches: ready.map((r) => ({ address: r.address, ageSec: now - Number(r.filled_at) })), failedAttempts15m: Number(failed?.n ?? 0), lastSuccessAt: this.lastSuccessAt };
+  }
 
   async ensureFunded(): Promise<void> {
     if (!this.keypair || config.network !== "localnet") return;
@@ -51,6 +62,10 @@ export class Keeper {
 
   async tick(): Promise<number> {
     if (!this.client || !this.keypair) return 0;
+    // Below the floor the keeper stands down (anyone can still settle from the launch page) instead of
+    // draining its last lamports on attempts that cannot pay their own fee.
+    const balance = await this.connection.getBalance(this.keypair.publicKey, "confirmed");
+    if (balance < config.keeperMinBalanceSol * LAMPORTS_PER_SOL) { console.error(`[keeper] balance ${balance / LAMPORTS_PER_SOL} SOL below floor ${config.keeperMinBalanceSol}; not sending`); return 0; }
     const now = Math.floor(Date.now() / 1000);
     const ready = await query<{ address: string; settlement_deadline: string }>(
       `SELECT address, settlement_deadline FROM launches WHERE chain_state = 1 AND settlement_deadline > $1
@@ -60,11 +75,12 @@ export class Keeper {
     let n = 0;
     for (const r of ready) {
       const launch = new PublicKey(r.address);
-      // Re-check on chain right before sending; the database is only a hint.
-      const l = await this.client.fetchLaunch(launch);
-      if (l.state !== 1) continue;
       let signature: string | null = null;
       try {
+        // Re-check on chain right before sending; the database is only a hint. A read failure for one launch
+        // must not abort the tick for the others.
+        const l = await this.client.fetchLaunch(launch);
+        if (l.state !== 1) continue;
         const tx = await this.client.buildFinalizeTransaction(this.keypair.publicKey, launch);
         tx.feePayer = this.keypair.publicKey;
         const bh = await this.connection.getLatestBlockhash("confirmed");
@@ -75,6 +91,7 @@ export class Keeper {
         const conf = await this.connection.confirmTransaction({ signature, ...bh }, "confirmed");
         if (conf.value.err) throw new Error(`on-chain error ${JSON.stringify(conf.value.err)}`);
         await query(`UPDATE settlement_attempts SET status = 'confirmed' WHERE signature = $1`, [signature]);
+        this.lastSuccessAt = new Date().toISOString();
         n++;
       } catch (e) {
         const msg = ((e as Error).message ?? String(e)).slice(0, 1000);

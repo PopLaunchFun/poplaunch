@@ -16,5 +16,13 @@ export const config = {
   keeperKeypairPath: process.env.KEEPER_KEYPAIR ?? "",
   maxImageBytes: Number(process.env.MAX_IMAGE_BYTES ?? 1_048_576),
   rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE ?? 240),
+  /** Set to 1 only when launchd sits behind a reverse proxy that overwrites X-Forwarded-For; the rightmost hop is then the client. */
+  trustedProxy: process.env.TRUSTED_PROXY === "1",
+  /** Keeper refuses to send below this balance and raises an alert below the alert threshold. */
+  keeperMinBalanceSol: Number(process.env.KEEPER_MIN_BALANCE_SOL ?? 0.05),
+  keeperAlertBalanceSol: Number(process.env.KEEPER_ALERT_BALANCE_SOL ?? 0.2),
+  /** Unpublished drafts and their images are deleted after this many hours; at most this many open drafts per wallet. */
+  draftTtlHours: Number(process.env.DRAFT_TTL_HOURS ?? 48),
+  maxOpenDraftsPerWallet: Number(process.env.MAX_OPEN_DRAFTS_PER_WALLET ?? 3),
   gitCommit: process.env.GIT_COMMIT ?? "unknown",
 };

@@ -107,3 +107,16 @@ indexer is superseded and kept only for reference.
 - `docs/pop-launch-mechanism.md` — Stage 2 proof: what is implemented, what the tests show, limits.
 - `docs/pop-launch-app.md` — Stage 3: running the connected app and what the end-to-end run verified.
 - `scripts/raydium-fixture.sh`, `scripts/localnet.sh` — real Raydium CP-Swap program as a localnet fixture.
+
+### Stage 4 (production readiness)
+
+Internal adversarial review with every finding fixed and regression-tested (`docs/stage4-report.md`),
+immutable Metaplex metadata at creation, verified per-network addresses with a live checker
+(`pnpm --filter @pop/integration verify:addresses`), measured costs (`docs/costs.json`), keeper health and
+alerts in `/api/status` with a runbook (`docs/runbook.md`), the authority disclosure
+(`/authority`, `docs/authority-disclosure.md`), full Terms and Privacy, and the deployment plan with
+mainnet gates (`docs/deployment-poplaunch.md`). Not deployed; the independent audit, devnet run, multisig
+and counsel review are the remaining gates.
+
+Fixtures: `scripts/raydium-fixture.sh` (Raydium CP-Swap) and `scripts/metaplex-fixture.sh` (Token
+Metadata), both built from source in the pinned Anchor image.

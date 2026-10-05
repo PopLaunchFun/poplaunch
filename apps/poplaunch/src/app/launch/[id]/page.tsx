@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DEMO } from "@/lib/config";
 import { demoLaunches, withPreviewState } from "@/demo/fixtures";
-import { api, isStale, toLaunch } from "@/lib/api";
+import { api, isBase58Key, isStale, toLaunch } from "@/lib/api";
 import { type LaunchState, pctFunded } from "@/lib/launch";
 import { LaunchScreen } from "@/components/launch-screen";
 import { LaunchLive } from "@/components/launch-live";
@@ -31,6 +31,7 @@ export default async function LaunchPage({ params, searchParams }: { params: Pro
     );
   }
   // The index may not have seen a brand-new launch yet: fall back to the chain before giving up.
+  if (!isBase58Key(id)) notFound();
   const r = await api.launch(id);
   const l = r ? toLaunch(r.launch) : await fetchLaunchFromChain(id).catch(() => null);
   if (!l) notFound();

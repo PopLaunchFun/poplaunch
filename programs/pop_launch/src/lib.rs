@@ -18,6 +18,7 @@ use anchor_spl::token::{self, Burn, Mint, MintTo, SetAuthority, Token, TokenAcco
 
 pub mod errors;
 pub mod events;
+pub mod metadata;
 pub mod raydium;
 pub mod state;
 
@@ -35,6 +36,17 @@ pub const BACKER_VAULT_SEED: &[u8] = b"backer_vault";
 pub const POOL_VAULT_SEED: &[u8] = b"pool_vault";
 pub const RECEIPT_SEED: &[u8] = b"receipt";
 
+/// Verified external addresses. Protocol settings may only point at these (see packages/sdk/src/networks.ts
+/// for provenance); an authority cannot redirect future launches' principal to an arbitrary program.
+pub const CP_SWAP_PROGRAMS: [Pubkey; 2] = [
+    Pubkey::from_str_const("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"), // mainnet (and the localnet fixture)
+    Pubkey::from_str_const("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb"), // devnet
+];
+pub const CREATE_POOL_FEE_RECEIVERS: [Pubkey; 2] = [
+    Pubkey::from_str_const("DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8"), // mainnet (and the localnet fixture)
+    Pubkey::from_str_const("3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy"), // devnet
+];
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct CreateLaunchArgs {
     pub name: String,
@@ -50,7 +62,21 @@ fn validate_settings(s: &LaunchSettings) -> Result<()> {
     require!(s.supply > 0 && s.backer_allocation > 0 && s.pool_allocation > 0, LaunchError::InvalidSettings);
     require!(s.backer_allocation.checked_add(s.pool_allocation) == Some(s.supply), LaunchError::InvalidSettings);
     require!(s.min_contribution_lamports > 0 && s.min_contribution_lamports <= s.target_lamports, LaunchError::InvalidSettings);
+    require!(s.min_setup_reserve_lamports > 0, LaunchError::InvalidSettings);
+    require!(CP_SWAP_PROGRAMS.contains(&s.cp_swap_program), LaunchError::InvalidSettings);
+    require!(CREATE_POOL_FEE_RECEIVERS.contains(&s.create_pool_fee_receiver), LaunchError::InvalidSettings);
+    require_keys_eq!(s.quote_mint, anchor_spl::token::spl_token::native_mint::ID, LaunchError::InvalidSettings);
     Ok(())
+}
+
+/// Supply of an SPL mint read straight from its layout (u64 LE at offset 36).
+fn mint_supply(info: &AccountInfo) -> Result<u64> {
+    require_keys_eq!(*info.owner, anchor_spl::token::ID, LaunchError::WrongAta);
+    let data = info.try_borrow_data()?;
+    require!(data.len() >= 44, LaunchError::WrongAta);
+    let mut b = [0u8; 8];
+    b.copy_from_slice(&data[36..44]);
+    Ok(u64::from_le_bytes(b))
 }
 
 fn validate_str(s: &str, max: usize) -> Result<()> {
@@ -76,6 +102,130 @@ fn token_amount(info: &AccountInfo) -> Result<u64> {
     Ok(u64::from_le_bytes(b))
 }
 
+/// Create the authority's WSOL ATA (rent from the setup reserve), move exactly `target` from escrow and sync.
+/// Measures deltas, not absolutes: anyone can pre-fund the ATA address with stray lamports, and that must not
+/// change what is seeded nor block settlement. Returns the amount that was there before.
+#[inline(never)]
+fn wrap_quote(ctx: &Context<FinalizeLaunch>, launch_key: &Pubkey, auth_bump: u8, escrow_bump: u8, target: u64) -> Result<u64> {
+    let auth_seeds: &[&[u8]] = &[AUTH_SEED, launch_key.as_ref(), &[auth_bump]];
+    let escrow_seeds: &[&[u8]] = &[ESCROW_SEED, launch_key.as_ref(), &[escrow_bump]];
+    associated_token::create_idempotent(CpiContext::new_with_signer(ctx.accounts.associated_token_program.key(),
+        associated_token::Create {
+            payer: ctx.accounts.auth.to_account_info(),
+            associated_token: ctx.accounts.auth_quote.to_account_info(),
+            authority: ctx.accounts.auth.to_account_info(),
+            mint: ctx.accounts.quote_mint.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+        },
+        &[auth_seeds],
+    ))?;
+    token::sync_native(CpiContext::new(ctx.accounts.token_program.key(), token::SyncNative { account: ctx.accounts.auth_quote.to_account_info() }))?;
+    let before = token_amount(&ctx.accounts.auth_quote.to_account_info())?;
+    transfer_lamports_signed(&ctx.accounts.escrow.to_account_info(), &ctx.accounts.auth_quote.to_account_info(), &ctx.accounts.system_program.to_account_info(), escrow_seeds, target)?;
+    token::sync_native(CpiContext::new(ctx.accounts.token_program.key(), token::SyncNative { account: ctx.accounts.auth_quote.to_account_info() }))?;
+    require!(token_amount(&ctx.accounts.auth_quote.to_account_info())?.checked_sub(before) == Some(target), LaunchError::ReserveMismatch);
+    Ok(before)
+}
+
+/// Raydium CP-Swap `initialize` CPI signed by the launch authority PDA.
+#[inline(never)]
+fn seed_pool(ctx: &Context<FinalizeLaunch>, pa: &raydium::PoolAddresses, launch_key: &Pubkey, auth_bump: u8, quote_is_0: bool, t0: Pubkey, t1: Pubkey, target: u64, pool_allocation: u64) -> Result<()> {
+    let auth_seeds: &[&[u8]] = &[AUTH_SEED, launch_key.as_ref(), &[auth_bump]];
+    let (c0, c1, a0, a1) = if quote_is_0 {
+        (ctx.accounts.auth_quote.key(), ctx.accounts.pool_vault.key(), target, pool_allocation)
+    } else {
+        (ctx.accounts.pool_vault.key(), ctx.accounts.auth_quote.key(), pool_allocation, target)
+    };
+    let keys = raydium::InitializeKeys {
+        creator: ctx.accounts.auth.key(),
+        amm_config: ctx.accounts.amm_config.key(),
+        authority: pa.authority,
+        pool_state: pa.pool_state,
+        token_0_mint: t0,
+        token_1_mint: t1,
+        lp_mint: pa.lp_mint,
+        creator_token_0: c0,
+        creator_token_1: c1,
+        creator_lp_token: ctx.accounts.auth_lp.key(),
+        token_0_vault: pa.token_0_vault,
+        token_1_vault: pa.token_1_vault,
+        create_pool_fee: ctx.accounts.create_pool_fee.key(),
+        observation_state: pa.observation_state,
+        token_program: ctx.accounts.token_program.key(),
+        token_0_program: ctx.accounts.token_program.key(),
+        token_1_program: ctx.accounts.token_program.key(),
+        associated_token_program: ctx.accounts.associated_token_program.key(),
+        system_program: ctx.accounts.system_program.key(),
+        rent: ctx.accounts.rent.key(),
+    };
+    let ix = raydium::initialize_instruction(ctx.accounts.cp_swap_program.key(), &keys, a0, a1, 0);
+    let (m0, m1) = if quote_is_0 {
+        (ctx.accounts.quote_mint.to_account_info(), ctx.accounts.mint.to_account_info())
+    } else {
+        (ctx.accounts.mint.to_account_info(), ctx.accounts.quote_mint.to_account_info())
+    };
+    let (ct0, ct1) = if quote_is_0 {
+        (ctx.accounts.auth_quote.to_account_info(), ctx.accounts.pool_vault.to_account_info())
+    } else {
+        (ctx.accounts.pool_vault.to_account_info(), ctx.accounts.auth_quote.to_account_info())
+    };
+    invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.auth.to_account_info(),
+            ctx.accounts.amm_config.to_account_info(),
+            ctx.accounts.cp_authority.to_account_info(),
+            ctx.accounts.pool_state.to_account_info(),
+            m0,
+            m1,
+            ctx.accounts.lp_mint.to_account_info(),
+            ct0,
+            ct1,
+            ctx.accounts.auth_lp.to_account_info(),
+            ctx.accounts.token_0_vault.to_account_info(),
+            ctx.accounts.token_1_vault.to_account_info(),
+            ctx.accounts.create_pool_fee.to_account_info(),
+            ctx.accounts.observation_state.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.associated_token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+            ctx.accounts.cp_swap_program.to_account_info(),
+        ],
+        &[auth_seeds],
+    )?;
+    Ok(())
+}
+
+/// Burn every LP token issued to the launch, prove the LP mint supply is zero, and return both ATAs' rent (and any
+/// stray wrapped SOL) to the setup reserve so the creator can reclaim it. Returns the amount burned.
+#[inline(never)]
+fn burn_lp_and_close(ctx: &Context<FinalizeLaunch>, launch_key: &Pubkey, auth_bump: u8) -> Result<u64> {
+    let auth_seeds: &[&[u8]] = &[AUTH_SEED, launch_key.as_ref(), &[auth_bump]];
+    let lp_amount = token_amount(&ctx.accounts.auth_lp.to_account_info())?;
+    require!(lp_amount > 0, LaunchError::LpNotBurned);
+    token::burn(
+        CpiContext::new_with_signer(ctx.accounts.token_program.key(),
+            Burn { mint: ctx.accounts.lp_mint.to_account_info(), from: ctx.accounts.auth_lp.to_account_info(), authority: ctx.accounts.auth.to_account_info() },
+            &[auth_seeds],
+        ),
+        lp_amount,
+    )?;
+    require!(token_amount(&ctx.accounts.auth_lp.to_account_info())? == 0, LaunchError::LpNotBurned);
+    // Nothing redeemable may remain anywhere: the LP mint's whole supply was issued to the launch and is now burned.
+    require!(mint_supply(&ctx.accounts.lp_mint.to_account_info())? == 0, LaunchError::LpSupplyNotZero);
+    for acc in [&ctx.accounts.auth_lp, &ctx.accounts.auth_quote] {
+        token::close_account(CpiContext::new_with_signer(ctx.accounts.token_program.key(),
+            token::CloseAccount { account: acc.to_account_info(), destination: ctx.accounts.auth.to_account_info(), authority: ctx.accounts.auth.to_account_info() },
+            &[auth_seeds],
+        ))?;
+    }
+    Ok(lp_amount)
+}
+
 #[program]
 pub mod pop_launch {
     use super::*;
@@ -98,6 +248,7 @@ pub mod pop_launch {
         let c = &mut ctx.accounts.config;
         c.settings = settings;
         c.version = c.version.checked_add(1).ok_or(LaunchError::Overflow)?;
+        emit!(SettingsUpdated { authority: c.authority, version: c.version });
         Ok(())
     }
 
@@ -136,6 +287,24 @@ pub mod pop_launch {
                 &[auth_seeds],
             ),
             s.pool_allocation,
+        )?;
+        // Immutable token metadata (Metaplex standard) while the launch authority still holds the mint authority.
+        let (metadata_key, _) = metadata::pda(&ctx.accounts.mint.key());
+        require_keys_eq!(ctx.accounts.metadata.key(), metadata_key, LaunchError::WrongMetadataAccount);
+        let ix = metadata::create_immutable_metadata_instruction(metadata_key, ctx.accounts.mint.key(), ctx.accounts.auth.key(), ctx.accounts.creator.key(), ctx.accounts.auth.key(), &args.name, &args.symbol, &args.uri);
+        invoke_signed(
+            &ix,
+            &[
+                ctx.accounts.metadata.to_account_info(),
+                ctx.accounts.mint.to_account_info(),
+                ctx.accounts.auth.to_account_info(),
+                ctx.accounts.creator.to_account_info(),
+                ctx.accounts.auth.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.rent.to_account_info(),
+                ctx.accounts.token_metadata_program.to_account_info(),
+            ],
+            &[auth_seeds],
         )?;
         // Revoke the mint authority permanently. The mint was created with no freeze authority.
         token::set_authority(
@@ -183,6 +352,7 @@ pub mod pop_launch {
         l.create_pool_fee_receiver = s.create_pool_fee_receiver;
         l.quote_mint = s.quote_mint;
         l.creation_fee_paid = s.creation_fee_lamports;
+        l.min_contribution_lamports = s.min_contribution_lamports;
         l.name = args.name;
         l.symbol = args.symbol;
         l.uri = args.uri;
@@ -211,7 +381,7 @@ pub mod pop_launch {
         let remaining = l.target_lamports.checked_sub(l.raised_lamports).ok_or(LaunchError::Overflow)?;
         require!(remaining > 0, LaunchError::NotFunding);
         require!(amount <= remaining, LaunchError::ExceedsRemaining);
-        require!(amount >= ctx.accounts.config.settings.min_contribution_lamports || amount == remaining, LaunchError::BelowMinimum);
+        require!(amount >= l.min_contribution_lamports || amount == remaining, LaunchError::BelowMinimum);
 
         system_program::transfer(
             CpiContext::new(ctx.accounts.system_program.key(), system_program::Transfer { from: ctx.accounts.backer.to_account_info(), to: ctx.accounts.escrow.to_account_info() }),
@@ -258,126 +428,38 @@ pub mod pop_launch {
         let pool_allocation = ctx.accounts.launch.pool_allocation;
         let auth_bump = ctx.accounts.launch.auth_bump;
         let escrow_bump = ctx.accounts.launch.escrow_bump;
-        let auth_seeds: &[&[u8]] = &[AUTH_SEED, launch_key.as_ref(), &[auth_bump]];
-        let escrow_seeds: &[&[u8]] = &[ESCROW_SEED, launch_key.as_ref(), &[escrow_bump]];
 
         // Verify every DEX-side address against the approved program and config; never adopt an arbitrary pool.
-        let cp = ctx.accounts.cp_swap_program.key();
         let quote = ctx.accounts.quote_mint.key();
         let base = ctx.accounts.mint.key();
         let quote_is_0 = quote < base;
         let (t0, t1) = if quote_is_0 { (quote, base) } else { (base, quote) };
-        let pa = raydium::pool_addresses(&cp, &ctx.accounts.amm_config.key(), &t0, &t1);
+        let pa = raydium::pool_addresses(&ctx.accounts.cp_swap_program.key(), &ctx.accounts.amm_config.key(), &t0, &t1);
         require_keys_eq!(ctx.accounts.cp_authority.key(), pa.authority, LaunchError::WrongDexAccount);
         require_keys_eq!(ctx.accounts.pool_state.key(), pa.pool_state, LaunchError::WrongDexAccount);
         require_keys_eq!(ctx.accounts.lp_mint.key(), pa.lp_mint, LaunchError::WrongDexAccount);
         require_keys_eq!(ctx.accounts.token_0_vault.key(), pa.token_0_vault, LaunchError::WrongDexAccount);
         require_keys_eq!(ctx.accounts.token_1_vault.key(), pa.token_1_vault, LaunchError::WrongDexAccount);
         require_keys_eq!(ctx.accounts.observation_state.key(), pa.observation_state, LaunchError::WrongDexAccount);
-        // The pool must not exist yet: a precreated pool is never adopted.
-        require!(ctx.accounts.pool_state.owner == &system_program::ID && ctx.accounts.pool_state.lamports() == 0, LaunchError::WrongDexAccount);
+        // The pool must not exist yet: a precreated pool is never adopted. Stray lamports sent to the address are
+        // tolerated (Raydium allocates and assigns a funded system account), so nobody can brick settlement that way.
+        require!(ctx.accounts.pool_state.owner == &system_program::ID && ctx.accounts.pool_state.data_is_empty(), LaunchError::WrongDexAccount);
         let auth_key = ctx.accounts.auth.key();
         require_keys_eq!(ctx.accounts.auth_quote.key(), associated_token::get_associated_token_address(&auth_key, &quote), LaunchError::WrongAta);
         require_keys_eq!(ctx.accounts.auth_lp.key(), associated_token::get_associated_token_address(&auth_key, &pa.lp_mint), LaunchError::WrongAta);
 
-        // 1. Wrap exactly the target: create the authority's WSOL ATA (rent from the setup reserve), move principal, sync.
-        associated_token::create_idempotent(CpiContext::new_with_signer(ctx.accounts.associated_token_program.key(),
-            associated_token::Create {
-                payer: ctx.accounts.auth.to_account_info(),
-                associated_token: ctx.accounts.auth_quote.to_account_info(),
-                authority: ctx.accounts.auth.to_account_info(),
-                mint: ctx.accounts.quote_mint.to_account_info(),
-                system_program: ctx.accounts.system_program.to_account_info(),
-                token_program: ctx.accounts.token_program.to_account_info(),
-            },
-            &[auth_seeds],
-        ))?;
-        transfer_lamports_signed(&ctx.accounts.escrow.to_account_info(), &ctx.accounts.auth_quote.to_account_info(), &ctx.accounts.system_program.to_account_info(), escrow_seeds, target)?;
-        token::sync_native(CpiContext::new(ctx.accounts.token_program.key(), token::SyncNative { account: ctx.accounts.auth_quote.to_account_info() }))?;
-        require!(token_amount(&ctx.accounts.auth_quote.to_account_info())? == target, LaunchError::ReserveMismatch);
+        // 1. Wrap exactly the target into the authority's WSOL ATA (delta-accounted, see wrap_quote).
+        let quote_before = wrap_quote(&ctx, &launch_key, auth_bump, escrow_bump, target)?;
 
         // 2. Create the pool with exactly target quote and exactly the pool allocation; the authority PDA is Raydium's creator.
-        let (c0, c1, a0, a1) = if quote_is_0 {
-            (ctx.accounts.auth_quote.key(), ctx.accounts.pool_vault.key(), target, pool_allocation)
-        } else {
-            (ctx.accounts.pool_vault.key(), ctx.accounts.auth_quote.key(), pool_allocation, target)
-        };
-        let keys = raydium::InitializeKeys {
-            creator: auth_key,
-            amm_config: ctx.accounts.amm_config.key(),
-            authority: pa.authority,
-            pool_state: pa.pool_state,
-            token_0_mint: t0,
-            token_1_mint: t1,
-            lp_mint: pa.lp_mint,
-            creator_token_0: c0,
-            creator_token_1: c1,
-            creator_lp_token: ctx.accounts.auth_lp.key(),
-            token_0_vault: pa.token_0_vault,
-            token_1_vault: pa.token_1_vault,
-            create_pool_fee: ctx.accounts.create_pool_fee.key(),
-            observation_state: pa.observation_state,
-            token_program: ctx.accounts.token_program.key(),
-            token_0_program: ctx.accounts.token_program.key(),
-            token_1_program: ctx.accounts.token_program.key(),
-            associated_token_program: ctx.accounts.associated_token_program.key(),
-            system_program: ctx.accounts.system_program.key(),
-            rent: ctx.accounts.rent.key(),
-        };
-        let ix = raydium::initialize_instruction(cp, &keys, a0, a1, 0);
-        let (m0, m1) = if quote_is_0 {
-            (ctx.accounts.quote_mint.to_account_info(), ctx.accounts.mint.to_account_info())
-        } else {
-            (ctx.accounts.mint.to_account_info(), ctx.accounts.quote_mint.to_account_info())
-        };
-        let (ct0, ct1) = if quote_is_0 {
-            (ctx.accounts.auth_quote.to_account_info(), ctx.accounts.pool_vault.to_account_info())
-        } else {
-            (ctx.accounts.pool_vault.to_account_info(), ctx.accounts.auth_quote.to_account_info())
-        };
-        invoke_signed(
-            &ix,
-            &[
-                ctx.accounts.auth.to_account_info(),
-                ctx.accounts.amm_config.to_account_info(),
-                ctx.accounts.cp_authority.to_account_info(),
-                ctx.accounts.pool_state.to_account_info(),
-                m0,
-                m1,
-                ctx.accounts.lp_mint.to_account_info(),
-                ct0,
-                ct1,
-                ctx.accounts.auth_lp.to_account_info(),
-                ctx.accounts.token_0_vault.to_account_info(),
-                ctx.accounts.token_1_vault.to_account_info(),
-                ctx.accounts.create_pool_fee.to_account_info(),
-                ctx.accounts.observation_state.to_account_info(),
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.associated_token_program.to_account_info(),
-                ctx.accounts.system_program.to_account_info(),
-                ctx.accounts.rent.to_account_info(),
-                ctx.accounts.cp_swap_program.to_account_info(),
-            ],
-            &[auth_seeds],
-        )?;
+        seed_pool(&ctx, &pa, &launch_key, auth_bump, quote_is_0, t0, t1, target, pool_allocation)?;
 
         // 3. Validate the deposited reserves against the launch terms, then burn every LP token the pool issued.
         let (qv, bv) = if quote_is_0 { (&ctx.accounts.token_0_vault, &ctx.accounts.token_1_vault) } else { (&ctx.accounts.token_1_vault, &ctx.accounts.token_0_vault) };
         require!(token_amount(&qv.to_account_info())? == target, LaunchError::ReserveMismatch);
         require!(token_amount(&bv.to_account_info())? == pool_allocation, LaunchError::ReserveMismatch);
-        require!(token_amount(&ctx.accounts.auth_quote.to_account_info())? == 0, LaunchError::ReserveMismatch);
-        let lp_amount = token_amount(&ctx.accounts.auth_lp.to_account_info())?;
-        require!(lp_amount > 0, LaunchError::LpNotBurned);
-        token::burn(
-            CpiContext::new_with_signer(ctx.accounts.token_program.key(),
-                Burn { mint: ctx.accounts.lp_mint.to_account_info(), from: ctx.accounts.auth_lp.to_account_info(), authority: ctx.accounts.auth.to_account_info() },
-                &[auth_seeds],
-            ),
-            lp_amount,
-        )?;
-        require!(token_amount(&ctx.accounts.auth_lp.to_account_info())? == 0, LaunchError::LpNotBurned);
+        require!(token_amount(&ctx.accounts.auth_quote.to_account_info())? == quote_before, LaunchError::ReserveMismatch);
+        let lp_amount = burn_lp_and_close(&ctx, &launch_key, auth_bump)?;
 
         // 4. Commit: LIVE, claims enabled.
         let l = &mut ctx.accounts.launch;
@@ -470,8 +552,12 @@ pub mod pop_launch {
         let now = Clock::get()?.unix_timestamp;
         let l = &mut ctx.accounts.launch;
         require_keys_eq!(l.creator, ctx.accounts.creator.key(), LaunchError::NotCreator);
+        let was_refundable = l.state() == LaunchState::Refundable;
         let settled = l.state() == LaunchState::Live || l.derive_refundable(now);
         require!(settled, LaunchError::ReserveLocked);
+        if !was_refundable && l.state() == LaunchState::Refundable {
+            emit!(LaunchRefundable { launch: l.key(), reason: l.refund_reason, at: now });
+        }
         let rent_min = Rent::get()?.minimum_balance(0);
         let available = ctx.accounts.auth.lamports().saturating_sub(rent_min);
         require!(available > 0, LaunchError::NothingToRefund);
@@ -488,10 +574,15 @@ pub mod pop_launch {
 
 #[derive(Accounts)]
 pub struct InitializeProtocol<'info> {
+    /// Must be the program's upgrade authority, so the singleton config cannot be claimed by a front-runner at deployment.
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(init, payer = authority, space = 8 + ProtocolConfig::INIT_SPACE, seeds = [CONFIG_SEED], bump)]
     pub config: Account<'info, ProtocolConfig>,
+    #[account(constraint = program.programdata_address()? == Some(program_data.key()) @ LaunchError::NotUpgradeAuthority)]
+    pub program: Program<'info, crate::program::PopLaunch>,
+    #[account(constraint = program_data.upgrade_authority_address == Some(authority.key()) @ LaunchError::NotUpgradeAuthority)]
+    pub program_data: Account<'info, ProgramData>,
     pub system_program: Program<'info, System>,
 }
 
@@ -526,6 +617,12 @@ pub struct CreateLaunch<'info> {
     /// CHECK: must equal the configured fee recipient.
     #[account(mut, address = config.settings.fee_recipient @ LaunchError::InvalidFeeRecipient)]
     pub fee_recipient: UncheckedAccount<'info>,
+    /// CHECK: Metaplex metadata PDA for the mint, verified in the handler; created immutable here.
+    #[account(mut)]
+    pub metadata: UncheckedAccount<'info>,
+    /// CHECK: the Metaplex Token Metadata program.
+    #[account(address = metadata::ID @ LaunchError::WrongMetadataAccount)]
+    pub token_metadata_program: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
@@ -535,8 +632,6 @@ pub struct CreateLaunch<'info> {
 pub struct Contribute<'info> {
     #[account(mut)]
     pub backer: Signer<'info>,
-    #[account(seeds = [CONFIG_SEED], bump = config.bump)]
-    pub config: Box<Account<'info, ProtocolConfig>>,
     #[account(mut, seeds = [LAUNCH_SEED, launch.mint.as_ref()], bump = launch.bump)]
     pub launch: Box<Account<'info, Launch>>,
     /// CHECK: escrow PDA
@@ -550,7 +645,6 @@ pub struct Contribute<'info> {
 #[derive(Accounts)]
 pub struct FinalizeLaunch<'info> {
     /// Anyone: the operated keeper normally, or any backer if the keeper is late. Pays only the network fee.
-    #[account(mut)]
     pub caller: Signer<'info>,
     #[account(mut, seeds = [LAUNCH_SEED, launch.mint.as_ref()], bump = launch.bump, has_one = mint)]
     pub launch: Box<Account<'info, Launch>>,

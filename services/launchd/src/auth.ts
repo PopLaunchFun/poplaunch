@@ -38,7 +38,13 @@ export async function verifyDraftSignature(payload: string, signer: string, sign
     throw new Error("invalid signature encoding");
   }
   if (sig.length !== 64 || !nacl.sign.detached.verify(msg, sig, pk.toBytes())) throw new Error("signature does not verify");
+  const [used] = await query(`SELECT 1 FROM used_signatures WHERE signature = $1`, [signature]);
+  if (used) throw new Error("signature already used");
+  return pk;
+}
+
+/** Burn a verified signature. Called only after the upload validated, so a rejected form does not cost a re-sign. */
+export async function consumeSignature(signature: string): Promise<void> {
   const used = await query(`INSERT INTO used_signatures (signature) VALUES ($1) ON CONFLICT DO NOTHING RETURNING signature`, [signature]);
   if (used.length === 0) throw new Error("signature already used");
-  return pk;
 }

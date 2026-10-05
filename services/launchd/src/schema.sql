@@ -92,8 +92,10 @@ CREATE TABLE IF NOT EXISTS drafts (
   metadata_hash      TEXT NOT NULL,              -- hex sha256 of the canonical metadata JSON
   signed_at          BIGINT NOT NULL,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  published_at       TIMESTAMPTZ
+  published_at       TIMESTAMPTZ,
+  hidden             BOOLEAN NOT NULL DEFAULT false  -- operator takedown of the off-chain content only
 );
+ALTER TABLE drafts ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS drafts_creator_idx ON drafts (creator);
 
 CREATE TABLE IF NOT EXISTS settlement_attempts (

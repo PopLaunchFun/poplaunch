@@ -101,6 +101,8 @@ pub struct Launch {
     pub create_pool_fee_receiver: Pubkey,
     pub quote_mint: Pubkey,
     pub creation_fee_paid: u64,
+    /// Minimum contribution for this launch (copied at opening; the exact remainder may be smaller).
+    pub min_contribution_lamports: u64,
     #[max_len(32)]
     pub name: String,
     #[max_len(10)]

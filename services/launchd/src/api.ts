@@ -1,10 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { bodyLimit } from "hono/body-limit";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { PublicKey, type Connection } from "@solana/web3.js";
 import { entitlement, launchPda } from "@pop/sdk";
 import { config } from "./config.js";
 import { query } from "./db.js";
-import { sha256Hex, verifyDraftSignature } from "./auth.js";
+import { consumeSignature, sha256Hex, verifyDraftSignature } from "./auth.js";
 import type { Keeper } from "./keeper.js";
 
 type Row = Record<string, string | number | null>;
@@ -25,9 +27,11 @@ function pctBps(r: Row): number {
   return target === 0n ? 0 : Number((raised * 10_000n) / target);
 }
 
-async function draftFor(mint: string) {
-  const [d] = await query<{ description: string | null; website: string | null; x: string | null; image_id: string; published_at: string | null }>(`SELECT description, website, x, image_id, published_at FROM drafts WHERE mint = $1`, [mint]);
-  return d ?? null;
+/** The draft shown for a launch is only the one whose metadata hash the chain pinned; anything else is ignored. */
+async function draftFor(r: Row) {
+  const [d] = await query<{ description: string | null; website: string | null; x: string | null; image_id: string; published_at: string | null; hidden: boolean }>(`SELECT description, website, x, image_id, published_at, hidden FROM drafts WHERE mint = $1 AND metadata_hash = $2`, [String(r.mint), String(r.metadata_hash)]);
+  if (!d || d.hidden) return null;
+  return d;
 }
 
 function toDto(r: Row, now: number, extra: { image: string | null; description: string | null; website: string | null; x: string | null; attempts?: unknown[] }) {
@@ -94,7 +98,7 @@ function sniffImage(bytes: Uint8Array): string | null {
 
 const clean = (s: unknown, max: number) => {
   if (typeof s !== "string") return "";
-  const t = s.replace(/[\u0000-\u001f\u007f<>]/g, "").trim();
+  const t = s.normalize("NFC").replace(/[\u0000-\u001f\u007f<>\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, "").trim();
   if (t.length > max) throw new Error(`field exceeds ${max} characters`);
   return t;
 };
@@ -114,10 +118,19 @@ const cleanHandle = (s: unknown) => {
 export function buildApi(connection: Connection, keeper: Keeper, startedAt: number) {
   const app = new Hono();
   app.use("*", cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"] }));
+  // Rate limit per client address. The socket address is authoritative; X-Forwarded-For is only honoured
+  // (rightmost hop) when TRUSTED_PROXY=1, because any client can set that header.
   const hits = new Map<string, { n: number; t: number }>();
+  let lastSweep = Date.now();
   app.use("*", async (c, next) => {
-    const ip = c.req.header("x-forwarded-for") ?? "local";
+    let ip = "local";
+    try { ip = getConnInfo(c).remote.address ?? "local"; } catch { /* not a node socket */ }
+    if (config.trustedProxy) {
+      const xff = c.req.header("x-forwarded-for");
+      if (xff) ip = xff.split(",").pop()!.trim() || ip;
+    }
     const now = Date.now();
+    if (now - lastSweep > 60_000) { for (const [k, v] of hits) if (now - v.t > 60_000) hits.delete(k); lastSweep = now; if (hits.size > 50_000) hits.clear(); }
     const h = hits.get(ip) ?? { n: 0, t: now };
     if (now - h.t > 60_000) { h.n = 0; h.t = now; }
     h.n++;
@@ -125,13 +138,25 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     if (h.n > config.rateLimitPerMinute) return c.json({ error: "rate limited" }, 429);
     await next();
   });
+  app.use("/api/drafts", bodyLimit({ maxSize: config.maxImageBytes + 64 * 1024, onError: (c) => c.json({ error: `request larger than ${config.maxImageBytes} bytes` }, 413) }));
 
   app.get("/api/status", async (c) => {
     const [scan] = await query<{ value: string; updated_at: string }>(`SELECT value, updated_at FROM sync WHERE key = 'scan_slot'`);
     let chainSlot: number | null = null, rpcOk = true;
     try { chainSlot = await connection.getSlot("confirmed"); } catch { rpcOk = false; }
     const [counts] = await query<{ launches: string; receipts: string; events: string }>(`SELECT (SELECT count(*) FROM launches) AS launches, (SELECT count(*) FROM receipts) AS receipts, (SELECT count(*) FROM events) AS events`);
-    return c.json({ network: config.network, rpcUrl: config.rpcUrl, rpcOk, programId: config.programId, keeper: keeper.address, keeperEnabled: !!keeper.address, chainSlot, scanSlot: scan ? Number(scan.value) : null, scanUpdatedAt: scan?.updated_at ?? null, lagSlots: chainSlot !== null && scan ? chainSlot - Number(scan.value) : null, counts, gitCommit: config.gitCommit, uptimeSec: Math.round((Date.now() - startedAt) / 1000), time: new Date().toISOString() });
+    const lagSlots = chainSlot !== null && scan ? chainSlot - Number(scan.value) : null;
+    const scanAgeSec = scan ? Math.round((Date.now() - Date.parse(scan.updated_at)) / 1000) : null;
+    const k = await keeper.health();
+    const alerts: string[] = [];
+    if (!rpcOk) alerts.push("rpc-down");
+    if (lagSlots !== null && lagSlots > 150) alerts.push("index-lag");
+    if (scanAgeSec === null || scanAgeSec > 60) alerts.push("scan-stale");
+    if (k.enabled && k.balanceSol !== null && k.balanceSol < config.keeperAlertBalanceSol) alerts.push("keeper-balance-low");
+    if (k.readyLaunches.some((r) => r.ageSec > 300)) alerts.push("settlement-stuck");
+    if (k.failedAttempts15m >= 3) alerts.push("settlement-failing");
+    c.header("cache-control", "no-store");
+    return c.json({ network: config.network, rpcHost: safeHost(config.rpcUrl), rpcOk, programId: config.programId, keeper: { address: k.address, enabled: k.enabled, balanceSol: k.balanceSol, minBalanceSol: config.keeperMinBalanceSol, alertBalanceSol: config.keeperAlertBalanceSol, readyLaunches: k.readyLaunches, failedAttempts15m: k.failedAttempts15m, lastSuccessAt: k.lastSuccessAt }, chainSlot, scanSlot: scan ? Number(scan.value) : null, scanUpdatedAt: scan?.updated_at ?? null, scanAgeSec, lagSlots, alerts, counts, gitCommit: config.gitCommit, uptimeSec: Math.round((Date.now() - startedAt) / 1000), time: new Date().toISOString() });
   });
 
   /** Discovery feed. tab=filling (funding + ready, highest % then soonest deadline then id) | launched (live, newest first). */
@@ -152,7 +177,7 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     const page = items.slice(cursor, cursor + limit);
     const out = [];
     for (const { r } of page) {
-      const d = await draftFor(String(r.mint));
+      const d = await draftFor(r);
       out.push(toDto(r, now, { image: d ? `${config.publicUrl}/api/images/${d.image_id}` : null, description: d?.description ?? null, website: d?.website ?? null, x: d?.x ?? null }));
     }
     const [scan] = await query<{ value: string; updated_at: string }>(`SELECT value, updated_at FROM sync WHERE key = 'scan_slot'`);
@@ -164,7 +189,7 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     const now = Math.floor(Date.now() / 1000);
     const [r] = await query<Row>(`SELECT * FROM launches WHERE mint = $1 OR address = $1`, [id]);
     if (!r) return c.json({ error: "not found" }, 404);
-    const d = await draftFor(String(r.mint));
+    const d = await draftFor(r);
     const attempts = await query(`SELECT signature, status, error, created_at AS "createdAt" FROM settlement_attempts WHERE launch = $1 ORDER BY created_at DESC LIMIT 10`, [r.address]);
     const [scan] = await query<{ value: string; updated_at: string }>(`SELECT value, updated_at FROM sync WHERE key = 'scan_slot'`);
     return c.json({ launch: toDto(r, now, { image: d ? `${config.publicUrl}/api/images/${d.image_id}` : null, description: d?.description ?? null, website: d?.website ?? null, x: d?.x ?? null, attempts }), scanSlot: scan ? Number(scan.value) : null, scanUpdatedAt: scan?.updated_at ?? null, time: new Date().toISOString() });
@@ -184,7 +209,7 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     try { new PublicKey(owner); } catch { return c.json({ error: "invalid address" }, 400); }
     const now = Math.floor(Date.now() / 1000);
     const rows = await query<Row & { contributed: string; claimed: string; refunded: string }>(
-      `SELECT l.*, r.contributed, r.claimed, r.refunded FROM receipts r JOIN launches l ON l.address = r.launch WHERE r.owner = $1`,
+      `SELECT l.*, r.contributed, r.claimed, r.refunded FROM receipts r JOIN launches l ON l.address = r.launch WHERE r.owner = $1 ORDER BY r.updated_at DESC LIMIT 200`,
       [owner],
     );
     const entries = [];
@@ -193,17 +218,18 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
       const contributed = BigInt(r.contributed), claimed = BigInt(r.claimed), refunded = BigInt(r.refunded);
       const entitled = entitlement(contributed, BigInt(String(r.target_lamports)), BigInt(String(r.backer_allocation)));
       const action = eff.state === "live" && entitled > claimed ? "claim" : eff.state === "refundable" && contributed > refunded ? "refund" : eff.state === "funding" || eff.state === "ready" ? "wait" : "done";
-      const d = await draftFor(String(r.mint));
+      const d = await draftFor(r);
       entries.push({ launch: toDto(r, now, { image: d ? `${config.publicUrl}/api/images/${d.image_id}` : null, description: d?.description ?? null, website: d?.website ?? null, x: d?.x ?? null }), receipt: { contributed: r.contributed, claimed: r.claimed, refunded: r.refunded, entitled: entitled.toString() }, action });
     }
-    const createdRows = await query<Row>(`SELECT * FROM launches WHERE creator = $1 ORDER BY opened_at DESC`, [owner]);
+    const createdRows = await query<Row>(`SELECT * FROM launches WHERE creator = $1 ORDER BY opened_at DESC LIMIT 100`, [owner]);
     const created = [];
     for (const r of createdRows) {
-      const d = await draftFor(String(r.mint));
+      const d = await draftFor(r);
       created.push(toDto(r, now, { image: d ? `${config.publicUrl}/api/images/${d.image_id}` : null, description: d?.description ?? null, website: d?.website ?? null, x: d?.x ?? null }));
     }
     const history = await query(`SELECT signature, name, launch, data, slot, block_time AS "blockTime" FROM events WHERE wallet = $1 ORDER BY slot DESC LIMIT 200`, [owner]);
     const drafts = await query(`SELECT mint, name, symbol, created_at AS "createdAt", published_at AS "publishedAt" FROM drafts WHERE creator = $1 AND published_at IS NULL ORDER BY created_at DESC`, [owner]);
+    c.header("cache-control", "no-store");
     return c.json({ entries, created, history, drafts, time: new Date().toISOString() });
   });
 
@@ -235,6 +261,12 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
       const [existing] = await query<{ published_at: string | null; creator: string }>(`SELECT published_at, creator FROM drafts WHERE mint = $1`, [mint]);
       if (existing?.published_at) throw new Error("this launch is already published; its metadata is frozen");
       if (existing && existing.creator !== pk.toBase58()) throw new Error("draft belongs to another wallet");
+      // Once the mint exists on chain nothing about it may change here, whatever hash the chain carries.
+      const [onChain] = await query<{ address: string }>(`SELECT address FROM launches WHERE mint = $1`, [mint]);
+      if (onChain) throw new Error("this mint already has an on-chain launch; its metadata is frozen");
+      const [open] = await query<{ n: string }>(`SELECT count(*) AS n FROM drafts WHERE creator = $1 AND published_at IS NULL AND mint <> $2`, [pk.toBase58(), mint]);
+      if (Number(open?.n ?? 0) >= config.maxOpenDraftsPerWallet) throw new Error(`you already have ${config.maxOpenDraftsPerWallet} unpublished drafts; publish or discard one first`);
+      await consumeSignature(signature);
       const imageId = sha256Hex(bytes);
       await query(`INSERT INTO images (id, mime, bytes, size) VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [imageId, mime, Buffer.from(bytes), bytes.length]);
       const image = `${config.publicUrl}/api/images/${imageId}`;
@@ -269,6 +301,7 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     const [d] = await query<{ metadata_json: unknown; metadata_hash: string }>(`SELECT metadata_json, metadata_hash FROM drafts WHERE mint = $1`, [c.req.param("mint")]);
     if (!d) return c.json({ error: "not found" }, 404);
     c.header("content-type", "application/json; charset=utf-8");
+    c.header("x-content-type-options", "nosniff");
     c.header("x-metadata-sha256", d.metadata_hash);
     c.header("cache-control", "public, max-age=60");
     return c.body(canonical(d.metadata_json));
@@ -280,13 +313,20 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     const [img] = await query<{ mime: string; bytes: Buffer }>(`SELECT mime, bytes FROM images WHERE id = $1`, [id]);
     if (!img) return c.text("not found", 404);
     c.header("content-type", img.mime);
+    c.header("x-content-type-options", "nosniff");
     c.header("cache-control", "public, max-age=31536000, immutable");
-    c.header("content-security-policy", "default-src 'none'");
+    c.header("content-security-policy", "default-src 'none'; sandbox");
     return c.body(new Uint8Array(img.bytes));
   });
 
-  app.get("/api/pda/:mint", (c) => c.json({ launch: launchPda(new PublicKey(c.req.param("mint"))).toBase58() }));
+  app.get("/api/pda/:mint", (c) => {
+    try { return c.json({ launch: launchPda(new PublicKey(c.req.param("mint"))).toBase58() }); } catch { return c.json({ error: "invalid mint" }, 400); }
+  });
   return app;
+}
+
+function safeHost(url: string): string {
+  try { return new URL(url).host; } catch { return "invalid"; }
 }
 
 /** Canonical JSON: sorted keys, no whitespace, undefined dropped. Stable across runs so the hash is reproducible. */

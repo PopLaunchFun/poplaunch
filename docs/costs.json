@@ -1,0 +1,79 @@
+{
+  "measuredAt": "2026-10-05T15:19:57.789Z",
+  "cluster": "localnet",
+  "notes": "CU and fees are measured; rents use the cluster rent rate (same as mainnet: 6.96 lamports/byte-year × 2 years).",
+  "instructions": [
+    {
+      "instruction": "create_launch",
+      "cu": 121752,
+      "feeLamports": 10000,
+      "signature": "duZ51ktj8DyKJDR6iZjijNrb8SjoCSkb3FpSNUtuSvot1cm3jKS5uf1VGCtqqSx8PjUvmUNFKAwMt98PMBLJxvs"
+    },
+    {
+      "instruction": "contribute (new receipt)",
+      "cu": 17983,
+      "feeLamports": 5000,
+      "signature": "2TKyxNCpC2FCpr7jhvYR3ED42tWozqVe1YsoGCmYKQmUKV8AomMrKXmwV2sSsAcxTbzuzHHdmpSQPaavxKnyBxPZ"
+    },
+    {
+      "instruction": "contribute (existing receipt)",
+      "cu": 15343,
+      "feeLamports": 5000,
+      "signature": "5wnQc9EYpaBZPvMS7dkpPsz36iwPUYXs4CjMcPsTrQrbTNuZuWwbuxywTbPzxMKMUcnob5hEu651u9cQRp1rbyPH"
+    },
+    {
+      "instruction": "contribute (fills target)",
+      "cu": 18322,
+      "feeLamports": 5000,
+      "signature": "4mbHPEw4PePG2w47qEZyyhtZu5QULS6jWQWu8CSkvRE1nN1adiWvWktHu8Q6PkFSG3Eb3UW4CKerqkntQ9jJxstA"
+    },
+    {
+      "instruction": "finalize_launch",
+      "cu": 245771,
+      "feeLamports": 5000,
+      "signature": "3Q6KRYW36CPQmBhrVPTzmkfe3jPfR9EfFgDNatj6ttJNXA7qouM5JgMGKM5HqML23x4XaGtJfYAvreZjvvVciRx"
+    },
+    {
+      "instruction": "claim_tokens (creates ATA)",
+      "cu": 52500,
+      "feeLamports": 5000,
+      "signature": "5RB2AgbP3Jqup5MgpkFjWEfJMuSxwYpEuqi92gET1jfCX6WpFfbe86BDcJ8KLcXYdZez3i5pyRFurtzgo9zUM2oB"
+    },
+    {
+      "instruction": "reclaim_unused_setup_reserve",
+      "cu": 12031,
+      "feeLamports": 5000,
+      "signature": "5tgq1T7zXm7Dg6sHYoL17XAYKTBcMTMN5K8Q9SdnyRhocpLFh1QQhGJG7iDqNcUPyamYnJkXq1RpgotM5iPhawkF"
+    },
+    {
+      "instruction": "refund (lazy expiry)",
+      "cu": 14962,
+      "feeLamports": 5000,
+      "signature": "392KCXgR8Lno42AS88JcHxSnsi1ny8r1hNjwsgkvi4UcjHaVWyifd9GXdjizzsru9uPDYAShH2ugkrvF4t2o9Xyb"
+    }
+  ],
+  "rentsLamports": {
+    "Launch account": 4182960,
+    "Mint": 1461600,
+    "Backer vault + pool vault (token accounts)": 4078560,
+    "Token metadata (Metaplex, 679 bytes)": 5616720,
+    "Escrow + authority PDAs (system accounts)": 1781760,
+    "Contribution receipt (per backer, paid by backer)": 1566000,
+    "Backer token account on claim (paid by claimer)": 2039280
+  },
+  "setupReserve": {
+    "quotedLamports": 204196000,
+    "parts": {
+      "wsolAta": 2039280,
+      "lpMint": 1461600,
+      "lpAta": 2039280,
+      "poolState": 5324400,
+      "vault0": 2039280,
+      "vault1": 2039280,
+      "observation": 29252880,
+      "createPoolFee": 150000000,
+      "margin": 10000000
+    },
+    "consumedBySettlementLamports": 190117440
+  }
+}

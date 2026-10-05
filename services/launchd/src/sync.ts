@@ -54,24 +54,33 @@ export class Syncer {
     return { launches: launches.length, receipts: receipts.length, slot };
   }
 
-  /** Walk program signatures newer than the last one stored; parse and store events idempotently. */
+  /**
+   * Walk program signatures newer than the last one stored and store their events idempotently. Reads at
+   * `finalized` so the cursor can never point at a dropped block. If more than one tick's worth of history
+   * accumulated (downtime, first run), the walk continues from where it stopped on the next tick instead of
+   * skipping the gap: `backfill_before` is the oldest signature seen so far, `backfill_newest` the newest.
+   */
   async ingestEvents(): Promise<number> {
-    const [row] = await query<{ value: string }>(`SELECT value FROM sync WHERE key = 'last_signature'`);
-    const until = row?.value;
+    const cursor = async (key: string) => (await query<{ value: string }>(`SELECT value FROM sync WHERE key = $1`, [key]))[0]?.value;
+    const setCursor = (key: string, value: string | null) => value === null
+      ? query(`DELETE FROM sync WHERE key = $1`, [key])
+      : query(`INSERT INTO sync (key, value, updated_at) VALUES ($1, $2, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, [key, value]);
+    const until = await cursor("last_signature");
+    let before = await cursor("backfill_before");
     const sigs: ConfirmedSignatureInfo[] = [];
-    let before: string | undefined;
-    for (let page = 0; page < 20; page++) {
-      const batch = await this.connection.getSignaturesForAddress(this.programId, { limit: 1000, before, until }, "confirmed");
+    let complete = false;
+    for (let page = 0; page < 10; page++) {
+      const batch = await this.connection.getSignaturesForAddress(this.programId, { limit: 1000, before, until }, "finalized");
       sigs.push(...batch);
-      if (batch.length < 1000) break;
+      if (batch.length < 1000) { complete = true; break; }
       before = batch[batch.length - 1]!.signature;
     }
-    if (sigs.length === 0) return 0;
+    if (sigs.length === 0) { if (!complete) return 0; await setCursor("backfill_before", null); const newest = await cursor("backfill_newest"); if (newest) { await setCursor("last_signature", newest); await setCursor("backfill_newest", null); } return 0; }
     const parser = new EventParser(this.programId, this.client.program.coder);
     let n = 0;
     for (const s of sigs.reverse()) {
       if (s.err) continue;
-      const tx = await this.connection.getTransaction(s.signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+      const tx = await this.connection.getTransaction(s.signature, { commitment: "finalized", maxSupportedTransactionVersion: 0 });
       if (!tx?.meta?.logMessages) continue;
       let i = 0;
       for (const ev of parser.parseLogs(tx.meta.logMessages)) {
@@ -85,9 +94,23 @@ export class Syncer {
         n++;
       }
     }
-    const newest = sigs[sigs.length - 1]!.signature;
-    await query(`INSERT INTO sync (key, value, updated_at) VALUES ('last_signature', $1, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, [newest]);
+    const newestSeen = (await cursor("backfill_newest")) ?? sigs[sigs.length - 1]!.signature;
+    if (complete) {
+      await setCursor("last_signature", newestSeen);
+      await setCursor("backfill_before", null);
+      await setCursor("backfill_newest", null);
+    } else {
+      await setCursor("backfill_newest", newestSeen);
+      await setCursor("backfill_before", sigs[0]!.signature);
+    }
     return n;
+  }
+
+  /** Expire unpublished drafts and their orphaned images, and prune the replay table. Cheap; runs every few minutes. */
+  async housekeeping(ttlHours: number): Promise<void> {
+    await query(`DELETE FROM drafts WHERE published_at IS NULL AND created_at < now() - ($1 || ' hours')::interval AND mint NOT IN (SELECT mint FROM launches)`, [String(ttlHours)]);
+    await query(`DELETE FROM images WHERE id NOT IN (SELECT image_id FROM drafts) AND created_at < now() - interval '1 hour'`);
+    await query(`DELETE FROM used_signatures WHERE created_at < now() - interval '1 hour'`);
   }
 }
 

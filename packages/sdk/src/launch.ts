@@ -8,6 +8,17 @@ import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SystemProgram, SY
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import launchIdl from "./idl/pop_launch.json" with { type: "json" };
 import type { PopLaunch } from "./idl/pop_launch.js";
+import { TOKEN_METADATA_PROGRAM_ID } from "./networks.js";
+
+export const BPF_LOADER_UPGRADEABLE_ID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+/** The upgradeable loader's ProgramData account for a program. */
+export function programDataPda(programId: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([programId.toBuffer()], BPF_LOADER_UPGRADEABLE_ID)[0];
+}
+/** Metaplex Token Metadata PDA for a mint. */
+export function metadataPda(mint: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()], TOKEN_METADATA_PROGRAM_ID)[0];
+}
 
 export const LAUNCH_IDL = launchIdl as unknown as PopLaunch;
 export const LAUNCH_PROGRAM_ID = new PublicKey((launchIdl as { address: string }).address);
@@ -186,7 +197,7 @@ export class PopLaunchClient {
 
   // ---------------------------------------------------------------- admin
   initializeProtocolIx(authority: PublicKey, settings: LaunchSettingsInput) {
-    return this.program.methods.initializeProtocol(toIdlSettings(settings)).accountsPartial({ authority, config: launchConfigPda(this.programId), systemProgram: SystemProgram.programId }).instruction();
+    return this.program.methods.initializeProtocol(toIdlSettings(settings)).accountsPartial({ authority, config: launchConfigPda(this.programId), program: this.programId, programData: programDataPda(this.programId), systemProgram: SystemProgram.programId }).instruction();
   }
   updateSettingsIx(authority: PublicKey, settings: LaunchSettingsInput) {
     return this.program.methods.updateSettings(toIdlSettings(settings)).accountsPartial({ authority, config: launchConfigPda(this.programId) }).instruction();
@@ -222,14 +233,14 @@ export class PopLaunchClient {
     const a = launchAccounts(launch, this.programId);
     return this.program.methods
       .createLaunch({ name: args.name, symbol: args.symbol, uri: args.uri, metadataHash: Array.from(args.metadataHash) as number[], setupReserveLamports: bn(args.setupReserveLamports) })
-      .accountsPartial({ creator, config: launchConfigPda(this.programId), launch, mint, auth: a.auth, escrow: a.escrow, backerVault: a.backerVault, poolVault: a.poolVault, feeRecipient, tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, rent: SYSVAR_RENT_PUBKEY })
+      .accountsPartial({ creator, config: launchConfigPda(this.programId), launch, mint, auth: a.auth, escrow: a.escrow, backerVault: a.backerVault, poolVault: a.poolVault, feeRecipient, metadata: metadataPda(mint), tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID, tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, rent: SYSVAR_RENT_PUBKEY })
       .instruction();
   }
 
   // ---------------------------------------------------------------- backers
   contributeIx(backer: PublicKey, launch: PublicKey, lamports: bigint) {
     const a = launchAccounts(launch, this.programId);
-    return this.program.methods.contribute(bn(lamports)).accountsPartial({ backer, config: launchConfigPda(this.programId), launch, escrow: a.escrow, receipt: receiptPda(launch, backer, this.programId), systemProgram: SystemProgram.programId }).instruction();
+    return this.program.methods.contribute(bn(lamports)).accountsPartial({ backer, launch, escrow: a.escrow, receipt: receiptPda(launch, backer, this.programId), systemProgram: SystemProgram.programId }).instruction();
   }
   claimTokensIx(payer: PublicKey, launch: PublicKey, mint: PublicKey, owner: PublicKey) {
     const a = launchAccounts(launch, this.programId);

@@ -1,4 +1,4 @@
-# Pop Launch connected app — Stage 3
+# Pop Launch connected app — Stage 3 (hardened in Stage 4)
 
 Status: **working end to end on localnet** through the real UI: create a coin (image upload, signed
 metadata, on-chain creation), back it from two wallets, keeper settlement into the real Raydium
@@ -104,12 +104,21 @@ node tests/e2e/poplaunch.mjs                                # full flow with scr
 6. A creates a second coin, backs 0.1 SOL, the funding window lapses, the page shows "This one didn't
    launch", Reclaim SOL returns the 0.1 SOL with its signature.
 
+## Stage 4 changes (see docs/stage4-report.md)
+
+- Token metadata is created immutable on chain inside `create_launch` (Metaplex, built from source for localnet).
+- Settlement can no longer be blocked by stray lamports at the pool address or the authority's WSOL account.
+- Drafts shown for a launch are only the one whose hash the chain pinned; uploads are size-limited,
+  per-wallet capped and expire; rate limiting keys on the socket address.
+- The browser verifies the metadata document and hash before pinning them, binds pending drafts to the
+  cluster, keeps the signature of a broadcast transaction and checks its status before allowing a retry.
+- Live builds fail to compile without an explicit cluster; the Dev wallet exists only in localnet bundles.
+- `/api/status` carries keeper health and alert conditions; `/authority`, full Terms and Privacy pages.
+
 ## Not done / blockers
 
-- Metaplex token metadata on chain (program not obtainable here). Uri + hash are in place.
 - Devnet deployment and a real-extension wallet test (Phantom/Solflare): the sandbox has no browser
-  extension and no public RPC access. The adapters are wired; the Dev wallet exercises the same code
-  path.
+  extension and no public RPC access. The adapters are wired; the Dev wallet exercises the same code path.
 - Mobile deep-link wallet flow untested for the same reason.
-- Terms and Privacy are drafts. No analytics, no email.
-- Image moderation is limited to type/size checks.
+- Terms and Privacy await counsel review (labelled on the pages). No analytics, no email.
+- Image moderation is limited to type/size checks plus an operator takedown flag.

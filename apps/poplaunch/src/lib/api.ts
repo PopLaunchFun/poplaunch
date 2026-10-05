@@ -55,7 +55,12 @@ export interface WalletEntry {
   action: "claim" | "refund" | "wait" | "done";
 }
 export interface HistoryItem { signature: string; name: string; launch: string | null; data: Record<string, string>; slot: number; blockTime: number | null }
-export interface StatusInfo { network: string; rpcUrl: string; rpcOk: boolean; programId: string; keeper: string | null; keeperEnabled: boolean; chainSlot: number | null; scanSlot: number | null; scanUpdatedAt: string | null; lagSlots: number | null; counts: { launches: string; receipts: string; events: string }; time: string }
+export interface StatusInfo { network: string; rpcHost: string; rpcOk: boolean; programId: string; keeper: { address: string | null; enabled: boolean; balanceSol: number | null; readyLaunches: { address: string; ageSec: number }[]; failedAttempts15m: number; lastSuccessAt: string | null }; chainSlot: number | null; scanSlot: number | null; scanUpdatedAt: string | null; lagSlots: number | null; alerts: string[]; counts: { launches: string; receipts: string; events: string }; time: string }
+
+/** Route ids are mints or addresses: anything else never reaches the backend. */
+export function isBase58Key(s: string): boolean {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+}
 
 async function get<T>(path: string): Promise<T | null> {
   try {
@@ -70,9 +75,9 @@ async function get<T>(path: string): Promise<T | null> {
 export const api = {
   status: () => get<StatusInfo>("/api/status"),
   launches: (tab: "filling" | "launched" = "filling", q = "") => get<{ launches: LaunchDto[]; nextCursor: number | null; total: number; scanSlot: number | null; scanUpdatedAt: string | null; time: string }>(`/api/launches?tab=${tab}${q ? `&q=${encodeURIComponent(q)}` : ""}`),
-  launch: (id: string) => get<{ launch: LaunchDto; scanSlot: number | null; scanUpdatedAt: string | null; time: string }>(`/api/launches/${id}`),
-  wallet: (address: string) => get<{ entries: WalletEntry[]; created: LaunchDto[]; history: HistoryItem[]; drafts: { mint: string; name: string; symbol: string; createdAt: string }[]; time: string }>(`/api/wallets/${address}/launches`),
-  draft: (mint: string) => get<{ draft: { mint: string; name: string; symbol: string; image: string; uri: string; metadataHash: string; publishedAt: string | null } }>(`/api/drafts/${mint}`),
+  launch: (id: string) => (isBase58Key(id) ? get<{ launch: LaunchDto; scanSlot: number | null; scanUpdatedAt: string | null; time: string }>(`/api/launches/${encodeURIComponent(id)}`) : Promise.resolve(null)),
+  wallet: (address: string) => (isBase58Key(address) ? get<{ entries: WalletEntry[]; created: LaunchDto[]; history: HistoryItem[]; drafts: { mint: string; name: string; symbol: string; createdAt: string }[]; time: string }>(`/api/wallets/${encodeURIComponent(address)}/launches`) : Promise.resolve(null)),
+  draft: (mint: string) => (isBase58Key(mint) ? get<{ draft: { mint: string; name: string; symbol: string; image: string; uri: string; metadataHash: string; publishedAt: string | null } }>(`/api/drafts/${encodeURIComponent(mint)}`) : Promise.resolve(null)),
   postDraft: async (form: FormData) => {
     const r = await fetch(`${API_URL}/api/drafts`, { method: "POST", body: form });
     const j = (await r.json()) as { ok?: boolean; error?: string; mint?: string; uri?: string; metadataHash?: string; image?: string };

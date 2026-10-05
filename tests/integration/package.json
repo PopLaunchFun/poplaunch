@@ -6,7 +6,9 @@
   "scripts": {
     "test": "vitest run --no-file-parallelism",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "bootstrap:launch": "tsx src/bootstrap-launch.ts"
+    "bootstrap:launch": "tsx src/bootstrap-launch.ts",
+    "verify:addresses": "tsx src/verify-addresses.ts",
+    "measure:costs": "tsx src/measure-costs.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "1.2.0",
