@@ -3,7 +3,7 @@
 FROM node:22-slim AS build
 RUN corepack enable
 WORKDIR /app
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/sdk/package.json packages/sdk/
 COPY packages/math/package.json packages/math/
 COPY services/launchd/package.json services/launchd/
