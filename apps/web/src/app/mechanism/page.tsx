@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Mechanism() {
   return (
-    <div className="max-w-3xl prose-pop">
-      <h1 className="text-2xl font-bold">How it works</h1>
+    <div className="max-w-3xl prose-pop pt-4 md:pt-6">
+      <h1 className="text-[22px] md:text-[24px] font-semibold leading-tight">How it works</h1>
       <p><strong className="text-text">Short version.</strong> Every trade pays a 2% fee. Buy fees arrive in SOL, sell fees in the coin. At each price bin the two kinds pair up at that bin&apos;s fixed price and become locked liquidity that stays exactly there. Nobody can withdraw it; it only changes hands through ordinary trades.</p>
       <p>Each coin launched here is a discrete constant-price-bin market. Price moves in 1% steps between fixed bins. Each bin holds inventory of two kinds: launch seed inventory and fee-funded scar inventory. The bin never moves; what changes is what it holds.</p>
 

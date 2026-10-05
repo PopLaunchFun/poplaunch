@@ -19,8 +19,8 @@ export default async function Status() {
   if (s?.program && s.program.upgradeAuthority) missing.push("program upgrade authority is NOT revoked: custody is upgradeable / multisig-controlled, not immutable");
   if (NETWORK !== "mainnet-beta") missing.push("not a mainnet deployment; mainnet launch is disabled until release gates pass");
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold">Status</h1>
+    <div className="max-w-3xl pt-4 md:pt-6">
+      <h1 className="text-[22px] md:text-[24px] font-semibold leading-tight">Status</h1>
       <table className="w-full text-sm mt-4">
         <tbody>
           {rows.map(([k, v]) => (

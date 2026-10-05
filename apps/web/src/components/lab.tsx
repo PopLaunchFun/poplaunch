@@ -73,9 +73,9 @@ export function Lab() {
         {r && (
           <div className="space-y-4">
             {reports!.length > 1 && (
-              <div className="flex gap-1">{reports!.map((x, i) => <button key={x.name} className={`chip ${i === selected ? "chip-on" : ""}`} onClick={() => setSelected(i)}>{x.name}</button>)}</div>
+              <div className="flex gap-1">{reports!.map((x, i) => <button key={x.name} className={`btn btn-sm ${i === selected ? "border-green text-text" : "text-muted"}`} aria-pressed={i === selected} onClick={() => setSelected(i)}>{x.name}</button>)}</div>
             )}
-            <div className="panel p-3 text-sm"><div className="font-semibold">{r.name} <span className="chip ml-2">{r.configLabel}</span></div><div className="text-muted mt-1">{r.description}</div></div>
+            <div className="panel p-3 text-sm"><div className="font-semibold">{r.name} <span className="tag ml-2">{r.configLabel}</span></div><div className="text-muted mt-1">{r.description}</div></div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs num">
               <Box k="Trades" v={`${r.tradeCount.succeeded} ok / ${r.tradeCount.failed} failed`} />
               <Box k="Historical paired" v={fmtSol(r.matched.pairedQuoteLifetime)} tone="scar" />

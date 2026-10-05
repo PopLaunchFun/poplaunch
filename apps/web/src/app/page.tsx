@@ -9,12 +9,9 @@ export default async function Home() {
   const data = await api.markets();
   return (
     <div>
-      <section className="flex flex-wrap items-end justify-between gap-3 mt-1">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Launch a coin. Build its liquidity.</h1>
-          <p className="text-sm text-muted mt-1">Every launch uses Proof of Pain. Trade and watch its liquidity scars form. <span className="text-muted/80">The market remembers.</span></p>
-        </div>
-        <Link href="/launch" className="btn btn-green">Launch coin</Link>
+      <section className="flex items-center justify-between gap-3 pt-4 md:pt-6">
+        <h1 className="text-[22px] md:text-[24px] font-semibold leading-tight">Discover launches</h1>
+        <Link href="/launch" className="btn btn-green md:hidden" aria-label="Launch coin">+ Launch</Link>
       </section>
       <Explore initial={data?.markets ?? null} network={NETWORK} />
     </div>

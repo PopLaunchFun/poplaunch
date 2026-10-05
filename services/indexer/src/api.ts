@@ -95,14 +95,17 @@ export function buildApi(connection: Connection, startedAt: number) {
   /** Directory: activated markets with metadata and a short sparkline of executed prices. */
   app.get("/api/markets", async (c) => {
     const includeCreated = c.req.query("include") === "created";
-    const rows = await query<{ state: Record<string, unknown>; base_mint: string; image_url: string | null; description: string | null; website: string | null; twitter: string | null; telegram: string | null; sparkline: number[] | null }>(
+    const rows = await query<{ state: Record<string, unknown>; base_mint: string; image_url: string | null; description: string | null; website: string | null; twitter: string | null; telegram: string | null; sparkline: number[] | null; vol_all: string; vol_24h: string }>(
       `SELECT m.state, m.base_mint, cm.image_url, cm.description, cm.website, cm.twitter, cm.telegram,
-              (SELECT array_agg(avg_price ORDER BY slot, event_index) FROM (SELECT avg_price, slot, event_index FROM trades t WHERE t.market = m.address AND avg_price IS NOT NULL ORDER BY slot DESC, event_index DESC LIMIT 24) x) AS sparkline
+              (SELECT array_agg(avg_price ORDER BY slot, event_index) FROM (SELECT avg_price, slot, event_index FROM trades t WHERE t.market = m.address AND avg_price IS NOT NULL ORDER BY slot DESC, event_index DESC LIMIT 24) x) AS sparkline,
+              -- SOL volume on both sides: buys count their gross SOL input, sells their SOL output
+              (SELECT coalesce(sum(CASE WHEN is_buy THEN gross_input ELSE output END),0)::text FROM trades t WHERE t.market = m.address) AS vol_all,
+              (SELECT coalesce(sum(CASE WHEN is_buy THEN gross_input ELSE output END),0)::text FROM trades t WHERE t.market = m.address AND block_time >= extract(epoch FROM now())::bigint - 86400) AS vol_24h
        FROM markets m LEFT JOIN coin_metadata cm ON cm.mint = m.base_mint
        ${includeCreated ? "" : "WHERE m.status <> 'created'"}
        ORDER BY m.created_slot DESC`,
     );
-    return c.json({ markets: rows.map((r) => ({ ...r.state, metadata: { imageUrl: r.image_url, description: r.description, website: r.website, twitter: r.twitter, telegram: r.telegram }, sparkline: r.sparkline ?? [] })) });
+    return c.json({ markets: rows.map((r) => ({ ...r.state, metadata: { imageUrl: r.image_url, description: r.description, website: r.website, twitter: r.twitter, telegram: r.telegram }, sparkline: r.sparkline ?? [], volumeQuote: { allTime: r.vol_all, last24h: r.vol_24h, definition: "SOL on both sides: buy gross input + sell output" } })) });
   });
 
   app.get("/api/markets/:address", async (c) => {
@@ -118,9 +121,9 @@ export function buildApi(connection: Connection, startedAt: number) {
   app.get("/api/creators/:address/markets", async (c) => {
     const address = c.req.param("address");
     if (!isPubkey(address)) return c.json({ error: "bad address" }, 400);
-    const rows = await query<{ state: Record<string, unknown>; base_mint: string; updated_at: string }>("SELECT state, base_mint, updated_at FROM markets WHERE creator = $1 ORDER BY created_slot DESC", [address]);
+    const rows = await query<{ state: Record<string, unknown>; base_mint: string; updated_at: string; vol_all: string }>("SELECT state, base_mint, updated_at, (SELECT coalesce(sum(CASE WHEN is_buy THEN gross_input ELSE output END),0)::text FROM trades t WHERE t.market = markets.address) AS vol_all FROM markets WHERE creator = $1 ORDER BY created_slot DESC", [address]);
     const out = [];
-    for (const r of rows) out.push({ ...r.state, metadata: await readMetadata(r.base_mint), updatedAt: r.updated_at });
+    for (const r of rows) out.push({ ...r.state, metadata: await readMetadata(r.base_mint), updatedAt: r.updated_at, volumeQuote: { allTime: r.vol_all, last24h: null, definition: "SOL on both sides: buy gross input + sell output" } });
     return c.json({ markets: out });
   });
 

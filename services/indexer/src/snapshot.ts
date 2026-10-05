@@ -72,12 +72,35 @@ export function marketSummary(v: MarketView, slot: number) {
       buybackAccruedQuote: v.state.buybackAccruedQuote.toString(),
     },
     volume: { buyQuote: v.state.totalBuyVolumeQuote.toString(), sellBase: v.state.totalSellVolumeBase.toString(), swapCount: v.state.swapCount.toString() },
+    scarPreview: scarPreview(v),
     supply: { totalMinted: v.config.seedBase.toString(), outstanding: v.config.seedBase.toString() },
     activatedAtSlot: str(v.raw.activatedAtSlot),
     activatedAtTs: str(v.raw.activatedAtTs),
     createdAtSlot: str(v.raw.createdAtSlot),
     snapshotSlot: slot,
   };
+}
+
+/**
+ * Compact scar preview for directory rows: 24 segments over a fixed window of bins around the
+ * cursor (cursor-24 .. cursor+23, 2 bins per segment). Each segment = current scar quote inventory
+ * (lamports) held in those bins; `max` lets the client normalize per coin. Uninitialized pages
+ * hold no scars by definition.
+ */
+export function scarPreview(v: MarketView) {
+  const start = v.state.cursor - 24;
+  const segments: string[] = [];
+  let max = 0n;
+  for (let s = 0; s < 24; s++) {
+    let q = 0n;
+    for (let k = 0; k < 2; k++) {
+      const b = v.store.get(start + s * 2 + k);
+      if (b) q += b.scarQuote;
+    }
+    if (q > max) max = q;
+    segments.push(q.toString());
+  }
+  return { startBin: start, binsPerSegment: 2, measure: "scarQuoteLamports", segments, max: max.toString(), cursorSegment: 12 };
 }
 
 export function binSnapshot(v: MarketView) {

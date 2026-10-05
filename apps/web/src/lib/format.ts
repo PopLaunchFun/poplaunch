@@ -7,7 +7,7 @@ export function lamportsToSol(x: bigint | string | number): number {
 export function fmtSol(x: bigint | string | number, digits = 4): string {
   const v = lamportsToSol(x);
   if (v === 0) return "0 SOL";
-  if (Math.abs(v) < 0.0001) return `${v.toExponential(2)} SOL`;
+  if (Math.abs(v) < 0.0001) return `${plainDecimal(v, 2)} SOL`;
   return `${v.toLocaleString("en-US", { maximumFractionDigits: digits })} SOL`;
 }
 
@@ -27,10 +27,18 @@ export function atomicPriceToHuman(p: number, baseDecimals: number, quoteDecimal
   return p * 10 ** (baseDecimals - quoteDecimals);
 }
 
+/** Plain decimal with `sig` significant digits and no exponent (0.00000000233, never 2.33e-9). */
+export function plainDecimal(p: number, sig = 4): string {
+  if (!isFinite(p)) return "–";
+  if (p === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(p)));
+  const decimals = Math.max(0, sig - 1 - e);
+  return p.toFixed(Math.min(decimals, 20)).replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
+}
+
 export function fmtPrice(p: number): string {
   if (!isFinite(p) || p === 0) return "–";
-  if (p < 1e-6) return p.toExponential(3);
-  if (p < 0.01) return p.toFixed(8);
+  if (p < 0.01) return plainDecimal(p, 4);
   return p.toLocaleString("en-US", { maximumFractionDigits: 6 });
 }
 
@@ -55,4 +63,35 @@ export function ago(ts: number | string | null): string {
 export function fmtUsd(x: number | null): string {
   if (x === null || !isFinite(x)) return "USD unavailable";
   return `≈ $${x.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
+/** Compact number: 1,234 -> 1.23K, 1.2e6 -> 1.2M. */
+export function compact(n: number, digits = 2): string {
+  if (!isFinite(n)) return "–";
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `${(n / 1e9).toFixed(digits)}B`;
+  if (abs >= 1e6) return `${(n / 1e6).toFixed(digits)}M`;
+  if (abs >= 1e3) return `${(n / 1e3).toFixed(digits)}K`;
+  if (abs >= 1) return n.toFixed(digits);
+  return n.toPrecision(3);
+}
+
+export function fmtSolCompact(x: bigint | string | number): string {
+  const v = lamportsToSol(x);
+  if (v === 0) return "0 SOL";
+  if (v < 0.001) return `${v.toPrecision(2)} SOL`;
+  return `${compact(v, v < 10 ? 3 : 2)} SOL`;
+}
+
+/**
+ * Leading-zero subscript presentation for very small prices: 0.000000002330 -> { lead: "0.0", zeros: 8, rest: "2330" }.
+ * Returns null when a plain decimal is readable (price >= 0.0001).
+ */
+export function subscriptPrice(p: number, sig = 4): { lead: string; zeros: number; rest: string; full: string } | null {
+  if (!isFinite(p) || p <= 0 || p >= 1e-4) return null;
+  const full = p.toFixed(20).replace(/0+$/, "");
+  const frac = full.split(".")[1] ?? "";
+  const zeros = frac.match(/^0*/)![0].length;
+  const rest = frac.slice(zeros, zeros + sig).replace(/0+$/, "") || "0";
+  return { lead: "0.0", zeros, rest, full: p.toPrecision(6) };
 }

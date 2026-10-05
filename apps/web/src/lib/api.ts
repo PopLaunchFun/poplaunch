@@ -17,6 +17,10 @@ export interface MarketSummary {
   activatedAtSlot: string; activatedAtTs: string; createdAtSlot: string; snapshotSlot: number;
   metadata?: CoinMetadata | null;
   sparkline?: number[];
+  /** 24 segments of scar quote inventory around the cursor (real bin data); absent on older indexers. */
+  scarPreview?: { segments: string[]; max: string; cursorSegment: number; binsPerSegment: number; startBin: number } | null;
+  /** SOL volume on both sides (buy gross input + sell output); absent on older indexers. */
+  volumeQuote?: { allTime: string; last24h: string | null; definition: string } | null;
   updatedAt?: string;
 }
 export interface Trade { signature: string; event_index: number; trader: string; is_buy: boolean; gross_input: string; output: string; scar_fee: string; protocol_fee: string; creator_fee: string; bins_inspected: number; start_bin: number; end_bin: number; avg_price: number | null; slot: string; block_time: string | null; finalized: boolean }

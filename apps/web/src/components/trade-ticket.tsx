@@ -166,74 +166,89 @@ export function TradeTicket({ summary, onClose, onConfirmed }: { summary: Market
     : `${q.error}: ${q.detail}`
     : null;
 
+  const rejected = !!error && /^Rejected in wallet/.test(error);
+  const status: { tone: "muted" | "green" | "neg"; text: string } | null =
+    stage === "quoting" || stage === "simulating" ? { tone: "muted", text: stage === "quoting" ? "Re-quoting from live state…" : "Simulating before you sign…" }
+    : stage === "signing" ? { tone: "muted", text: "Waiting for your signature in the wallet." }
+    : stage === "confirming" ? { tone: "muted", text: "Pending: sent to the network, waiting for confirmation…" }
+    : sig ? { tone: "green", text: "Confirmed on chain." }
+    : error ? { tone: "neg", text: rejected ? "Rejected in the wallet. Nothing was sent." : "Failed. Nothing was executed." }
+    : null;
+
   return (
-    <div className="panel p-4 text-sm">
+    <div className="panel p-4 text-[14px]">
       <div className="flex justify-between items-center">
-        <div className="flex gap-1 raised rounded-lg p-1" role="tablist">
-          <button role="tab" aria-selected={side === "buy"} className={`px-4 py-1.5 rounded-md font-semibold ${side === "buy" ? "bg-green text-[#0b1410]" : "text-muted"}`} onClick={() => setSide("buy")}>Buy</button>
-          <button role="tab" aria-selected={side === "sell"} className={`px-4 py-1.5 rounded-md font-semibold ${side === "sell" ? "bg-neg text-[#1a0d10]" : "text-muted"}`} onClick={() => setSide("sell")}>Sell</button>
+        <div className="flex gap-1 raised rounded-lg p-1" role="tablist" aria-label="Side">
+          <button role="tab" aria-selected={side === "buy"} className={`h-8 px-4 rounded-md font-semibold ${side === "buy" ? "bg-green text-green-ink" : "text-muted"}`} onClick={() => setSide("buy")}>Buy</button>
+          <button role="tab" aria-selected={side === "sell"} className={`h-8 px-4 rounded-md font-semibold ${side === "sell" ? "bg-neg text-[#1a0d10]" : "text-muted"}`} onClick={() => setSide("sell")}>Sell</button>
         </div>
-        {onClose && <button className="text-muted text-xs" onClick={onClose}>close</button>}
+        {onClose && <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close trade ticket">Close</button>}
       </div>
       <label className="block mt-4">
         <span className="label">{side === "buy" ? "Pay (SOL)" : `Sell (${summary.symbol})`}</span>
-        <input className="input mt-1 text-lg" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} aria-label="amount" />
+        <input className="input input-lg mt-1 text-[18px] num" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} aria-label="amount" />
       </label>
-      <div className="flex justify-between text-xs text-muted mt-1">
-        <span>Balance: {balances ? (side === "buy" ? fmtSol(balances.sol) : fmtBase(balances.base, dec, summary.symbol)) : "not connected"}</span>
-        {balances && <button className="link" onClick={() => setAmount(side === "buy" ? Math.max(0, Number(balances.sol) / 1e9 - 0.03).toFixed(4) : (Number(balances.base) / 10 ** dec).toString())}>max</button>}
+      <div className="flex justify-between label mt-1 num">
+        <span>Balance: {balances ? (side === "buy" ? fmtSol(balances.sol) : fmtBase(balances.base, dec, summary.symbol)) : "wallet not connected"}</span>
+        {balances && <button className="link" onClick={() => setAmount(side === "buy" ? Math.max(0, Number(balances.sol) / 1e9 - 0.03).toFixed(4) : (Number(balances.base) / 10 ** dec).toString())}>Max</button>}
       </div>
 
-      <div className="mt-4 space-y-1 num text-xs">
+      <div className="mt-4 space-y-1 num text-[12px] min-h-[64px]">
         {!view && !error && <div className="text-muted">Loading live market state…</div>}
-        {errorText && <div className="text-neg font-sans">{errorText}</div>}
+        {errorText && <div className="text-neg">{errorText}</div>}
         {q?.ok && (
           <>
             <Row k="You receive" v={side === "buy" ? fmtBase(q.output, dec, summary.symbol) : fmtSol(q.output)} strong />
             <Row k="Minimum after slippage" v={side === "buy" ? fmtBase(minOutput, dec, summary.symbol) : fmtSol(minOutput)} />
-            <Row k="Avg price" v={avg ? `${fmtPrice(avg)} SOL` : "–"} />
-            <Row k="Price impact" v={impact !== null ? `${(impact * 100).toFixed(2)}% · ${q.binsInspected} bins` : "–"} tone={impact !== null && Math.abs(impact) > 0.1 ? "neg" : undefined} />
+            <Row k="Avg price" v={avg ? `${fmtPrice(avg)} SOL` : "—"} />
+            <Row k="Price impact" v={impact !== null ? `${(impact * 100).toFixed(2)}% · ${q.binsInspected} bins` : "—"} tone={impact !== null && Math.abs(impact) > 0.1 ? "neg" : undefined} />
             <Row k="Fees 2.00%" v={side === "buy" ? fmtSol(q.fees.scarFee + q.fees.protocolFee + q.fees.creatorFee) : fmtBase(q.fees.scarFee + q.fees.protocolFee + q.fees.creatorFee, dec, summary.symbol)} />
             {pagesToCreate > 0 && <Row k={`Creates ${pagesToCreate} price page${pagesToCreate > 1 ? "s" : ""} (rent)`} v={`+ ${fmtSol(rentNeeded)}`} tone="violet" />}
             <Row k="Network fee" v="≈ 0.000005 SOL" />
             {side === "buy" && solUsd !== null && <Row k="USD (indicative)" v={fmtUsd((Number(gross) / 1e9) * solUsd)} />}
-            <button className="link text-muted font-sans" onClick={() => setAdvanced((a) => !a)}>{advanced ? "hide" : "show"} fee breakdown</button>
+            <button className="link text-muted" onClick={() => setAdvanced((a) => !a)} aria-expanded={advanced}>{advanced ? "Hide" : "Show"} fee breakdown</button>
             {advanced && (
               <>
                 <Row k="Scar escrow 1.50%" v={side === "buy" ? fmtSol(q.fees.scarFee) : fmtBase(q.fees.scarFee, dec, summary.symbol)} tone="green" />
                 <Row k="Protocol 0.25%" v={side === "buy" ? fmtSol(q.fees.protocolFee) : fmtBase(q.fees.protocolFee, dec, summary.symbol)} />
                 <Row k="Creator 0.25%" v={side === "buy" ? fmtSol(q.fees.creatorFee) : fmtBase(q.fees.creatorFee, dec, summary.symbol)} />
                 <Row k="Net traded" v={side === "buy" ? fmtSol(q.fees.tradable) : fmtBase(q.fees.tradable, dec, summary.symbol)} />
-                <Row k="Route" v={`bins ${q.fills[0]!.bin} → ${q.newCursor}`} />
+                <Row k="Route" v={`bins ${q.fills[0]!.bin} to ${q.newCursor}`} />
               </>
             )}
           </>
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-xs flex-wrap">
-        <span className="text-muted">Slippage</span>
+      <div className="mt-3 flex items-center gap-1.5 flex-wrap" role="group" aria-label="Slippage tolerance">
+        <span className="label mr-1">Slippage</span>
         {[50, 100, 300].map((b) => (
-          <button key={b} className={`chip ${slippageBps === b ? "chip-on" : ""}`} onClick={() => setSlippageBps(b)}>{b / 100}%</button>
+          <button key={b} className={`h-8 px-2.5 rounded-md text-[12px] num border ${slippageBps === b ? "border-line bg-raised text-text" : "border-transparent text-muted hover:text-text"}`} aria-pressed={slippageBps === b} onClick={() => setSlippageBps(b)}>{b / 100}%</button>
         ))}
-        <input className="input w-16 py-0.5 text-xs" value={slippageBps / 100} onChange={(e) => { const v = Number(e.target.value); if (isFinite(v) && v >= 0 && v <= 50) setSlippageBps(Math.round(v * 100)); }} aria-label="custom slippage percent" />
+        <input className="input w-16 h-8 text-[12px] num" value={slippageBps / 100} onChange={(e) => { const v = Number(e.target.value); if (isFinite(v) && v >= 0 && v <= 50) setSlippageBps(Math.round(v * 100)); }} aria-label="custom slippage percent" />
       </div>
-      {slippageBps > 300 && <div className="text-xs text-neg mt-1">High tolerance: a front-runner can take up to {slippageBps / 100}% of your output.</div>}
-      <div className="text-xs text-muted mt-1">Quote is after fees; tolerance covers only state changes before execution. Quoted at slot {viewSlot || "–"}.</div>
+      {slippageBps > 300 && <div className="text-[12px] text-neg mt-1">High tolerance: a front-runner can take up to {slippageBps / 100}% of your output.</div>}
+      <div className="label mt-1 num">After-fee quote at slot {viewSlot || "—"}; tolerance covers only state changes before execution.</div>
 
-      {networkMismatch && <div className="text-xs text-neg mt-2">Wallet is on {walletNet}; this site is configured for {NETWORK}.</div>}
-      {insufficient && <div className="text-xs text-neg mt-2">Insufficient balance (including rent and fees).</div>}
-      {error && <div className="text-xs text-neg mt-2 whitespace-pre-wrap break-all">{error}</div>}
-      {sig && <div className="text-xs text-green mt-2 break-all">Executed. <a className="link" href={explorerTx(sig)} target="_blank" rel="noreferrer">{sig}</a></div>}
+      {networkMismatch && <div className="text-[12px] text-neg mt-2" role="alert">Wallet is on {walletNet}; this site is configured for {NETWORK}.</div>}
+      {insufficient && <div className="text-[12px] text-neg mt-2" role="alert">Insufficient balance (including rent and fees).</div>}
 
       <button
-        className={`btn w-full mt-4 ${side === "buy" ? "btn-green" : ""}`}
+        className={`btn btn-lg w-full mt-4 ${side === "buy" ? "btn-green" : ""}`}
         disabled={!wallet.connected || !q?.ok || stage !== "idle" || !!networkMismatch || !!insufficient}
         onClick={() => void submit()}
       >
-        {!wallet.connected ? "Connect wallet" : stage === "idle" ? `${side === "buy" ? "Buy" : "Sell"} ${summary.symbol}` : stage === "quoting" ? "Re-quoting…" : stage === "simulating" ? "Simulating…" : stage === "signing" ? "Approve in wallet…" : "Confirming…"}
+        {!wallet.connected ? "Connect wallet" : stage === "idle" ? `${side === "buy" ? "Buy" : "Sell"} ${summary.symbol}` : stage === "quoting" ? "Re-quoting…" : stage === "simulating" ? "Simulating…" : stage === "signing" ? "Approve in wallet…" : "Pending…"}
       </button>
-      <p className="text-xs text-muted mt-3">Exact input, fill-or-kill, simulated before you sign. The on-chain minimum output is the final protection.</p>
+
+      {status && (
+        <div className={`mt-3 rounded-lg p-2.5 text-[12px] ${status.tone === "green" ? "bg-green-dim text-green" : status.tone === "neg" ? "bg-[#3a1f24] text-neg" : "raised text-muted"}`} role="status" aria-live="polite">
+          <div className="font-medium">{status.text}</div>
+          {sig && status.tone === "green" && <a className="link addr break-all" href={explorerTx(sig)} target="_blank" rel="noreferrer">{sig}</a>}
+          {error && !rejected && <div className="mt-1 whitespace-pre-wrap break-all">{error}</div>}
+        </div>
+      )}
+      <p className="label mt-3">Exact input, fill-or-kill, simulated before you sign. The on-chain minimum output is the final protection.</p>
     </div>
   );
 }
@@ -241,8 +256,8 @@ export function TradeTicket({ summary, onClose, onConfirmed }: { summary: Market
 function Row({ k, v, strong, tone }: { k: string; v: string; strong?: boolean; tone?: "green" | "neg" | "violet" }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-muted font-sans">{k}</span>
-      <span className={`${strong ? "text-text text-sm" : ""} ${tone === "green" ? "text-green" : tone === "neg" ? "text-neg" : tone === "violet" ? "text-violet" : ""}`}>{v}</span>
+      <span className="text-muted">{k}</span>
+      <span className={`text-right ${strong ? "text-text text-[14px] font-semibold" : ""} ${tone === "green" ? "text-green" : tone === "neg" ? "text-neg" : tone === "violet" ? "text-violet" : ""}`}>{v}</span>
     </div>
   );
 }

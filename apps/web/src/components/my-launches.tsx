@@ -7,11 +7,11 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PopClient, marketPda } from "@pop/sdk";
 import { api, type MarketSummary } from "@/lib/api";
-import { fmtSol, fmtBase, short } from "@/lib/format";
+import { fmtSol, fmtBase, short, fmtPct } from "@/lib/format";
 import { explorerTx } from "@/lib/config";
 import { loadPending, type PendingLaunch } from "@/lib/launch-store";
 import { runLaunch, signAndPostMetadata, type Stage } from "@/lib/launch-runner";
-import { CoinImage, StatusTag } from "./ui";
+import { CoinImage, ProgressBar, Skeleton, StatusTag } from "./ui";
 
 interface Row { mint: string; market: string; name: string; symbol: string; status: string; missingPages: number[]; creatorQuote: bigint; creatorBase: bigint; decimals: number; summary?: MarketSummary }
 
@@ -108,55 +108,103 @@ export function MyLaunches() {
     } catch (e) { setMsg((e as Error).message); } finally { setBusy(null); }
   }
 
-  if (!wallet.connected) return <div className="panel p-6 mt-6 text-sm text-muted">Connect a wallet to see your launches.</div>;
-  if (rows === null) return <div className="panel p-6 mt-6 text-sm text-muted">Loading from chain…</div>;
+  if (!wallet.connected) {
+    return (
+      <div className="panel p-6 mt-6">
+        <div className="font-semibold">Wallet not connected</div>
+        <p className="text-[14px] text-muted mt-1">Connect a wallet to see the coins it created. Nothing is listed until then.</p>
+      </div>
+    );
+  }
+  if (rows === null) {
+    return (
+      <div className="mt-4" aria-busy="true" aria-label="Loading your launches">
+        {[0, 1].map((i) => (
+          <div key={i} className="border-b border-line py-4 flex items-center gap-3"><Skeleton className="w-11 h-11 rounded-lg" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-40" /><Skeleton className="h-3 w-24" /></div><Skeleton className="h-8 w-24" /></div>
+        ))}
+      </div>
+    );
+  }
   const orphanPending = pending && !rows.some((r) => r.mint === pending.mintPubkey);
+  const sigIn = (m: string) => m.match(/[1-9A-HJ-NP-Za-km-z]{60,}/)?.[0] ?? null;
   return (
-    <div className="mt-5 space-y-3">
-      {msg && <div className="text-xs break-all panel p-2">{msg.includes(":") && msg.length > 60 && /[1-9A-HJ-NP-Za-km-z]{60,}/.test(msg) ? <>{msg.split(":")[0]}: <a className="link num" href={explorerTx(msg.split(": ").pop()!)} target="_blank" rel="noreferrer">{short(msg.split(": ").pop()!, 8)}</a></> : msg}</div>}
-      {orphanPending && (
-        <div className="panel p-4 text-sm border-green/50">
-          <div className="font-semibold">Unfinished launch: {pending!.name} ({pending!.symbol})</div>
-          <div className="text-xs text-muted">Not found on-chain yet (creation was never confirmed). Resume will send it.</div>
-          <button className="btn btn-green btn-sm mt-2" disabled={!!busy} onClick={() => void resume(null)}>Resume</button>
+    <div className="mt-4">
+      {msg && (
+        <div className="panel p-3 mb-3 text-[12px] break-all" role="status" aria-live="polite">
+          {sigIn(msg) ? <>{msg.slice(0, msg.indexOf(sigIn(msg)!))}<a className="link addr" href={explorerTx(sigIn(msg)!)} target="_blank" rel="noreferrer">{short(sigIn(msg)!, 8)}</a></> : msg}
         </div>
       )}
-      {rows.length === 0 && !orphanPending && <div className="panel p-6 text-sm text-muted">No coins yet. <Link className="link" href="/launch">Launch one</Link>.</div>}
-      {rows.map((r) => {
-        return (
-          <div key={r.mint} className="panel p-4 text-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <CoinImage url={r.summary?.metadata?.imageUrl} symbol={r.symbol} />
-              <div className="min-w-0"><div className="font-semibold">{r.name} <span className="text-muted">· {r.symbol}</span></div><div className="num text-xs text-muted break-all">mint {short(r.mint, 8)}</div></div>
-              <StatusTag status={r.status} />
-              <div className="ml-auto flex gap-2">
-                {r.status === "created" && <button className="btn btn-green btn-sm" disabled={!!busy} onClick={() => void resume(r)}>Resume launch</button>}
-                {r.status !== "created" && <Link href={`/coin/${r.mint}`} className="btn btn-sm">Open market</Link>}
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-3 mt-3 text-xs">
-              <div className="raised rounded-lg p-2"><div className="label">Creator fees (SOL)</div><div className="num text-base">{fmtSol(r.creatorQuote)}</div><button className="btn btn-sm mt-1" disabled={r.creatorQuote === 0n || !!busy} onClick={() => void claim(r, "quote")}>Claim</button></div>
-              <div className="raised rounded-lg p-2"><div className="label">Creator fees ({r.symbol})</div><div className="num text-base">{fmtBase(r.creatorBase, r.decimals)}</div><button className="btn btn-sm mt-1" disabled={r.creatorBase === 0n || !!busy} onClick={() => void claim(r, "base")}>Claim</button></div>
-              <div className="raised rounded-lg p-2"><div className="label">Price pages</div><div className="num text-base">{36 - r.missingPages.length} / 36</div>{r.missingPages.length > 0 && <button className="btn btn-sm mt-1" disabled={!!busy} onClick={() => void createPages(r)}>Create remaining ({r.missingPages.length})</button>}</div>
-            </div>
-            <div className="mt-3">
-              {editing?.mint === r.mint ? (
-                <div className="grid sm:grid-cols-2 gap-2">
-                  <input className="input" placeholder="https image URL" value={editing.imageUrl} onChange={(e) => setEditing({ ...editing, imageUrl: e.target.value })} />
-                  <input className="input" placeholder="website https" value={editing.website} onChange={(e) => setEditing({ ...editing, website: e.target.value })} />
-                  <input className="input" placeholder="@x handle" value={editing.twitter} onChange={(e) => setEditing({ ...editing, twitter: e.target.value })} />
-                  <input className="input" placeholder="telegram handle" value={editing.telegram} onChange={(e) => setEditing({ ...editing, telegram: e.target.value })} />
-                  <textarea className="input sm:col-span-2 font-sans" rows={2} placeholder="description" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value.slice(0, 500) })} />
-                  <div className="flex gap-2"><button className="btn btn-green btn-sm" disabled={!!busy} onClick={() => void saveMetadata()}>Sign and save</button><button className="btn btn-sm" onClick={() => setEditing(null)}>Cancel</button></div>
+      {orphanPending && (
+        <div className="panel p-4 mb-3">
+          <div className="font-semibold">Unfinished launch: {pending!.name} ({pending!.symbol})</div>
+          <div className="label mt-1">Not found on-chain yet (creation was never confirmed). Resume will send it.</div>
+          <button className="btn btn-green btn-sm mt-3" disabled={!!busy} onClick={() => void resume(null)}>Resume</button>
+        </div>
+      )}
+      {rows.length === 0 && !orphanPending && (
+        <div className="panel p-8 text-center">
+          <div className="text-[16px] font-semibold">No coins yet</div>
+          <p className="text-[14px] text-muted mt-1">This wallet has not launched a coin on this network.</p>
+          <Link className="btn btn-green mt-4" href="/launch">Launch coin</Link>
+        </div>
+      )}
+      <ul className="-mx-4 md:mx-0">
+        {rows.map((r) => {
+          const progress = r.summary?.maturity.progress ?? null;
+          const isEditing = editing?.mint === r.mint;
+          return (
+            <li key={r.mint} className="border-b border-line px-4 md:px-0 py-4">
+              <div className="flex items-center gap-3">
+                <CoinImage url={r.summary?.metadata?.imageUrl} symbol={r.symbol} size={44} name={r.name} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[16px] font-semibold truncate">{r.name}</span>
+                    {r.status === "created" ? <span className="tag tag-violet">Not activated</span> : <StatusTag status={r.status} compact />}
+                  </div>
+                  <div className="label truncate">{r.symbol} · mint <span className="addr">{short(r.mint, 6)}</span>{r.missingPages.length > 0 && ` · ${36 - r.missingPages.length}/36 price pages`}</div>
                 </div>
-              ) : (
-                <button className="link text-xs" onClick={() => setEditing({ mint: r.mint, imageUrl: r.summary?.metadata?.imageUrl ?? "", description: r.summary?.metadata?.description ?? "", website: r.summary?.metadata?.website ?? "", twitter: r.summary?.metadata?.twitter ?? "", telegram: r.summary?.metadata?.telegram ?? "" })}>Edit image, description and links (signed message, no transaction)</button>
+                <div className="shrink-0 flex gap-2">
+                  {r.status === "created" ? (
+                    <button className="btn btn-green btn-sm" disabled={!!busy} onClick={() => void resume(r)}>Resume launch</button>
+                  ) : (
+                    <Link href={`/coin/${r.mint}`} className="btn btn-sm">Open</Link>
+                  )}
+                </div>
+              </div>
+              {progress !== null && (
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="flex-1"><ProgressBar value={progress} label={`Pain proven ${fmtPct(progress, 0)}`} /></div>
+                  <span className="label num shrink-0">Pain proven <span className="text-text">{fmtPct(progress, 0)}</span></span>
+                </div>
               )}
-            </div>
-          </div>
-        );
-      })}
-      <p className="text-xs text-muted">Claims can only move your creator fee balances. Seed and scar inventory are not withdrawable by anyone.</p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px]">
+                <div className="flex items-center gap-2">
+                  <span className="label">Creator fees</span>
+                  <span className="num">{fmtSol(r.creatorQuote)}</span>
+                  <button className="btn btn-sm" disabled={r.creatorQuote === 0n || !!busy} onClick={() => void claim(r, "quote")}>Claim SOL</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="num">{fmtBase(r.creatorBase, r.decimals, r.symbol)}</span>
+                  <button className="btn btn-sm" disabled={r.creatorBase === 0n || !!busy} onClick={() => void claim(r, "base")}>Claim {r.symbol}</button>
+                </div>
+                {r.missingPages.length > 0 && r.status !== "created" && <button className="btn btn-sm" disabled={!!busy} onClick={() => void createPages(r)}>Create remaining pages ({r.missingPages.length})</button>}
+                {!isEditing && <button className="btn btn-ghost btn-sm" onClick={() => setEditing({ mint: r.mint, imageUrl: r.summary?.metadata?.imageUrl ?? "", description: r.summary?.metadata?.description ?? "", website: r.summary?.metadata?.website ?? "", twitter: r.summary?.metadata?.twitter ?? "", telegram: r.summary?.metadata?.telegram ?? "" })}>Edit details</button>}
+              </div>
+              {isEditing && (
+                <div className="mt-3 panel p-3 grid sm:grid-cols-2 gap-2">
+                  <input className="input" placeholder="https image URL" value={editing.imageUrl} onChange={(e) => setEditing({ ...editing, imageUrl: e.target.value })} aria-label="Image URL" />
+                  <input className="input" placeholder="Website (https)" value={editing.website} onChange={(e) => setEditing({ ...editing, website: e.target.value })} aria-label="Website" />
+                  <input className="input" placeholder="@x handle" value={editing.twitter} onChange={(e) => setEditing({ ...editing, twitter: e.target.value })} aria-label="X handle" />
+                  <input className="input" placeholder="Telegram handle" value={editing.telegram} onChange={(e) => setEditing({ ...editing, telegram: e.target.value })} aria-label="Telegram handle" />
+                  <textarea className="input sm:col-span-2" rows={2} placeholder="Description" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value.slice(0, 500) })} aria-label="Description" />
+                  <div className="flex gap-2 sm:col-span-2"><button className="btn btn-green btn-sm" disabled={!!busy} onClick={() => void saveMetadata()}>Sign and save</button><button className="btn btn-sm" onClick={() => setEditing(null)}>Cancel</button><span className="label self-center">Signed message, no transaction.</span></div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="label mt-3">Claims move only your creator fee balances. Seed and scar inventory are not withdrawable by anyone.</p>
     </div>
   );
 }

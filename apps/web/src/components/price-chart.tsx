@@ -11,10 +11,10 @@ export function PriceChart({ candles, summary, bins }: { candles: Candle[] | nul
   useEffect(() => {
     if (!ref.current) return;
     const chart = createChart(ref.current, {
-      layout: { background: { type: ColorType.Solid, color: "#1b2023" }, textColor: "#a1aca7", fontFamily: "ui-monospace, monospace" },
-      grid: { vertLines: { color: "#232a2e" }, horzLines: { color: "#232a2e" } },
-      rightPriceScale: { borderColor: "#303a3f" },
-      timeScale: { borderColor: "#303a3f", timeVisible: true },
+      layout: { background: { type: ColorType.Solid, color: "#181c1f" }, textColor: "#a4afaa", fontFamily: "Inter Variable, Inter, system-ui, sans-serif", fontSize: 11 },
+      grid: { vertLines: { color: "#22282b" }, horzLines: { color: "#22282b" } },
+      rightPriceScale: { borderColor: "#2d353a" },
+      timeScale: { borderColor: "#2d353a", timeVisible: true },
       height: 320,
       autoSize: true,
     });
@@ -31,16 +31,16 @@ export function PriceChart({ candles, summary, bins }: { candles: Candle[] | nul
         series.createPriceLine({ price: priceX64ToHuman(b.priceX64, summary.baseDecimals), color: w > 50 ? "#00ff85" : "#00ff8566", lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: "" });
       }
     }
-    series.createPriceLine({ price: priceX64ToHuman(summary.cursorPriceX64, summary.baseDecimals), color: "#f0f4f2", lineWidth: 1, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: "cursor" });
+    series.createPriceLine({ price: priceX64ToHuman(summary.cursorPriceX64, summary.baseDecimals), color: "#f2f5f3", lineWidth: 1, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: "cursor" });
     chart.timeScale().fitContent();
     return () => chart.remove();
   }, [candles, bins, summary]);
 
   return (
-    <div className="panel p-2">
+    <div className="panel p-2 overflow-hidden">
       <div ref={ref} className="w-full" style={{ height: 320 }} />
-      {(!candles || candles.length === 0) && <div className="text-xs text-muted p-2">No executed trades indexed for this interval yet. The chart shows only real executions.</div>}
-      <div className="text-xs text-muted px-2 pb-1">Candles are volume-weighted executed prices per bucket; the last execution is in the trade list. Neither is a manipulation-resistant oracle. Dotted green lines: bins holding scar liquidity (they never move).</div>
+      {(!candles || candles.length === 0) && <div className="label p-2">No executed trades indexed for this interval yet. The chart shows only real executions.</div>}
+      <div className="label px-2 pb-1">Executed prices per bucket, not an oracle. Dotted green lines: bins holding scar liquidity.</div>
     </div>
   );
 }
