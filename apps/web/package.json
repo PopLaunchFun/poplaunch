@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anchor-lang/core": "1.2.0",
     "@pop/math": "workspace:*",
     "@pop/sdk": "workspace:*",
     "@pop/simulator": "workspace:*",
