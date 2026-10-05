@@ -10,6 +10,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey, type Connection } from "@solana/w
 import { NATIVE_MINT, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PopClient, TEST_SETTINGS, buybackPda, buybackQuoteAccountPda, marketPda, marketVaults, pagePda, type MarketView } from "@pop/sdk";
 import { pageRange, reconcile, SOL, totalBase, totalQuote } from "@pop/math";
+import { writeFileSync } from "node:fs";
 import { chunk, computeUnits, connect, ensureAta, expectFail, makeActor, mintInfo, send, tokenBalance, wrapSol, type Actor } from "./harness.js";
 
 let connection: Connection;
@@ -22,6 +23,7 @@ const POP_SUPPLY_SEED = 900_000_000n * 1_000_000n;
 const FOUNDER = 50_000_000n * 1_000_000n;
 const ECOSYSTEM = 50_000_000n * 1_000_000n;
 const graduatedEvents: string[] = [];
+const perf: Record<string, unknown> = {};
 
 async function view(actor: Actor, market: PublicKey): Promise<MarketView> {
   return actor.client.fetchMarket(market);
@@ -297,7 +299,7 @@ describe("graduation under TEST thresholds", () => {
     const after = await swap(trader, popMarket, true, size);
     expect(after.q.fees.scarFee).toBe((size * 150n) / 10_000n);
     expect(after.events.filter((e) => e.name === "graduated").length).toBe(0);
-    console.log(`[cu] worst swap during chop: ${worst}`);
+    perf.worstChopSwapCu = worst;
   });
 
   it("measures compute for a traversal-capped buy", async () => {
@@ -312,7 +314,8 @@ describe("graduation under TEST thresholds", () => {
     const q = trader.client.quote(v, "buy", lo);
     if (!q.ok) throw new Error(q.error);
     const r = await swap(trader, popMarket, true, lo, { slippageBps: 50 });
-    console.log(`[cu] ${r.q.binsInspected} bins inspected, ${r.q.fills.length} fills, ${r.q.pagesTouched.length} pages: ${r.cu} CU`);
+    perf.cappedBuy = { binsInspected: r.q.binsInspected, fills: r.q.fills.length, pages: r.q.pagesTouched.length, computeUnits: r.cu, grossLamports: lo.toString() };
+    writeFileSync(new URL("../compute.json", import.meta.url), JSON.stringify(perf, null, 2));
     expect(r.cu).toBeLessThan(1_400_000);
   });
 });

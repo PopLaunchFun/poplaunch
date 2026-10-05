@@ -44,7 +44,7 @@ export function short(addr: string, n = 4): string {
 
 export function ago(ts: number | string | null): string {
   if (!ts) return "–";
-  const t = typeof ts === "string" ? Date.parse(ts) : Number(ts) * 1000;
+  const t = typeof ts === "string" ? (/^\d+$/.test(ts) ? Number(ts) * 1000 : Date.parse(ts)) : Number(ts) * 1000;
   const s = Math.max(0, Math.round((Date.now() - t) / 1000));
   if (s < 60) return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;

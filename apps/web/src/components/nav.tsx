@@ -34,7 +34,7 @@ export function Nav({ network }: { network: string }) {
       </aside>
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line sticky top-0 bg-ink z-20">
         <Link href="/" className="wordmark text-2xl">POP</Link>
-        <nav className="flex gap-3 overflow-x-auto text-sm">
+        <nav className="flex gap-3 overflow-x-auto whitespace-nowrap text-sm mx-3 min-w-0">
           {items.slice(1).map((i) => (
             <Link key={i.href} href={i.href} className={path.startsWith(i.href) ? "text-paper" : "text-paper-3"}>{i.label}</Link>
           ))}

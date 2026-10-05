@@ -121,6 +121,15 @@ export class Ingester {
       await this.ingestSignature(s);
       await this.saveCursor(s.signature, s.slot);
     }
+    if (sigs.length === 0) {
+      // Nothing new: record that we are caught up to the current slot so lag reporting is honest.
+      const slot = await this.connection.getSlot("confirmed");
+      await query(
+        `INSERT INTO indexer_cursor (program_id, last_signature, last_slot, updated_at) VALUES ($1, NULL, $2, now())
+         ON CONFLICT (program_id) DO UPDATE SET last_slot = GREATEST(indexer_cursor.last_slot, EXCLUDED.last_slot), updated_at = now()`,
+        [config.programId, slot],
+      );
+    }
     return sigs.length;
   }
 
