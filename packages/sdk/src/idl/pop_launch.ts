@@ -1196,6 +1196,57 @@ export type PopLaunch = {
       ]
     },
     {
+      "name": "transferAuthority",
+      "docs": [
+        "Hand the protocol authority (settings and pause only; never funds) to another key. One step, so the",
+        "current holder must be sure of the address; the new key cannot be the default (zero) key."
+      ],
+      "discriminator": [
+        48,
+        169,
+        76,
+        72,
+        229,
+        180,
+        55,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "updateSettings",
       "docs": [
         "Versioned settings for launches created from now on. Never alters an existing launch."
@@ -1293,6 +1344,19 @@ export type PopLaunch = {
   ],
   "events": [
     {
+      "name": "authorityTransferred",
+      "discriminator": [
+        245,
+        109,
+        179,
+        54,
+        135,
+        92,
+        22,
+        64
+      ]
+    },
+    {
       "name": "claimed",
       "discriminator": [
         217,
@@ -1355,6 +1419,19 @@ export type PopLaunch = {
         107,
         228,
         165
+      ]
+    },
+    {
+      "name": "pauseChanged",
+      "discriminator": [
+        238,
+        188,
+        213,
+        78,
+        134,
+        209,
+        178,
+        218
       ]
     },
     {
@@ -1571,6 +1648,22 @@ export type PopLaunch = {
     }
   ],
   "types": [
+    {
+      "name": "authorityTransferred",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "previous",
+            "type": "pubkey"
+          },
+          {
+            "name": "newAuthority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
     {
       "name": "claimed",
       "type": {
@@ -2091,6 +2184,22 @@ export type PopLaunch = {
               "Quote mint (wrapped SOL)."
             ],
             "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pauseChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
           }
         ]
       }

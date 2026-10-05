@@ -175,4 +175,18 @@ describe("Pop Launch hardening (Stage 4 review findings)", () => {
     const stranger = await makeActor(connection, 2);
     expect(await expectFail(stranger, [await clientFor(stranger).reclaimUnusedSetupReserveIx(stranger.pubkey, launch)])).toMatch(/NotCreator/);
   });
+
+  it("transfer_authority: only the authority may hand over; afterwards the old key has no power and the new one does", async () => {
+    const stranger = await makeActor(connection, 2);
+    const next = await makeActor(connection, 2);
+    expect(await expectFail(stranger, [await clientFor(stranger).transferAuthorityIx(stranger.pubkey, stranger.pubkey)])).toMatch(/has one constraint|ConstraintHasOne|2001/);
+    expect(await expectFail(admin, [await lc.transferAuthorityIx(admin.pubkey, PublicKey.default)])).toMatch(/InvalidSettings/);
+    await send(admin, [await lc.transferAuthorityIx(admin.pubkey, next.pubkey)]);
+    expect((await lc.fetchConfig()).authority.equals(next.pubkey)).toBe(true);
+    expect(await expectFail(admin, [await lc.setPausedIx(admin.pubkey, true)])).toMatch(/has one constraint|ConstraintHasOne|2001/);
+    await send(next, [await clientFor(next).setPausedIx(next.pubkey, false)]);
+    // hand it back so the rest of the suites keep working against the deterministic admin
+    await send(next, [await clientFor(next).transferAuthorityIx(next.pubkey, admin.pubkey)]);
+    expect((await lc.fetchConfig()).authority.equals(admin.pubkey)).toBe(true);
+  });
 });

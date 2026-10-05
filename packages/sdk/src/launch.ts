@@ -205,6 +205,9 @@ export class PopLaunchClient {
   setPausedIx(authority: PublicKey, paused: boolean) {
     return this.program.methods.setPaused(paused).accountsPartial({ authority, config: launchConfigPda(this.programId) }).instruction();
   }
+  transferAuthorityIx(authority: PublicKey, newAuthority: PublicKey) {
+    return this.program.methods.transferAuthority(newAuthority).accountsPartial({ authority, config: launchConfigPda(this.programId) }).instruction();
+  }
 
   // ---------------------------------------------------------------- creator
   /**

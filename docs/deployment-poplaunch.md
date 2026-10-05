@@ -34,7 +34,7 @@ production release decision by the owner after the gates below.
 Gates, all required:
 - [x] Independent security review completed with no blocking findings (owner confirmation, October 2026; report held privately by the owner).
 - [ ] `verify:addresses` passes on mainnet: Raydium CP-Swap `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`, AmmConfig index 0 with its live fee tier recorded, fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`, Token Metadata `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`.
-- [ ] Multisig created (Squads), members and threshold published in `docs/authority-disclosure.md`, timelock configured.
+- [x] ~~Multisig~~ Owner decision: no multisig; upgrade and protocol authority is the owner's wallet `jNdwn3…tnx`, disclosed on `/authority`.
 - [ ] Verifiable build hash published; `solana-verify` passes against the deployed program.
 - [x] Terms and Privacy reviewed by counsel (owner confirmation, October 2026); contact address hello@poplaunch.fun on both pages.
 - [ ] Monitoring live: `/api/status` scraped, alerts routed to a phone.
@@ -43,10 +43,11 @@ Gates, all required:
 - [ ] Owner's written production release decision.
 
 Steps:
-1. Deploy from the release commit with the deployer key; immediately
-   `solana program set-upgrade-authority <program> --new-upgrade-authority <multisig>`; publish the signature.
-2. `verify:addresses` (mainnet). `initialize_protocol` from the multisig with V1 settings (fee recipient = treasury).
-   `verify:addresses` again.
+1. Deploy from the release commit with a throwaway deployer key; immediately
+   `solana program set-upgrade-authority <program> --new-upgrade-authority jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx --skip-new-upgrade-authority-signer-check`; publish the signature.
+2. `verify:addresses` (mainnet). The owner opens `/admin` with that wallet and initializes the protocol with the
+   V1 settings, fee recipient = the same wallet, creation fee **0** for the opening 24 hours; 24 hours later the owner
+   sets the fee to 0.1 SOL from `/admin`. `verify:addresses` again.
 3. Deploy launchd and the web app with mainnet env. The web app shows no network strip on mainnet and
    explorer links carry no cluster parameter.
 4. Smoke test with a tiny internal launch is **not possible** without a real 50 SOL fill; instead run

@@ -14,13 +14,19 @@ funds. Mitigations, in the order they apply:
 |---|---|---|
 | localnet | throwaway key in `scripts/deploy/keys/` (gitignored) | test only |
 | devnet | deployer hot key | test only; funds are test SOL |
-| mainnet | **must be a Squads multisig with a timelock** (threshold and members published here before deployment) | not deployed |
+| mainnet | **a single key held by the owner** (`jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`); owner decision, October 2026: no multisig | not deployed |
+
+Owner decision (October 2026): **no multisig.** The upgrade authority and the protocol authority are one
+key, the owner's wallet `jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`. That means a single compromised or
+careless key could replace the program's code; backers are told this on the `/authority` page in plain words.
+The mitigations below still apply; the strongest one is setting the upgrade authority to none once the
+program has run unchanged.
 
 Rules for mainnet:
 - The program is deployed from a **verifiable build** (`anchor build --verifiable` / `solana-verify`) and the
   build hash is published next to the program id so anyone can confirm the deployed bytes match this repo.
-- The upgrade authority is transferred to the multisig in the same release session as the deployment, and
-  the transfer signature is published here.
+- The deployer key used to upload the program is a throwaway; the upgrade authority is moved to the owner's
+  key in the same release session, and that transfer signature is published here.
 - Every upgrade proposal is announced with its diff and build hash at least the timelock period before it
   can execute. Backers who disagree can refund or claim during that period (refunds and claims never depend
   on an upgrade).
@@ -43,14 +49,14 @@ A single on-chain key stored in the protocol config account. It can call exactly
 There is no instruction that moves SOL or tokens out of any escrow, vault, receipt or pool to the
 authority. There is no admin "sweep". Unsolicited SOL sent to a vault stays there.
 
-The protocol authority will be the same multisig as the upgrade authority on mainnet. Changing it requires
-a program upgrade in V1 (there is no transfer instruction); that is a deliberate V1 limitation and is listed
-in the review findings.
+The protocol authority is the same owner key on mainnet. `transfer_authority` (added after the Stage 4
+review, authority-only, one step) hands it to another key; `/admin` exposes it to the connected authority.
 
 ## 3. Creation-fee recipient (`settings.fee_recipient`)
 
 Receives the 0.1 SOL creation fee that a creator pays when `create_launch` succeeds. It has no other
-power. It is a plain wallet (mainnet: a multisig-controlled treasury address published here).
+power. Mainnet: the owner's wallet `jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`. Mainnet opens with the
+fee set to zero for 24 hours (announced on the site), then it is set to 0.1 SOL.
 
 ## 4. Settlement keeper (operational)
 

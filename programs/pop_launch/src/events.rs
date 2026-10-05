@@ -82,3 +82,15 @@ pub struct SettingsUpdated {
     pub authority: Pubkey,
     pub version: u16,
 }
+
+#[event]
+pub struct PauseChanged {
+    pub authority: Pubkey,
+    pub paused: bool,
+}
+
+#[event]
+pub struct AuthorityTransferred {
+    pub previous: Pubkey,
+    pub new_authority: Pubkey,
+}

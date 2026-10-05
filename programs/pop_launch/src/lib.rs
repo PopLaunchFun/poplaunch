@@ -255,6 +255,18 @@ pub mod pop_launch {
     /// A global pause blocks NEW launches only; it cannot disable settlement, claims or refunds.
     pub fn set_paused(ctx: Context<AdminConfig>, paused: bool) -> Result<()> {
         ctx.accounts.config.paused = paused;
+        emit!(PauseChanged { authority: ctx.accounts.config.authority, paused });
+        Ok(())
+    }
+
+    /// Hand the protocol authority (settings and pause only; never funds) to another key. One step, so the
+    /// current holder must be sure of the address; the new key cannot be the default (zero) key.
+    pub fn transfer_authority(ctx: Context<AdminConfig>, new_authority: Pubkey) -> Result<()> {
+        require_keys_neq!(new_authority, Pubkey::default(), LaunchError::InvalidSettings);
+        let c = &mut ctx.accounts.config;
+        let previous = c.authority;
+        c.authority = new_authority;
+        emit!(AuthorityTransferred { previous, new_authority });
         Ok(())
     }
 

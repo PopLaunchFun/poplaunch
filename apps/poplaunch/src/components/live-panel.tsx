@@ -40,7 +40,7 @@ export function usePosition(l: Launch, bump: number): { position: Position | nul
   return { position, loading };
 }
 
-function TxStatus({ s, success, pending }: { s: TxState; success: string; pending: string }) {
+export function TxStatus({ s, success, pending }: { s: TxState; success: string; pending: string }) {
   if (s.stage === "idle") return null;
   const tone = s.stage === "confirmed" ? "bg-[#bff0c6]" : s.stage === "failed" ? "bg-[#ffd3cf]" : s.stage === "rejected" ? "bg-bg" : "bg-yellow";
   return (
