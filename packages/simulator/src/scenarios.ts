@@ -2,12 +2,12 @@
  * Required scenarios from the build brief (section 9). Each returns a RunReport whose
  * `findings` are computed from the run, never asserted in advance.
  */
-import { POP_PILOT_DEFAULTS, SOL, factoryMarketDefaults, testThresholds, priceAtBin, type MarketConfig } from "@pop/math";
+import { FACTORY_DEFAULTS, LAUNCH_PAGES, SOL, factoryMarketDefaults, testThresholds, priceAtBin, pageRange, type MarketConfig } from "@pop/math";
 import { Simulation, binComposition, fmtSol, fmtBase, type RunReport } from "./engine.js";
 
 export type Scenario = { id: string; title: string; run: () => RunReport | RunReport[] };
 
-const PILOT = POP_PILOT_DEFAULTS;
+const PILOT = FACTORY_DEFAULTS; // 1B tokens, 20 SOL seed
 
 /** Sell the largest amount (<= actor balance) that fills within the traversal cap. Returns false if nothing fills. */
 function sellMax(sim: Simulation, actorName: string): boolean {
@@ -40,9 +40,9 @@ export const straightPump: Scenario = {
     const end = sim.snapshot();
     sim.finding(`Pending eligible quote escrow after 20 buys: ${fmtSol(end.pendingQuoteEligible)}; activated scar quote: ${fmtSol(end.scarQuote)}; paired lifetime: ${fmtSol(sim.state.pairedQuoteLifetime)}.`);
     sim.finding(end.scarQuote === 0n && sim.state.pairedQuoteLifetime === 0n ? "No matching occurred without opposing sell fees: one-sided flow creates pending escrow only." : "UNEXPECTED: matching occurred without sell fees.");
-    sim.finding(`Cursor moved from bin 0 to bin ${end.cursor} (price ${sim.priceHuman(0).toExponential(4)} -> ${end.cursorPriceHuman.toExponential(4)} SOL/POP).`);
+    sim.finding(`Cursor moved from bin 0 to bin ${end.cursor} (price ${sim.priceHuman(0).toExponential(4)} -> ${end.cursorPriceHuman.toExponential(4)} SOL/token).`);
     const failed = sim.trades.filter((t) => !t.ok);
-    if (failed.length) sim.finding(`${failed.length} buys failed: ${failed[0]!.error}. A 1 SOL buy at launch spans many bins because each bin holds only ~0.039 SOL of seed POP at P0.`);
+    if (failed.length) sim.finding(`${failed.length} buys failed: ${failed[0]!.error}. A 1 SOL buy at launch spans many bins because each bin holds only ~0.039 SOL of seed tokens at P0.`);
     return sim.report();
   },
 };
@@ -59,8 +59,8 @@ export const pumpThenSell: Scenario = {
     for (let i = 0; i < 5; i++) sim.swap("trader", "sell", chunk);
     const end = sim.snapshot();
     const scars = sim.trades.flatMap((t) => t.scarsFormed ?? []);
-    sim.finding(`After buys: pending quote ${fmtSol(afterBuys.pendingQuoteEligible)}, no scars. After sells: ${scars.length} ScarFormed events; activated scar base ${fmtBase(end.scarBase)} POP and scar quote ${fmtSol(end.scarQuote)}; paired lifetime ${fmtSol(sim.state.pairedQuoteLifetime)}.`);
-    sim.finding(`Remaining unmatched: pending quote ${fmtSol(end.pendingQuoteEligible)}, pending base ${fmtBase(end.pendingBaseEligible)} POP. Pending amounts are reported separately from activated inventory.`);
+    sim.finding(`After buys: pending quote ${fmtSol(afterBuys.pendingQuoteEligible)}, no scars. After sells: ${scars.length} ScarFormed events; activated scar base ${fmtBase(end.scarBase)} tokens and scar quote ${fmtSol(end.scarQuote)}; paired lifetime ${fmtSol(sim.state.pairedQuoteLifetime)}.`);
+    sim.finding(`Remaining unmatched: pending quote ${fmtSol(end.pendingQuoteEligible)}, pending base ${fmtBase(end.pendingBaseEligible)} tokens. Pending amounts are reported separately from activated inventory.`);
     for (const e of scars.slice(0, 3)) {
       const p = priceAtBin(sim.p0, e.bin);
       const impliedQ = (e.base * p) >> 64n;
@@ -88,7 +88,7 @@ export const repeatedChop: Scenario = {
     const r = sim.reconciliationCheck();
     sim.finding(`Reconciliation ${r.ok ? "holds" : "FAILS"}: vault base+fees ${r.expected.vaultBase + r.expected.feeVaultBase} == ledger ${r.ledgerBase}; quote ${r.expected.vaultQuote + r.expected.feeVaultQuote} == ledger ${r.ledgerQuote}.`);
     const end = sim.snapshot();
-    sim.finding(`Scar inventory after 200 rounds: ${fmtBase(end.scarBase)} POP + ${fmtSol(end.scarQuote)}; paired lifetime ${fmtSol(sim.state.pairedQuoteLifetime)}; every unit traces to a charged fee or a swap input (no minting, no synthesized reserves).`);
+    sim.finding(`Scar inventory after 200 rounds: ${fmtBase(end.scarBase)} tokens + ${fmtSol(end.scarQuote)}; paired lifetime ${fmtSol(sim.state.pairedQuoteLifetime)}; every unit traces to a charged fee or a swap input (no minting, no synthesized reserves).`);
     sim.finding(`Current total quote inventory (seed+scar) ${fmtSol(sumQuote(sim))} vs. starting seed quote ${fmtSol(PILOT.seedQuote)}: quote reserves do not monotonically increase; they move with net flow.`);
     return sim.report();
   },
@@ -115,7 +115,7 @@ export const roundTripActor: Scenario = {
     }
     const capitalRecycled = a.quoteSpent;
     sim.finding(`Round trips: ${rounds}. Status: ${sim.state.status}. Paired lifetime ${fmtSol(sim.state.pairedQuoteLifetime)} of ${fmtSol(cfg.maturityQuoteTarget)} target; hardened bands ${sim.state.hardenedBands} of ${cfg.bandsRequired}.`);
-    sim.finding(`Actor started with 10 SOL, ends with ${fmtSol(a.quote)} SOL and ${fmtBase(a.base)} POP. Gross capital recycled through buys: ${fmtSol(capitalRecycled)}. Net quote P/L ${fmtSol(a.quote - 10n * SOL)}.`);
+    sim.finding(`Actor started with 10 SOL, ends with ${fmtSol(a.quote)} SOL and ${fmtBase(a.base)} tokens. Gross capital recycled through buys: ${fmtSol(capitalRecycled)}. Net quote P/L ${fmtSol(a.quote - 10n * SOL)}.`);
     sim.finding(`Quote-side fees paid by the actor: ${fmtSol(feesPaidQuote)} (plus base-side fees on every sell). Maturity is a function of paid fees, so a single actor can manufacture it at the cost of ~2% per side per round trip plus rounding; graduation must not be marketed as proof of organic demand.`);
     const perRound = rounds ? sim.state.pairedQuoteLifetime / BigInt(rounds) : 0n;
     sim.finding(`Average paired quote per 1 SOL round trip: ${fmtSol(perRound)}. At that rate the 100 SOL target needs about ${perRound ? (Number(cfg.maturityQuoteTarget) / Number(perRound)).toFixed(0) : "n/a"} round trips (~${perRound ? (Number(cfg.maturityQuoteTarget) / Number(perRound) * 2 * 0.02).toFixed(0) : "n/a"} SOL of fees if sized at 1 SOL).`);
@@ -167,7 +167,7 @@ export const splitTrades: Scenario = {
       const a = sim.actor("buyer");
       const end = sim.snapshot();
       results.push({ label: `${n} swap(s)`, output: a.base, scar: end.pendingQuoteEligible, endBin: end.cursor, failed });
-      sim.finding(`${n} swaps: output ${a.base} POP-atomic (${fmtBase(a.base)} POP), pending scar quote ${end.pendingQuoteEligible}, cursor ${end.cursor}, failed ${failed}.`);
+      sim.finding(`${n} swaps: output ${a.base} token-atomic (${fmtBase(a.base)} POP), pending scar quote ${end.pendingQuoteEligible}, cursor ${end.cursor}, failed ${failed}.`);
       reports.push(sim.report());
     }
     const base = results[0]!;
@@ -195,7 +195,7 @@ export const sandwich: Scenario = {
     // Scenario A: attacker front-runs, victim's min_output is enforced.
     sim.swap("attacker", "buy", SOL);
     const victimAttempt = sim.swap("victim", "buy", victimGross, minOut);
-    sim.finding(`Victim quoted ${quoted.output} POP-atomic; with 1% tolerance min_output ${minOut}. After a 1 SOL front-run the victim swap ${victimAttempt.ok ? `EXECUTED with output ${victimAttempt.output}` : `REVERTED (${victimAttempt.error})`}.`);
+    sim.finding(`Victim quoted ${quoted.output} token-atomic; with 1% tolerance min_output ${minOut}. After a 1 SOL front-run the victim swap ${victimAttempt.ok ? `EXECUTED with output ${victimAttempt.output}` : `REVERTED (${victimAttempt.error})`}.`);
     // Scenario B: victim with a loose 15% tolerance gets sandwiched.
     const sim2 = new Simulation({ name: "sandwich-loose", description: "Same, victim tolerates 25% slippage.", config: PILOT });
     sim2.fund("victim", SOL);
@@ -246,7 +246,7 @@ export const sellDepletion: Scenario = {
   id: "sell-depletion",
   title: "Complete sell depletion: revert cleanly; no fabricated SOL or redemption guarantee",
   run: () => {
-    const sim = new Simulation({ name: "sell-depletion", description: "A synthetic holder with 2B POP (a TEST balance exceeding real supply, to reach the boundary) sells in the largest chunks that fill until the quote side is exhausted.", config: PILOT, configLabel: "pilot defaults (synthetic holder balance for boundary test)" });
+    const sim = new Simulation({ name: "sell-depletion", description: "A synthetic holder with 2B tokens (a TEST balance exceeding real supply, to reach the boundary) sells in the largest chunks that fill until the quote side is exhausted.", config: PILOT, configLabel: "pilot defaults (synthetic holder balance for boundary test)" });
     sim.fund("holder", 0n, 2_000_000_000n * 1_000_000n);
     sim.totalMinted += 2_000_000_000n * 1_000_000n;
     let fails = 0;
@@ -260,7 +260,7 @@ export const sellDepletion: Scenario = {
     }
     const end = sim.snapshot();
     sim.finding(`Final failures: ${lastErr}. Remaining quote inventory ${fmtSol(end.seedQuote + end.scarQuote)}; cursor ${end.cursor}. Failed swaps changed nothing (reconciliation ${sim.reconciliationCheck().ok ? "holds" : "FAILS"}).`);
-    sim.finding(`Holder received ${fmtSol(sim.actor("holder").quoteReceived)} for ${fmtBase(sim.actor("holder").baseSold)} POP. There is no floor and no redemption: once bid inventory is gone, sells revert.`);
+    sim.finding(`Holder received ${fmtSol(sim.actor("holder").quoteReceived)} for ${fmtBase(sim.actor("holder").baseSold)} tokens. There is no floor and no redemption: once bid inventory is gone, sells revert.`);
     return sim.report();
   },
 };
@@ -270,7 +270,7 @@ export const buyDepletion: Scenario = {
   title: "Complete buy depletion / boundary: revert consistently at bin +511",
   run: () => {
     const cfg: MarketConfig = { ...PILOT, binMax: 63, seedBase: PILOT.seedBase / 8n, configVersion: 1001 };
-    const sim = new Simulation({ name: "buy-depletion", description: "Smaller TEST range (binMax=63, 112.5M POP seed) so full depletion is cheap: buy until the top boundary rejects.", config: cfg, configLabel: "TEST range (binMax=63)" });
+    const sim = new Simulation({ name: "buy-depletion", description: "Smaller TEST range (binMax=63, 112.5M tokens seed) so full depletion is cheap: buy until the top boundary rejects.", config: cfg, configLabel: "TEST range (binMax=63)" });
     sim.fund("buyer", 10_000n * SOL);
     let lastErr = "";
     let fails = 0;
@@ -282,7 +282,7 @@ export const buyDepletion: Scenario = {
       }
     }
     const end = sim.snapshot();
-    sim.finding(`Final failures: ${lastErr}. Remaining base inventory ${fmtBase(end.seedBase + end.scarBase)} POP; cursor ${end.cursor} of max ${cfg.binMax}. Quote paid in total ${fmtSol(sim.actor("buyer").quoteSpent)}.`);
+    sim.finding(`Final failures: ${lastErr}. Remaining base inventory ${fmtBase(end.seedBase + end.scarBase)} tokens; cursor ${end.cursor} of max ${cfg.binMax}. Quote paid in total ${fmtSol(sim.actor("buyer").quoteSpent)}.`);
     sim.finding("At the boundary the program reports BuyInventoryExhausted and the SDK quote reports the same code; no new inventory is minted to rescue the market.");
     return sim.report();
   },
@@ -330,31 +330,111 @@ export const maturityThreshold: Scenario = {
   },
 };
 
-export const buybackFromPop: Scenario = {
-  id: "buyback-from-pop",
-  title: "Buyback from POP's own fees is rejected; non-POP market fees fund a bounded buyback and burn",
+export const multipleLaunches: Scenario = {
+  id: "multiple-launches",
+  title: "Multiple independent launches: scar, reserve and creator-fee state isolated per market",
   run: () => {
-    const pop = new Simulation({ name: "buyback-pop-market", description: "POP market: trades accrue protocol fees but zero buyback earmark; sweep is rejected.", config: PILOT });
-    pop.fund("t", 10n * SOL);
-    for (let i = 0; i < 10; i++) pop.swap("t", "buy", SOL / 2n);
-    const sweep = pop.sweepBuyback();
-    pop.finding(`POP market protocol quote fees ${fmtSol(pop.state.protocolClaimableQuote)}, buyback earmark ${fmtSol(pop.state.buybackAccruedQuote)}; sweep result: ${"error" in sweep ? sweep.error : "UNEXPECTED success"}.`);
-    const other = new Simulation({ name: "buyback-other-market", description: "A second (non-POP) market: 50% of WSOL protocol fees are earmarked and swept to the buyback vault.", config: factoryMarketDefaults(1_000_000_000n * 1_000_000n) });
-    other.fund("t", 10n * SOL);
-    for (let i = 0; i < 10; i++) other.swap("t", "buy", SOL / 2n);
-    const earmark = other.state.buybackAccruedQuote;
-    const sw = other.sweepBuyback();
-    other.finding(`Non-POP market: protocol quote fee ${fmtSol(other.state.protocolClaimableQuote + earmark)} total; earmark ${fmtSol(earmark)} swept: ${"amount" in sw ? fmtSol(sw.amount) : sw.error}. Base-token protocol fees (${fmtBase(other.state.protocolClaimableBase)}) are NOT counted as buyback funds.`);
-    // Execute a buyback on the POP market using the swept funds, with explicit bounds.
-    const vault = pop.actor("buyback-vault");
-    vault.quote += earmark;
-    const q = pop.quote("buy", earmark, 0n, true);
-    const minOut = q.ok ? (q.output * 99n) / 100n : 0n;
-    const bb = pop.executeBuyback(vault, earmark, minOut, pop.priceHuman(pop.state.cursor) * 1.05);
-    pop.finding(`Buyback executed=${bb.ok} spent ${fmtSol(bb.quoteSpent)} bought+burned ${fmtBase(bb.popBurned)} POP; outstanding supply ${fmtBase(pop.totalMinted - pop.burnedBase)}. Its scar fee went to INELIGIBLE escrow (${pop.snapshot().pendingQuoteIneligible} lamports); paired lifetime unchanged by the buyback: ${fmtSol(pop.state.pairedQuoteLifetime)}.`);
-    const over = pop.executeBuyback(vault, 1n * SOL, 0n);
-    pop.finding(`Attempt to spend beyond realized funds: ${over.ok ? "UNEXPECTED success" : over.error}.`);
-    return [pop.report(), other.report()];
+    const seeds = [1n * SOL, 5n * SOL, 20n * SOL];
+    const sims = seeds.map((seed, i) => new Simulation({ name: `multiple-launches-${i + 1}`, description: `Coin ${i + 1} of 3 launched with ${fmtSol(seed)} seed; traders interleave across the three coins.`, config: factoryMarketDefaults(1_000_000_000n * 1_000_000n, seed), configLabel: `factory defaults, seed ${fmtSol(seed)}` }));
+    for (const sim of sims) {
+      sim.fund("t1", 50n * SOL);
+      sim.fund("t2", 50n * SOL);
+    }
+    const snapshots = sims.map((sim) => sim.snapshot());
+    for (let round = 0; round < 30; round++) {
+      const sim = sims[round % 3]!;
+      const who = round % 2 === 0 ? "t1" : "t2";
+      const size = sim.config.seedQuote / 40n;
+      sim.swap(who, "buy", size);
+      const a = sim.actor(who);
+      if (a.base > 0n) {
+        let lo = 0n, hi = a.base;
+        if (!sim.quote("sell", hi).ok) while (hi - lo > 1_000_000n) { const mid = (lo + hi) / 2n; if (sim.quote("sell", mid).ok) lo = mid; else hi = mid; } else lo = hi;
+        if (lo > 0n) sim.swap(who, "sell", lo);
+      }
+      // the other two markets must be byte-for-byte unchanged by this round
+      for (let k = 0; k < 3; k++) if (k !== round % 3) {
+        const before = snapshots[k]!;
+        const now = sims[k]!.snapshot();
+        if (JSON.stringify(before, (_, v) => (typeof v === "bigint" ? v.toString() : v)) !== JSON.stringify(now, (_, v) => (typeof v === "bigint" ? v.toString() : v))) {
+          sims[k]!.finding(`UNEXPECTED: market ${k + 1} changed during a round on market ${(round % 3) + 1}`);
+        }
+      }
+      snapshots[round % 3] = sim.snapshot();
+    }
+    for (const [i, sim] of sims.entries()) {
+      const r = sim.reconciliationCheck();
+      const creator = sim.state.creatorClaimableQuote;
+      sim.finding(`Coin ${i + 1}: ${sim.trades.filter((t) => t.ok).length} swaps; paired ${fmtSol(sim.state.pairedQuoteLifetime)}; creator claimable ${fmtSol(creator)} + ${fmtBase(sim.state.creatorClaimableBase)} tokens; buyback earmark ${fmtSol(sim.state.buybackAccruedQuote)}; reconciliation ${r.ok ? "holds" : "FAILS"}. Fees accrue only to this coin's own creator and vaults.`);
+      sim.sweepBuyback();
+      sim.finding(`Sweep moved the earmark to the shared protocol escrow; the market's locked vaults are untouched (${fmtSol(sim.snapshot().vaultQuote)} quote in custody).`);
+    }
+    return sims.map((s) => s.report());
+  },
+};
+
+export const interruptedCreation: Scenario = {
+  id: "interrupted-creation",
+  title: "Interrupted creation: resume without duplicate mint, funding or page allocation",
+  run: () => {
+    const cfg = factoryMarketDefaults(1_000_000_000n * 1_000_000n, 1n * SOL);
+    const sim = new Simulation({ name: "interrupted-creation", description: "Launch creates only pages -1..2, 'crashes' after page 0, resumes, activates once; a trade later crosses into an uncreated page which the trader materializes.", config: cfg, initAllPages: false, pages: [0], active: false, configLabel: "factory defaults, seed 1 SOL, lazy pages" });
+    const seedBefore = { base: sim.state.unmaterializedSeedBase, quote: sim.state.unmaterializedSeedQuote };
+    const first = sim.initPages([...LAUNCH_PAGES]);
+    sim.finding(`Resume after crash: pages created ${JSON.stringify(first.created)}, already present (skipped) ${JSON.stringify(first.skipped)}. Unmaterialized seed went ${fmtBase(seedBefore.base)} -> ${fmtBase(sim.state.unmaterializedSeedBase)} tokens; exactly one allocation per page.`);
+    const again = sim.initPages([...LAUNCH_PAGES]);
+    sim.finding(`Second resume: created ${again.created.length}, skipped ${again.skipped.length} (idempotent).`);
+    const act1 = sim.activate();
+    const act2 = sim.activate();
+    sim.finding(`Activation succeeded once (${act1}) and was refused the second time (${act2}); activations = ${sim.activations}. The on-chain program likewise rejects a second activate (MarketAlreadyActive) and a second create_market for the same mint (account already exists).`);
+    sim.fund("trader", 10n * SOL);
+    // From a fresh cursor the 32-bin cap never leaves the launch pages; move the cursor first.
+    sim.swap("trader", "buy", SOL / 20n);
+    sim.swap("trader", "buy", SOL / 20n);
+    const size = SOL / 20n;
+    const q = sim.quote("buy", size, 0n, true);
+    const strict = sim.quote("buy", size, 0n, false);
+    if (q.ok) {
+      const missing = q.pagesTouched.filter((p) => !sim.store.hasPage(p));
+      sim.finding(`With the cursor at bin ${sim.state.cursor}, a ${fmtSol(size)} buy touches pages ${JSON.stringify(q.pagesTouched)}; strict quote: ${strict.ok ? "ok" : strict.error}; the virtual-page quote fills ${q.fills.length} bins and needs pages ${JSON.stringify(missing)} created first (trader pays rent).`);
+      sim.initPages(missing);
+      const r = sim.swap("trader", "buy", size);
+      sim.finding(`After creating them the swap executed with output ${r.output} (virtual quote predicted ${q.output}; equal: ${r.output === q.output}).`);
+    } else sim.finding(`UNEXPECTED: virtual quote failed ${q.error}`);
+    const { minPage, maxPage } = pageRange(cfg);
+    sim.finding(`Pages materialized: ${sim.store.pages.size} of ${maxPage - minPage + 1}; reconciliation ${sim.reconciliationCheck().ok ? "holds" : "FAILS"} with unmaterialized seed counted in the vault total.`);
+    return sim.report();
+  },
+};
+
+export const seedSizeSweep: Scenario = {
+  id: "seed-size-sweep",
+  title: "Seed size sweep: single-swap capacity and price impact at 1 / 5 / 20 SOL seeds",
+  run: () => {
+    const reports: RunReport[] = [];
+    for (const seed of [1n * SOL, 5n * SOL, 20n * SOL]) {
+      const cfg = factoryMarketDefaults(1_000_000_000n * 1_000_000n, seed);
+      const sim = new Simulation({ name: `seed-sweep-${Number(seed / SOL)}sol`, description: `Fresh market seeded with ${fmtSol(seed)}: largest buy/sell within 32 bins, price impact of small buys.`, config: cfg, configLabel: `factory defaults, seed ${fmtSol(seed)}` });
+      sim.fund("probe", 10_000n * SOL, 500_000_000n * 1_000_000n);
+      let lo = cfg.minQuoteIn, hi = 100n * SOL;
+      while (hi - lo > 100_000n) { const mid = (lo + hi) / 2n; if (sim.quote("buy", mid).ok) lo = mid; else hi = mid; }
+      const maxBuy = lo;
+      let lo2 = cfg.minBaseIn, hi2 = 500_000_000n * 1_000_000n;
+      while (hi2 - lo2 > 1_000_000n) { const mid = (lo2 + hi2) / 2n; if (sim.quote("sell", mid).ok) lo2 = mid; else hi2 = mid; }
+      const bin0 = sim.store.getOrThrow(0);
+      sim.finding(`Seed per bin: ${fmtSol(sim.store.getOrThrow(-1).seedQuote)} quote (bins -64..-1), ${fmtBase(bin0.seedBase)} tokens (~${fmtSol((bin0.seedBase * priceAtBin(sim.p0, 0)) >> 64n)} at P0, bins 0..511).`);
+      sim.finding(`Largest single buy within 32 bins: ${fmtSol(maxBuy)}. Largest single sell: ${fmtBase(lo2)} tokens (~${fmtSol((lo2 * priceAtBin(sim.p0, 0)) >> 64n)} at P0).`);
+      for (const size of [SOL / 100n, SOL / 10n, SOL]) {
+        const q = sim.quote("buy", size);
+        if (q.ok) {
+          const impact = (Number(q.endPriceX64) / Number(q.startPriceX64) - 1) * 100;
+          sim.finding(`A ${fmtSol(size)} buy inspects ${q.binsInspected} bins and moves the cursor price ${impact.toFixed(1)}%.`);
+        } else sim.finding(`A ${fmtSol(size)} buy fails: ${q.error}.`);
+      }
+      reports.push(sim.report());
+    }
+    reports[0]!.findings.push("Calibration: seed size sets how much a single transaction can move; a 1 SOL seed makes a 0.1 SOL buy a ~25% price move. The launch form shows the largest single buy for the chosen seed. Experimental calibration choice, not validated economics.");
+    return reports;
   },
 };
 
@@ -375,7 +455,7 @@ export const unauthorizedClaims: Scenario = {
     const c4 = sim.claimCreator("base");
     const lockedAfter = sim.snapshot();
     const attempt = sim.attemptLockedWithdrawal();
-    sim.finding(`Claims: protocol ${fmtSol(c1.amount)} + ${fmtBase(c3.amount)} POP; creator ${fmtSol(c2.amount)} + ${fmtBase(c4.amount)} POP. Locked vaults before/after claims: base ${lockedBefore.vaultBase}/${lockedAfter.vaultBase}, quote ${lockedBefore.vaultQuote}/${lockedAfter.vaultQuote} (unchanged).`);
+    sim.finding(`Claims: protocol ${fmtSol(c1.amount)} + ${fmtBase(c3.amount)} tokens; creator ${fmtSol(c2.amount)} + ${fmtBase(c4.amount)} tokens. Locked vaults before/after claims: base ${lockedBefore.vaultBase}/${lockedAfter.vaultBase}, quote ${lockedBefore.vaultQuote}/${lockedAfter.vaultQuote} (unchanged).`);
     sim.finding(`Locked withdrawal attempt: ${attempt.error}. On-chain, the program exposes no instruction that moves seed/scar/pending custody except swap_exact_in; upgrade authority is the remaining custody power and is reported on /status (see docs/authority-model.md).`);
     sim.finding(`Reconciliation after claims: ${sim.reconciliationCheck().ok}.`);
     return sim.report();
@@ -445,9 +525,9 @@ export const launchCalibration: Scenario = {
     }
     const maxSell = lo2;
     const bin0 = sim.store.getOrThrow(0);
-    sim.finding(`Seed base per bin: ${fmtBase(bin0.seedBase)} POP (~${fmtSol((bin0.seedBase * priceAtBin(sim.p0, 0)) >> 64n)} at P0). Seed quote per bin: ${fmtSol(sim.store.getOrThrow(-1).seedQuote)}.`);
-    sim.finding(`Largest single buy on a fresh market within 32 bins: ${fmtSol(maxBuy)} gross. Largest single sell: ${fmtBase(maxSell)} POP (~${fmtSol((maxSell * priceAtBin(sim.p0, 0)) >> 64n)} at P0).`);
-    sim.finding("Calibration note: with 20 SOL seed quote over 64 bins the sell side holds 0.3125 SOL per bin, but the buy side at P0 holds only ~0.039 SOL of POP per bin because 900M POP valued at P0 is 20 SOL spread over 512 bins. Larger buys must be split into separate signed transactions (the UI offers this). Consider a denser base schedule near the cursor or a smaller binMax in a new config version before mainnet; this is an experimental calibration choice.");
+    sim.finding(`Seed base per bin: ${fmtBase(bin0.seedBase)} tokens (~${fmtSol((bin0.seedBase * priceAtBin(sim.p0, 0)) >> 64n)} at P0). Seed quote per bin: ${fmtSol(sim.store.getOrThrow(-1).seedQuote)}.`);
+    sim.finding(`Largest single buy on a fresh market within 32 bins: ${fmtSol(maxBuy)} gross. Largest single sell: ${fmtBase(maxSell)} tokens (~${fmtSol((maxSell * priceAtBin(sim.p0, 0)) >> 64n)} at P0).`);
+    sim.finding("Calibration note: with 20 SOL seed quote over 64 bins the sell side holds 0.3125 SOL per bin, but the buy side at P0 holds only ~0.039 SOL of tokens per bin because 900M tokens valued at P0 is 20 SOL spread over 512 bins. Larger buys must be split into separate signed transactions (the UI offers this). Consider a denser base schedule near the cursor or a smaller binMax in a new config version before mainnet; this is an experimental calibration choice.");
     return sim.report();
   },
 };
@@ -464,7 +544,9 @@ export const ALL_SCENARIOS: Scenario[] = [
   sellDepletion,
   buyDepletion,
   maturityThreshold,
-  buybackFromPop,
+  multipleLaunches,
+  interruptedCreation,
+  seedSizeSweep,
   unauthorizedClaims,
   wrongPage,
   keeperOutage,

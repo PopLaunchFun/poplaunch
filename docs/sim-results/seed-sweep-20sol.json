@@ -1,7 +1,7 @@
 {
-  "name": "launch-calibration",
-  "description": "Binary search the largest gross buy that fills within 32 bins on a fresh pilot market; also measure the largest sell.",
-  "configLabel": "pilot defaults",
+  "name": "seed-sweep-20sol",
+  "description": "Fresh market seeded with 20.000000 SOL: largest buy/sell within 32 bins, price impact of small buys.",
+  "configLabel": "factory defaults, seed 20.000000 SOL",
   "config": {
     "seedBase": "1000000000000000",
     "seedQuote": "20000000000",
@@ -156,9 +156,11 @@
     "swapCount": "0"
   },
   "findings": [
-    "Seed base per bin: 1,953,125 tokens (~0.039062 SOL at P0). Seed quote per bin: 0.312500 SOL.",
-    "Largest single buy on a fresh market within 32 bins: 1.493769 SOL gross. Largest single sell: 499,999,999.07 tokens (~10.000000 SOL at P0).",
-    "Calibration note: with 20 SOL seed quote over 64 bins the sell side holds 0.3125 SOL per bin, but the buy side at P0 holds only ~0.039 SOL of tokens per bin because 900M tokens valued at P0 is 20 SOL spread over 512 bins. Larger buys must be split into separate signed transactions (the UI offers this). Consider a denser base schedule near the cursor or a smaller binMax in a new config version before mainnet; this is an experimental calibration choice."
+    "Seed per bin: 0.312500 SOL quote (bins -64..-1), 1,953,125 tokens (~0.039062 SOL at P0, bins 0..511).",
+    "Largest single buy within 32 bins: 1.494411 SOL. Largest single sell: 499,999,999.07 tokens (~10.000000 SOL at P0).",
+    "A 0.010000 SOL buy inspects 1 bins and moves the cursor price 0.0%.",
+    "A 0.100000 SOL buy inspects 3 bins and moves the cursor price 2.0%.",
+    "A 1.000000 SOL buy inspects 23 bins and moves the cursor price 24.5%."
   ],
   "binsWithScars": 0,
   "binsWithCurrentQuote": 64

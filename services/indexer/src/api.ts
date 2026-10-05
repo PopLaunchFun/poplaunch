@@ -4,6 +4,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { PopClient } from "@pop/sdk";
 import { config } from "./config.js";
 import { query } from "./db.js";
+import { readMetadata, verifyAndStore, type MetadataBody } from "./metadata.js";
 
 const INTERVALS: Record<string, number> = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1d": 86400 };
 
@@ -40,6 +41,7 @@ function isPubkey(s: string | undefined): s is string {
 export function buildApi(connection: Connection, startedAt: number) {
   const app = new Hono();
   const limiter = new RateLimiter(config.rateLimitPerMinute);
+  const writeLimiter = new RateLimiter(10);
   const client = PopClient.readOnly(connection, "confirmed");
   app.use("*", cors());
   app.use("*", async (c, next) => {
@@ -90,17 +92,72 @@ export function buildApi(connection: Connection, startedAt: number) {
     });
   });
 
+  /** Directory: activated markets with metadata and a short sparkline of executed prices. */
   app.get("/api/markets", async (c) => {
-    const rows = await query<{ state: unknown }>("SELECT state FROM markets ORDER BY is_pop DESC, created_slot ASC");
-    return c.json({ markets: rows.map((r) => r.state) });
+    const includeCreated = c.req.query("include") === "created";
+    const rows = await query<{ state: Record<string, unknown>; base_mint: string; image_url: string | null; description: string | null; website: string | null; twitter: string | null; telegram: string | null; sparkline: number[] | null }>(
+      `SELECT m.state, m.base_mint, cm.image_url, cm.description, cm.website, cm.twitter, cm.telegram,
+              (SELECT array_agg(avg_price ORDER BY slot, event_index) FROM (SELECT avg_price, slot, event_index FROM trades t WHERE t.market = m.address AND avg_price IS NOT NULL ORDER BY slot DESC, event_index DESC LIMIT 24) x) AS sparkline
+       FROM markets m LEFT JOIN coin_metadata cm ON cm.mint = m.base_mint
+       ${includeCreated ? "" : "WHERE m.status <> 'created'"}
+       ORDER BY m.created_slot DESC`,
+    );
+    return c.json({ markets: rows.map((r) => ({ ...r.state, metadata: { imageUrl: r.image_url, description: r.description, website: r.website, twitter: r.twitter, telegram: r.telegram }, sparkline: r.sparkline ?? [] })) });
   });
 
   app.get("/api/markets/:address", async (c) => {
     const address = c.req.param("address");
     if (!isPubkey(address)) return c.json({ error: "bad address" }, 400);
-    const [row] = await query<{ state: unknown; updated_at: string }>("SELECT state, updated_at FROM markets WHERE address = $1", [address]);
+    const [row] = await query<{ state: Record<string, unknown>; base_mint: string; updated_at: string }>("SELECT state, base_mint, updated_at FROM markets WHERE address = $1", [address]);
     if (!row) return c.json({ error: "not found" }, 404);
-    return c.json({ market: row.state, updatedAt: row.updated_at });
+    const metadata = await readMetadata(row.base_mint);
+    return c.json({ market: { ...row.state, metadata }, updatedAt: row.updated_at });
+  });
+
+  /** Creator workspace: every market by this creator (any status) with claimables and missing pages. */
+  app.get("/api/creators/:address/markets", async (c) => {
+    const address = c.req.param("address");
+    if (!isPubkey(address)) return c.json({ error: "bad address" }, 400);
+    const rows = await query<{ state: Record<string, unknown>; base_mint: string; updated_at: string }>("SELECT state, base_mint, updated_at FROM markets WHERE creator = $1 ORDER BY created_slot DESC", [address]);
+    const out = [];
+    for (const r of rows) out.push({ ...r.state, metadata: await readMetadata(r.base_mint), updatedAt: r.updated_at });
+    return c.json({ markets: out });
+  });
+
+  app.get("/api/coins/:mint/metadata", async (c) => {
+    const mint = c.req.param("mint");
+    if (!isPubkey(mint)) return c.json({ error: "bad mint" }, 400);
+    const m = await readMetadata(mint);
+    return c.json({ mint, metadata: m });
+  });
+
+  /** Metaplex-style JSON usable as the on-chain `uri`. */
+  app.get("/api/coins/:mint/metadata.json", async (c) => {
+    const mint = c.req.param("mint");
+    if (!isPubkey(mint)) return c.json({ error: "bad mint" }, 400);
+    const [row] = await query<{ name: string; symbol: string }>("SELECT name, symbol FROM markets WHERE base_mint = $1", [mint]);
+    const m = await readMetadata(mint);
+    return c.json({ name: row?.name ?? null, symbol: row?.symbol ?? null, description: m?.description ?? "", image: m?.imageUrl ?? null, external_url: m?.website ?? null, properties: { twitter: m?.twitter ?? null, telegram: m?.telegram ?? null }, launchpad: "POP / Proof of Pain" });
+  });
+
+  app.post("/api/coins/:mint/metadata", async (c) => {
+    const mint = c.req.param("mint");
+    if (!isPubkey(mint)) return c.json({ error: "bad mint" }, 400);
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+    if (!writeLimiter.allow(ip)) return c.json({ error: "rate limited" }, 429);
+    let body: { payload?: MetadataBody; signer?: string; signature?: string; signedAt?: number };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "bad json" }, 400);
+    }
+    if (!body.payload || !isPubkey(body.signer) || typeof body.signature !== "string" || typeof body.signedAt !== "number") return c.json({ error: "payload, signer, signature, signedAt required" }, 400);
+    try {
+      await verifyAndStore(connection, mint, body.payload, body.signer, body.signature, body.signedAt);
+      return c.json({ ok: true, metadata: await readMetadata(mint) });
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 400);
+    }
   });
 
   app.get("/api/markets/:address/bins", async (c) => {
@@ -116,7 +173,7 @@ export function buildApi(connection: Connection, startedAt: number) {
     if (!isPubkey(address)) return c.json({ error: "bad address" }, 400);
     const limit = Math.min(200, Math.max(1, Number(c.req.query("limit") ?? 50)));
     const rows = await query(
-      `SELECT signature, event_index, trader, is_buy, gross_input::text, output::text, scar_fee::text, protocol_fee::text, creator_fee::text, bins_inspected, start_bin, end_bin, internal_buyback, avg_price, slot, block_time, finalized
+      `SELECT signature, event_index, trader, is_buy, gross_input::text, output::text, scar_fee::text, protocol_fee::text, creator_fee::text, bins_inspected, start_bin, end_bin, avg_price, slot, block_time, finalized
        FROM trades WHERE market = $1 ORDER BY slot DESC, event_index DESC LIMIT $2`,
       [address, limit],
     );
@@ -164,21 +221,36 @@ export function buildApi(connection: Connection, startedAt: number) {
     return c.json({ events: rows });
   });
 
-  app.get("/api/pop", async (c) => {
-    const [p] = await query<{ state: unknown; buyback: unknown; vestings: unknown; snapshot_slot: string; updated_at: string }>("SELECT state, buyback, vestings, snapshot_slot, updated_at FROM protocol WHERE id = 1");
+  /** Buyback escrow transparency: vault, policy, sweeps, withdrawals and observed burns. */
+  app.get("/api/buyback", async (c) => {
+    const [p] = await query<{ state: { popMint: string; buybackAuthority: string }; buyback: unknown; snapshot_slot: string; updated_at: string }>("SELECT state, buyback, snapshot_slot, updated_at FROM protocol WHERE id = 1");
     if (!p) return c.json({ error: "protocol not initialized" }, 404);
-    const buybacks = await query(`SELECT signature, event_index, data, slot, block_time, finalized FROM events WHERE name IN ('buybackExecuted','buybackSwept') ORDER BY slot DESC LIMIT 100`);
-    const [pop] = await query<{ state: unknown }>("SELECT state FROM markets WHERE is_pop = true LIMIT 1");
-    return c.json({ protocol: p.state, buyback: p.buyback, vestings: p.vestings, buybackHistory: buybacks, popMarket: pop?.state ?? null, snapshotSlot: Number(p.snapshot_slot), updatedAt: p.updated_at });
+    const sweeps = await query(`SELECT signature, event_index, market, data, slot, block_time, finalized FROM events WHERE name = 'buybackSwept' ORDER BY slot DESC LIMIT 100`);
+    const withdrawals = await query(`SELECT signature, event_index, data, slot, block_time, finalized FROM events WHERE name = 'buybackWithdrawn' ORDER BY slot DESC LIMIT 100`);
+    const burns = await query(`SELECT signature, amount::text, mint, slot, block_time, finalized FROM buyback_burns ORDER BY slot DESC LIMIT 100`);
+    const burnedSigs = new Set(burns.map((b) => b.signature as string));
+    const [tot] = await query<{ burned: string }>("SELECT coalesce(sum(amount),0)::text AS burned FROM buyback_burns");
+    return c.json({
+      popMint: p.state.popMint,
+      authority: p.state.buybackAuthority,
+      vault: p.buyback,
+      totalBurned: tot?.burned ?? "0",
+      sweeps,
+      withdrawals: withdrawals.map((w) => ({ ...w, burnInSameTx: burnedSigs.has(w.signature as string) })),
+      burns,
+      snapshotSlot: Number(p.snapshot_slot),
+      updatedAt: p.updated_at,
+    });
   });
 
   app.get("/api/totals", async (c) => {
     const [t] = await query<{ markets: string; trades: string; scars: string; paired: string; graduated: string }>(
       `SELECT (SELECT count(*)::text FROM markets) AS markets,
-              (SELECT count(*)::text FROM trades WHERE internal_buyback = false) AS trades,
+              (SELECT count(*)::text FROM trades) AS trades,
               (SELECT count(*)::text FROM scars) AS scars,
               (SELECT coalesce(sum((state->'maturity'->>'pairedQuoteLifetime')::numeric),0)::text FROM markets) AS paired,
-              (SELECT count(*)::text FROM markets WHERE status = 'graduated') AS graduated`,
+              (SELECT count(*)::text FROM markets WHERE status = 'graduated') AS graduated,
+              (SELECT count(*)::text FROM markets WHERE status <> 'created') AS activeMarkets`,
     );
     return c.json({ totals: t });
   });

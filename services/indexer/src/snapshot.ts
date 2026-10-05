@@ -3,7 +3,7 @@
  * authoritative; this cache lets the API answer directory and detail queries in one round trip.
  */
 import { Connection } from "@solana/web3.js";
-import { PopClient, STATUS, vestingPda, type MarketView } from "@pop/sdk";
+import { PopClient, STATUS, type MarketView } from "@pop/sdk";
 import { executableDepth, graduationProgress, priceAtBin, reconcile, type Direction } from "@pop/math";
 import { query } from "./db.js";
 
@@ -13,15 +13,9 @@ export function marketSummary(v: MarketView, slot: number) {
   const r = reconcile(v.state, v.store);
   const cursorPrice = priceAtBin(v.p0X64, v.state.cursor);
   const depth = (d: Direction, bps: number) => {
-    const x = executableDepth(v.config, v.state, v.p0X64, (b) => v.store.get(b), d, bps);
+    const x = executableDepth(v.config, v.state, v.p0X64, (b) => v.store.getVirtual(b), d, bps);
     return { input: x.input.toString(), output: x.output.toString(), bins: x.binsWithInventory };
   };
-  let pendingQuoteIneligible = 0n;
-  let pendingBaseIneligible = 0n;
-  for (const [, b] of v.store.entries()) {
-    pendingQuoteIneligible += b.pendingQuoteIneligible;
-    pendingBaseIneligible += b.pendingBaseIneligible;
-  }
   const bands = [...v.state.bands.entries()].sort((a, b) => a[0] - b[0]).map(([band, s]) => ({ band, pairedQuote: s.pairedQuote.toString(), hardened: s.hardened }));
   return {
     address: v.address.toBase58(),
@@ -30,7 +24,6 @@ export function marketSummary(v: MarketView, slot: number) {
     name: v.raw.name,
     symbol: v.raw.symbol,
     uri: v.raw.uri,
-    isPopMarket: v.config.isPopMarket,
     status: v.state.status,
     configVersion: v.config.configVersion,
     baseDecimals: v.config.baseDecimals,
@@ -52,8 +45,6 @@ export function marketSummary(v: MarketView, slot: number) {
       scarQuote: r.binScarQuote.toString(),
       pendingBaseEligible: r.pendingBaseEligible.toString(),
       pendingQuoteEligible: r.pendingQuoteEligible.toString(),
-      pendingBaseIneligible: pendingBaseIneligible.toString(),
-      pendingQuoteIneligible: pendingQuoteIneligible.toString(),
       vaultBase: r.vaultBase.toString(),
       vaultQuote: r.vaultQuote.toString(),
       feeVaultBase: r.feeVaultBase.toString(),
@@ -81,7 +72,7 @@ export function marketSummary(v: MarketView, slot: number) {
       buybackAccruedQuote: v.state.buybackAccruedQuote.toString(),
     },
     volume: { buyQuote: v.state.totalBuyVolumeQuote.toString(), sellBase: v.state.totalSellVolumeBase.toString(), swapCount: v.state.swapCount.toString() },
-    supply: { seedBase: v.config.seedBase.toString(), allocated: str(v.raw.allocatedSupply), vestingCount: v.raw.vestingCount },
+    supply: { totalMinted: v.config.seedBase.toString(), outstanding: v.config.seedBase.toString() },
     activatedAtSlot: str(v.raw.activatedAtSlot),
     activatedAtTs: str(v.raw.activatedAtTs),
     createdAtSlot: str(v.raw.createdAtSlot),
@@ -92,7 +83,7 @@ export function marketSummary(v: MarketView, slot: number) {
 export function binSnapshot(v: MarketView) {
   const out: Record<string, unknown>[] = [];
   for (const [id, b] of v.store.entries()) {
-    const touched = b.buyVolumeQuote || b.sellVolumeBase || b.pendingQuoteEligible || b.pendingBaseEligible || b.scarBase || b.scarQuote || b.pendingBaseIneligible || b.pendingQuoteIneligible;
+    const touched = b.buyVolumeQuote || b.sellVolumeBase || b.pendingQuoteEligible || b.pendingBaseEligible || b.scarBase || b.scarQuote;
     out.push({
       bin: id,
       priceX64: priceAtBin(v.p0X64, id).toString(),
@@ -102,8 +93,6 @@ export function binSnapshot(v: MarketView) {
       scarQuote: b.scarQuote.toString(),
       pendingBaseEligible: b.pendingBaseEligible.toString(),
       pendingQuoteEligible: b.pendingQuoteEligible.toString(),
-      pendingBaseIneligible: b.pendingBaseIneligible.toString(),
-      pendingQuoteIneligible: b.pendingQuoteIneligible.toString(),
       buyVolumeQuote: b.buyVolumeQuote.toString(),
       sellVolumeBase: b.sellVolumeBase.toString(),
       pairedQuoteLifetime: b.pairedQuoteLifetime.toString(),
@@ -127,35 +116,27 @@ export class Snapshotter {
       const v = await this.client.fetchMarket(m.publicKey);
       const summary = marketSummary(v, slot);
       await query(
-        `INSERT INTO markets (address, base_mint, creator, name, symbol, uri, is_pop, status, config_version, created_slot, state, bins, snapshot_slot, updated_at)
+        `INSERT INTO markets (address, base_mint, creator, name, symbol, uri, status, seed_quote, config_version, created_slot, state, bins, snapshot_slot, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now())
          ON CONFLICT (address) DO UPDATE SET status = EXCLUDED.status, state = EXCLUDED.state, bins = EXCLUDED.bins, snapshot_slot = EXCLUDED.snapshot_slot, updated_at = now()`,
-        [summary.address, summary.baseMint, summary.creator, summary.name, summary.symbol, summary.uri, summary.isPopMarket, summary.status, summary.configVersion, summary.createdAtSlot, JSON.stringify(summary), JSON.stringify(binSnapshot(v)), slot],
+        [summary.address, summary.baseMint, summary.creator, summary.name, summary.symbol, summary.uri, summary.status, summary.seedQuote, summary.configVersion, summary.createdAtSlot, JSON.stringify(summary), JSON.stringify(binSnapshot(v)), slot],
       );
     }
-    // protocol + buyback + vestings of the POP market
+    // protocol + buyback escrow
     try {
       const p = await this.client.fetchProtocol();
       const bb = await this.client.fetchBuybackVault();
-      const vestings: unknown[] = [];
-      if (!p.popMarket.equals(p.authority) && p.popMarket.toBase58() !== "11111111111111111111111111111111") {
-        const pm = markets.find((m) => m.publicKey.equals(p.popMarket));
-        const count = pm ? pm.account.vestingCount : 0;
-        for (let i = 0; i < count; i++) {
-          const ves = await this.client.fetchVesting(p.popMarket, i);
-          if (ves) vestings.push({ address: vestingPda(this.client.programId, p.popMarket, i).toBase58(), beneficiary: ves.beneficiary.toBase58(), vault: ves.vault.toBase58(), index: ves.index, total: ves.total.toString(), claimed: ves.claimed.toString(), startOffset: ves.startOffset.toString(), cliffOffset: ves.cliffOffset.toString(), endOffset: ves.endOffset.toString(), label: ves.label });
-        }
-      }
+      const escrowBalance = await this.connection.getTokenAccountBalance(bb.quoteAccount, "confirmed").then((r) => r.value.amount).catch(() => "0");
       const state = {
         version: p.version, authority: p.authority.toBase58(), protocolFeeRecipient: p.protocolFeeRecipient.toBase58(), buybackAuthority: p.buybackAuthority.toBase58(),
-        popMint: p.popMint.toBase58(), popMarket: p.popMarket.toBase58(), launchesEnabled: p.launchesEnabled, marketCount: p.marketCount.toString(),
+        popMint: p.popMint.toBase58(), launchesEnabled: p.launchesEnabled, marketCount: p.marketCount.toString(),
         settings: Object.fromEntries(Object.entries(p.settings).map(([k, v]) => [k, typeof v === "object" ? (v as { toString(): string }).toString() : v])),
       };
-      const buyback = { authority: bb.authority.toBase58(), quoteAccount: bb.quoteAccount.toBase58(), totalReceived: bb.totalReceived.toString(), totalSpent: bb.totalSpent.toString(), totalBurned: bb.totalBurned.toString(), lastExecutionSlot: bb.lastExecutionSlot.toString(), minIntervalSlots: bb.minIntervalSlots.toString(), maxSpendPerExecution: bb.maxSpendPerExecution.toString(), executionCount: bb.executionCount.toString() };
+      const buyback = { authority: bb.authority.toBase58(), quoteAccount: bb.quoteAccount.toBase58(), escrowBalance, totalReceived: bb.totalReceived.toString(), totalWithdrawn: bb.totalWithdrawn.toString(), lastWithdrawalSlot: bb.lastWithdrawalSlot.toString(), minIntervalSlots: bb.minIntervalSlots.toString(), maxWithdrawPerExecution: bb.maxWithdrawPerExecution.toString(), withdrawalCount: bb.withdrawalCount.toString() };
       await query(
-        `INSERT INTO protocol (id, state, buyback, vestings, snapshot_slot, updated_at) VALUES (1,$1,$2,$3,$4,now())
-         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, buyback = EXCLUDED.buyback, vestings = EXCLUDED.vestings, snapshot_slot = EXCLUDED.snapshot_slot, updated_at = now()`,
-        [JSON.stringify(state), JSON.stringify(buyback), JSON.stringify(vestings), slot],
+        `INSERT INTO protocol (id, state, buyback, snapshot_slot, updated_at) VALUES (1,$1,$2,$3,now())
+         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, buyback = EXCLUDED.buyback, snapshot_slot = EXCLUDED.snapshot_slot, updated_at = now()`,
+        [JSON.stringify(state), JSON.stringify(buyback), slot],
       );
     } catch {
       // protocol not initialized yet

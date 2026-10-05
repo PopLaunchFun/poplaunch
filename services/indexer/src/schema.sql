@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS trades (
   bins_inspected INT NOT NULL,
   start_bin INT NOT NULL,
   end_bin INT NOT NULL,
-  internal_buyback BOOLEAN NOT NULL,
   -- executed average price in quote atomic per base atomic (double, display only)
   avg_price DOUBLE PRECISION,
   slot BIGINT NOT NULL,
@@ -70,8 +69,8 @@ CREATE TABLE IF NOT EXISTS markets (
   name TEXT NOT NULL,
   symbol TEXT NOT NULL,
   uri TEXT NOT NULL,
-  is_pop BOOLEAN NOT NULL,
   status TEXT NOT NULL,
+  seed_quote NUMERIC(40,0) NOT NULL DEFAULT 0,
   config_version INT NOT NULL,
   created_slot BIGINT NOT NULL,
   -- full decoded Market account plus derived metrics, refreshed by the snapshot loop
@@ -86,7 +85,43 @@ CREATE TABLE IF NOT EXISTS protocol (
   id INT PRIMARY KEY DEFAULT 1,
   state JSONB NOT NULL,
   buyback JSONB NOT NULL,
-  vestings JSONB NOT NULL DEFAULT '[]',
   snapshot_slot BIGINT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Off-chain coin metadata written by the creator through a signed message (see metadata.ts).
+CREATE TABLE IF NOT EXISTS coin_metadata (
+  mint TEXT PRIMARY KEY,
+  creator TEXT NOT NULL,
+  image_url TEXT,
+  description TEXT,
+  website TEXT,
+  twitter TEXT,
+  telegram TEXT,
+  signature TEXT NOT NULL,
+  signed_at BIGINT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- SPL burns of the published POP mint observed on the buyback authority's POP token account.
+CREATE TABLE IF NOT EXISTS buyback_burns (
+  signature TEXT PRIMARY KEY,
+  amount NUMERIC(40,0) NOT NULL,
+  mint TEXT NOT NULL,
+  slot BIGINT NOT NULL,
+  block_time BIGINT,
+  finalized BOOLEAN NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS watcher_cursor (
+  key TEXT PRIMARY KEY,
+  last_signature TEXT,
+  last_slot BIGINT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Idempotent v1 -> v2 column changes.
+ALTER TABLE markets DROP COLUMN IF EXISTS is_pop;
+ALTER TABLE trades DROP COLUMN IF EXISTS internal_buyback;
+ALTER TABLE protocol DROP COLUMN IF EXISTS vestings;
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS seed_quote NUMERIC(40,0) NOT NULL DEFAULT 0;

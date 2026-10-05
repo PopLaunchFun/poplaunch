@@ -59,7 +59,6 @@ export interface TradeRecord {
   avgPrice?: number | null;
   scarsFormed?: { bin: number; base: bigint; quote: bigint }[];
   graduated?: boolean;
-  internalBuyback?: boolean;
   /** Minimum output the trader demanded (slippage protection). */
   minOutput: bigint;
 }
@@ -73,16 +72,6 @@ export interface ClaimRecord {
   recipient: string;
 }
 
-export interface BuybackRecord {
-  seq: number;
-  slot: number;
-  quoteSpent: bigint;
-  popBought: bigint;
-  popBurned: bigint;
-  ok: boolean;
-  error?: string;
-}
-
 export interface InventorySnapshot {
   seedBase: bigint;
   seedQuote: bigint;
@@ -90,8 +79,6 @@ export interface InventorySnapshot {
   scarQuote: bigint;
   pendingBaseEligible: bigint;
   pendingQuoteEligible: bigint;
-  pendingBaseIneligible: bigint;
-  pendingQuoteIneligible: bigint;
   unmaterializedSeedBase: bigint;
   unmaterializedSeedQuote: bigint;
   vaultBase: bigint;
@@ -113,10 +100,8 @@ export interface RunReport {
   trades: TradeRecord[];
   tradeCount: { attempted: number; succeeded: number; failed: number };
   feesByDestination: {
-    scarEligibleQuote: bigint;
-    scarEligibleBase: bigint;
-    scarIneligibleQuote: bigint;
-    scarIneligibleBase: bigint;
+    scarQuote: bigint;
+    scarBase: bigint;
     protocolQuoteOperating: bigint;
     protocolQuoteBuybackEarmark: bigint;
     protocolBase: bigint;
@@ -124,9 +109,6 @@ export interface RunReport {
     creatorBase: bigint;
   };
   withdrawals: ClaimRecord[];
-  buybacks: BuybackRecord[];
-  burnedBase: bigint;
-  outstandingSupply: bigint;
   matched: {
     pairedQuoteLifetime: bigint;
     hardenedBands: number;
@@ -149,8 +131,11 @@ export interface SimulationOptions {
   description: string;
   config: MarketConfig;
   configLabel?: string;
-  /** Initialize all pages up front (default true). */
+  /** Initialize all pages up front (default true); otherwise only `pages` (default: none). */
   initAllPages?: boolean;
+  pages?: number[];
+  /** Start active (default true). Set false to model an unfinished launch. */
+  active?: boolean;
 }
 
 export class Simulation {
@@ -161,17 +146,16 @@ export class Simulation {
   readonly actors = new Map<string, Actor>();
   readonly trades: TradeRecord[] = [];
   readonly withdrawals: ClaimRecord[] = [];
-  readonly buybacks: BuybackRecord[] = [];
   readonly findings: string[] = [];
   readonly name: string;
   readonly description: string;
   readonly configLabel: string;
   slot = 1;
   seq = 0;
-  burnedBase = 0n;
   graduationEvents = 0;
-  /** Total supply minted for this market's base token (seed + any published allocations). */
+  /** Total supply minted for this market's base token (all of it is seed inventory). */
   totalMinted: bigint;
+  activations = 0;
   // Independent ledger of physical flows into/out of the market's custody.
   private ledgerBaseIn = 0n;
   private ledgerBaseOut = 0n;
@@ -187,7 +171,8 @@ export class Simulation {
     this.state = newMarketState(opts.config);
     this.store = new BinStore(opts.config);
     if (opts.initAllPages ?? true) this.store.initAllPages(this.state);
-    this.state.status = "active";
+    else for (const p of opts.pages ?? []) this.store.initPage(this.state, p);
+    if (opts.active ?? true) this.state.status = "active";
     this.p0 = quantizeP0(opts.config.seedQuote, opts.config.seedBase);
     this.totalMinted = opts.config.seedBase;
     this.startingInventory = this.snapshot();
@@ -214,15 +199,36 @@ export class Simulation {
     return (Number(p) / 2 ** 64) * 10 ** (this.config.baseDecimals - this.config.quoteDecimals);
   }
 
-  /** Quote without committing. */
-  quote(direction: Direction, grossInput: bigint, minOutput = 0n, internalBuyback = false): SwapOutcome {
-    return quoteSwap(this.config, this.state, this.p0, (b) => this.store.get(b), {
+  /** Quote without committing. `virtual` treats uninitialized pages as their seed schedule. */
+  quote(direction: Direction, grossInput: bigint, minOutput = 0n, virtual = false): SwapOutcome {
+    return quoteSwap(this.config, this.state, this.p0, (b) => (virtual ? this.store.getVirtual(b) : this.store.get(b)), {
       direction,
       grossInput,
       minOutput,
-      internalBuyback,
       slot: BigInt(this.slot),
     });
+  }
+
+  /** Materialize pages (idempotent for the caller: already-initialized pages are skipped and reported). */
+  initPages(indices: number[]): { created: number[]; skipped: number[] } {
+    const created: number[] = [];
+    const skipped: number[] = [];
+    for (const p of indices) {
+      if (this.store.hasPage(p)) skipped.push(p);
+      else {
+        this.store.initPage(this.state, p);
+        created.push(p);
+      }
+    }
+    return { created, skipped };
+  }
+
+  /** Activation: exactly once; models the funded-seed check. */
+  activate(): boolean {
+    if (this.state.status !== "created") return false;
+    this.state.status = "active";
+    this.activations += 1;
+    return true;
   }
 
   /** Execute a swap for an actor. Failed swaps leave all state untouched. */
@@ -246,13 +252,13 @@ export class Simulation {
       return rec;
     }
     const r = commitSwap(this.config, this.state, this.p0, (b) => this.store.getOrThrow(b), q, params);
-    this.applyReceipt(actor, direction, grossInput, r, rec, false);
+    this.applyReceipt(actor, direction, grossInput, r, rec);
     this.trades.push(rec);
     this.slot++;
     return rec;
   }
 
-  private applyReceipt(actor: Actor | null, direction: Direction, grossInput: bigint, r: SwapReceipt, rec: TradeRecord, internal: boolean) {
+  private applyReceipt(actor: Actor | null, direction: Direction, grossInput: bigint, r: SwapReceipt, rec: TradeRecord) {
     const q = r.quote;
     if (direction === "buy") {
       if (actor) {
@@ -287,7 +293,6 @@ export class Simulation {
     const grads = r.events.filter((e) => e.type === "Graduated").length;
     this.graduationEvents += grads;
     rec.graduated = grads > 0;
-    rec.internalBuyback = internal;
   }
 
   /** Permissionless keeper pass: try to match every initialized bin. Idempotent. */
@@ -320,9 +325,8 @@ export class Simulation {
     return { ok: false, error: "NoSuchInstruction: scar/seed custody has no withdrawal path" };
   }
 
-  /** Sweep the buyback earmark out of this (non-POP) market into the buyback vault. */
-  sweepBuyback(): ClaimRecord | { ok: false; error: string } {
-    if (this.config.isPopMarket) return { ok: false, error: "BuybackSourceExcluded: POP market cannot fund buybacks" };
+  /** Sweep the buyback earmark out of this market into the protocol buyback escrow (permissionless). */
+  sweepBuyback(): ClaimRecord {
     const amount = this.state.buybackAccruedQuote;
     this.state.buybackAccruedQuote = 0n;
     return this.recordWithdrawal("buyback_sweep", "quote", amount, "buyback-vault");
@@ -339,50 +343,6 @@ export class Simulation {
     return rec;
   }
 
-  /**
-   * Execute a POP buyback on THIS market (must be the POP market) with realized funds from the
-   * buyback vault: internal swap (scar fee ineligible, no protocol/creator fee), then burn.
-   */
-  executeBuyback(vault: Actor, quoteSpend: bigint, minPopOut: bigint, maxPriceHuman?: number): BuybackRecord {
-    const rec: BuybackRecord = { seq: ++this.seq, slot: this.slot, quoteSpent: 0n, popBought: 0n, popBurned: 0n, ok: false };
-    if (!this.config.isPopMarket) {
-      rec.error = "NotPopMarket";
-      this.buybacks.push(rec);
-      return rec;
-    }
-    if (vault.quote < quoteSpend) {
-      rec.error = "InsufficientBuybackFunds";
-      this.buybacks.push(rec);
-      return rec;
-    }
-    if (maxPriceHuman !== undefined && this.priceHuman(this.state.cursor) > maxPriceHuman) {
-      rec.error = "ReferencePriceGuard";
-      this.buybacks.push(rec);
-      return rec;
-    }
-    const params: SwapParams = { direction: "buy", grossInput: quoteSpend, minOutput: minPopOut, internalBuyback: true, slot: BigInt(this.slot) };
-    const q = quoteSwap(this.config, this.state, this.p0, (b) => this.store.get(b), params);
-    if (!q.ok) {
-      rec.error = `${q.error}: ${q.detail}`;
-      this.buybacks.push(rec);
-      return rec;
-    }
-    const r = commitSwap(this.config, this.state, this.p0, (b) => this.store.getOrThrow(b), q, params);
-    const trade: TradeRecord = { seq: this.seq, slot: this.slot, actor: vault.name, direction: "buy", grossInput: quoteSpend, ok: false, minOutput: minPopOut };
-    this.applyReceipt(vault, "buy", quoteSpend, r, trade, true);
-    this.trades.push(trade);
-    // Atomic burn of purchased POP.
-    vault.base -= q.output;
-    this.burnedBase += q.output;
-    rec.ok = true;
-    rec.quoteSpent = quoteSpend;
-    rec.popBought = q.output;
-    rec.popBurned = q.output;
-    this.buybacks.push(rec);
-    this.slot++;
-    return rec;
-  }
-
   snapshot(): InventorySnapshot {
     const r = reconcile(this.state, this.store);
     return {
@@ -392,8 +352,6 @@ export class Simulation {
       scarQuote: r.binScarQuote,
       pendingBaseEligible: r.pendingBaseEligible,
       pendingQuoteEligible: r.pendingQuoteEligible,
-      pendingBaseIneligible: r.pendingBaseIneligible,
-      pendingQuoteIneligible: r.pendingQuoteIneligible,
       unmaterializedSeedBase: this.state.unmaterializedSeedBase,
       unmaterializedSeedQuote: this.state.unmaterializedSeedQuote,
       vaultBase: r.vaultBase,
@@ -430,23 +388,23 @@ export class Simulation {
 
   report(): RunReport {
     const c = this.config;
-    let scarEligibleQuote = 0n, scarEligibleBase = 0n, scarIneligibleQuote = 0n, scarIneligibleBase = 0n;
+    let scarQuote = 0n, scarBase = 0n;
     let protocolQuote = 0n, protocolBase = 0n, creatorQuote = 0n, creatorBase = 0n;
     for (const t of this.trades) {
       if (!t.ok) continue;
       if (t.direction === "buy") {
-        if (t.internalBuyback) scarIneligibleQuote += t.scarFee!;
-        else scarEligibleQuote += t.scarFee!;
+        scarQuote += t.scarFee!;
         protocolQuote += t.protocolFee!;
         creatorQuote += t.creatorFee!;
       } else {
-        if (t.internalBuyback) scarIneligibleBase += t.scarFee!;
-        else scarEligibleBase += t.scarFee!;
+        scarBase += t.scarFee!;
         protocolBase += t.protocolFee!;
         creatorBase += t.creatorFee!;
       }
     }
-    const buybackEarmark = c.isPopMarket ? 0n : (protocolQuote * BigInt(c.fees.buybackShareBps)) / 10_000n;
+    // Per-swap flooring: the on-chain earmark is floor(protocolFee * bps / 10000) per swap.
+    let buybackEarmark = 0n;
+    for (const t of this.trades) if (t.ok && t.direction === "buy") buybackEarmark += (t.protocolFee! * BigInt(c.fees.buybackShareBps)) / 10_000n;
     let binsWithScars = 0, binsWithCurrentQuote = 0;
     for (const [, b] of this.store.entries()) {
       if (b.scarBase > 0n || b.scarQuote > 0n) binsWithScars++;
@@ -469,7 +427,6 @@ export class Simulation {
         maturityQuoteTarget: c.maturityQuoteTarget.toString(),
         bandQuoteTarget: c.bandQuoteTarget.toString(),
         bandsRequired: c.bandsRequired,
-        isPopMarket: c.isPopMarket,
         configVersion: c.configVersion,
         p0HumanQuotePerBase: this.priceHuman(0),
       },
@@ -479,15 +436,12 @@ export class Simulation {
       trades: this.trades,
       tradeCount: { attempted: this.trades.length, succeeded: this.trades.filter((t) => t.ok).length, failed: this.trades.filter((t) => !t.ok).length },
       feesByDestination: {
-        scarEligibleQuote, scarEligibleBase, scarIneligibleQuote, scarIneligibleBase,
+        scarQuote, scarBase,
         protocolQuoteOperating: protocolQuote - buybackEarmark,
         protocolQuoteBuybackEarmark: buybackEarmark,
         protocolBase, creatorQuote, creatorBase,
       },
       withdrawals: this.withdrawals,
-      buybacks: this.buybacks,
-      burnedBase: this.burnedBase,
-      outstandingSupply: this.totalMinted - this.burnedBase,
       matched: {
         pairedQuoteLifetime: this.state.pairedQuoteLifetime,
         hardenedBands: this.state.hardenedBands,

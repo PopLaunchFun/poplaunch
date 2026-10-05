@@ -90,9 +90,9 @@ export class Ingester {
           const tradable = gross - fees;
           const avg = output === 0n || tradable === 0n ? null : isBuy ? Number(tradable) / Number(output) : Number(output) / Number(tradable);
           await c.query(
-            `INSERT INTO trades (signature, event_index, market, trader, is_buy, gross_input, output, scar_fee, protocol_fee, creator_fee, bins_inspected, start_bin, end_bin, internal_buyback, avg_price, slot, block_time)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) ON CONFLICT DO NOTHING`,
-            [info.signature, idx, data.market, data.user, isBuy, gross.toString(), output.toString(), data.scarFee, data.protocolFee, data.creatorFee, data.binsInspected, data.startBin, data.endBin, data.internalBuyback, avg, slot, blockTime],
+            `INSERT INTO trades (signature, event_index, market, trader, is_buy, gross_input, output, scar_fee, protocol_fee, creator_fee, bins_inspected, start_bin, end_bin, avg_price, slot, block_time)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT DO NOTHING`,
+            [info.signature, idx, data.market, data.user, isBuy, gross.toString(), output.toString(), data.scarFee, data.protocolFee, data.creatorFee, data.binsInspected, data.startBin, data.endBin, avg, slot, blockTime],
           );
         } else if (ev.name === "scarFormed") {
           await c.query(

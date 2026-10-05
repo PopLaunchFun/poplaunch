@@ -1,10 +1,10 @@
 {
-  "name": "launch-calibration",
-  "description": "Binary search the largest gross buy that fills within 32 bins on a fresh pilot market; also measure the largest sell.",
-  "configLabel": "pilot defaults",
+  "name": "seed-sweep-5sol",
+  "description": "Fresh market seeded with 5.000000 SOL: largest buy/sell within 32 bins, price impact of small buys.",
+  "configLabel": "factory defaults, seed 5.000000 SOL",
   "config": {
     "seedBase": "1000000000000000",
-    "seedQuote": "20000000000",
+    "seedQuote": "5000000000",
     "binMin": -64,
     "binMax": 511,
     "maxBinsPerSwap": 32,
@@ -15,11 +15,11 @@
     "bandQuoteTarget": "1000000000",
     "bandsRequired": 10,
     "configVersion": 1,
-    "p0HumanQuotePerBase": 1.9999999999999997e-8
+    "p0HumanQuotePerBase": 4.999999999999959e-9
   },
   "startingInventory": {
     "seedBase": "1000000000000000",
-    "seedQuote": "20000000000",
+    "seedQuote": "5000000000",
     "scarBase": "0",
     "scarQuote": "0",
     "pendingBaseEligible": "0",
@@ -27,15 +27,15 @@
     "unmaterializedSeedBase": "0",
     "unmaterializedSeedQuote": "0",
     "vaultBase": "1000000000000000",
-    "vaultQuote": "20000000000",
+    "vaultQuote": "5000000000",
     "feeVaultBase": "0",
     "feeVaultQuote": "0",
     "cursor": 0,
-    "cursorPriceHuman": 1.9999999999999997e-8
+    "cursorPriceHuman": 4.999999999999959e-9
   },
   "endingInventory": {
     "seedBase": "1000000000000000",
-    "seedQuote": "20000000000",
+    "seedQuote": "5000000000",
     "scarBase": "0",
     "scarQuote": "0",
     "pendingBaseEligible": "0",
@@ -43,15 +43,15 @@
     "unmaterializedSeedBase": "0",
     "unmaterializedSeedQuote": "0",
     "vaultBase": "1000000000000000",
-    "vaultQuote": "20000000000",
+    "vaultQuote": "5000000000",
     "feeVaultBase": "0",
     "feeVaultQuote": "0",
     "cursor": 0,
-    "cursorPriceHuman": 1.9999999999999997e-8
+    "cursorPriceHuman": 4.999999999999959e-9
   },
   "deposits": {
     "seedBase": "1000000000000000",
-    "seedQuote": "20000000000"
+    "seedQuote": "5000000000"
   },
   "trades": [],
   "tradeCount": {
@@ -81,21 +81,21 @@
     {
       "direction": "buy",
       "bps": 500,
-      "input": "199258010",
+      "input": "49814505",
       "output": "9765625000000",
       "bins": 5
     },
     {
       "direction": "buy",
       "bps": 1000,
-      "input": "408680182",
+      "input": "102170050",
       "output": "19531250000000",
       "bins": 10
     },
     {
       "direction": "buy",
       "bps": 2000,
-      "input": "812925595",
+      "input": "203231407",
       "output": "37109375000000",
       "bins": 19
     },
@@ -103,21 +103,21 @@
       "direction": "sell",
       "bps": 500,
       "input": "80500235314067",
-      "output": "1562500000",
+      "output": "390625000",
       "bins": 5
     },
     {
       "direction": "sell",
       "bps": 1000,
       "input": "165106791664565",
-      "output": "3125000000",
+      "output": "781250000",
       "bins": 10
     },
     {
       "direction": "sell",
       "bps": 2000,
-      "input": "386192216169438",
-      "output": "6875000000",
+      "input": "386192216169442",
+      "output": "1718750000",
       "bins": 22
     }
   ],
@@ -137,18 +137,18 @@
     "ok": true,
     "expected": {
       "vaultBase": "1000000000000000",
-      "vaultQuote": "20000000000",
+      "vaultQuote": "5000000000",
       "feeVaultBase": "0",
       "feeVaultQuote": "0",
       "binSeedBase": "1000000000000000",
-      "binSeedQuote": "20000000000",
+      "binSeedQuote": "5000000000",
       "binScarBase": "0",
       "binScarQuote": "0",
       "pendingBaseEligible": "0",
       "pendingQuoteEligible": "0"
     },
     "ledgerBase": "1000000000000000",
-    "ledgerQuote": "20000000000"
+    "ledgerQuote": "5000000000"
   },
   "volume": {
     "buyQuote": "0",
@@ -156,9 +156,11 @@
     "swapCount": "0"
   },
   "findings": [
-    "Seed base per bin: 1,953,125 tokens (~0.039062 SOL at P0). Seed quote per bin: 0.312500 SOL.",
-    "Largest single buy on a fresh market within 32 bins: 1.493769 SOL gross. Largest single sell: 499,999,999.07 tokens (~10.000000 SOL at P0).",
-    "Calibration note: with 20 SOL seed quote over 64 bins the sell side holds 0.3125 SOL per bin, but the buy side at P0 holds only ~0.039 SOL of tokens per bin because 900M tokens valued at P0 is 20 SOL spread over 512 bins. Larger buys must be split into separate signed transactions (the UI offers this). Consider a denser base schedule near the cursor or a smaller binMax in a new config version before mainnet; this is an experimental calibration choice."
+    "Seed per bin: 0.078125 SOL quote (bins -64..-1), 1,953,125 tokens (~0.009766 SOL at P0, bins 0..511).",
+    "Largest single buy within 32 bins: 0.373558 SOL. Largest single sell: 499,999,999.07 tokens (~2.500000 SOL at P0).",
+    "A 0.010000 SOL buy inspects 2 bins and moves the cursor price 1.0%.",
+    "A 0.100000 SOL buy inspects 10 bins and moves the cursor price 9.4%.",
+    "A 1.000000 SOL buy fails: TraversalLimit."
   ],
   "binsWithScars": 0,
   "binsWithCurrentQuote": 64
