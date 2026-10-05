@@ -131,7 +131,7 @@ await sleep(Math.max(0, waitMs));
 await A.page.reload({ waitUntil: "load" });
 await waitForText(A.page, "didn’t launch", 60000);
 await shot(A.page, "08-refundable");
-await A.page.getByRole("button", { name: /^Reclaim / }).click();
+await A.page.getByRole("button", { name: /^Reclaim [0-9]/ }).click();
 await waitForText(A.page, "Reclaimed. SOL is back in your wallet.", 90000);
 await shot(A.page, "09-refunded");
 

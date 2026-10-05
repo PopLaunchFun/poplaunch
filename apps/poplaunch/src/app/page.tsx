@@ -48,9 +48,9 @@ export default async function Home() {
 
 function Hero({ featured }: { featured: Launch | null }) {
   return (
-    <section className="mx-auto max-w-[1536px] px-4 md:px-[55px] pt-6 md:pt-[22px] pb-8 md:pb-[26px] grid md:grid-cols-[minmax(0,1fr)_887px] gap-x-12 gap-y-10 items-start">
+    <section className="mx-auto max-w-[1536px] px-4 md:px-[55px] pt-6 md:pt-[22px] pb-8 md:pb-[26px] overflow-x-clip grid md:grid-cols-[minmax(0,1fr)_760px] 2xl:grid-cols-[minmax(0,1fr)_887px] gap-x-12 gap-y-10 items-start">
       <div className="pt-1 md:pt-[26px]">
-        <h1 className="display text-[66px] sm:text-[92px] md:text-[132px] leading-[0.85] tracking-[-0.045em]">
+        <h1 className="display text-[66px] sm:text-[92px] md:text-[112px] 2xl:text-[132px] leading-[0.85] tracking-[-0.045em]">
           <span className="block">Back it.</span>
           <span className="block">Fill it.</span>
           <span className="block text-red-deep">Pop it.</span>
@@ -58,7 +58,9 @@ function Hero({ featured }: { featured: Launch | null }) {
         <p className="font-bold text-[20px] md:text-[25px] mt-5 md:mt-[12px] tracking-[-0.01em]">Fill the balloon. Launch a coin together.</p>
       </div>
       {featured ? (
-        <FeaturedPanel l={featured} />
+        <div className="md:w-[760px] md:h-[347px] 2xl:w-[887px] 2xl:h-[405px]">
+          <div className="origin-top-left md:w-[887px] md:scale-[0.857] 2xl:scale-100"><FeaturedPanel l={featured} /></div>
+        </div>
       ) : (
         <div className="box bg-yellow p-10 md:p-14 text-center md:min-h-[405px] flex flex-col items-center justify-center">
           <div className="display text-[36px] md:text-[48px]">The next pop could be yours.</div>

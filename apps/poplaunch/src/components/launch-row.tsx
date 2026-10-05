@@ -3,6 +3,10 @@ import { type Launch, fmtSol, pctFunded } from "@/lib/launch";
 import { BalloonFrame } from "./balloon-frame";
 import { Countdown } from "./countdown";
 import { ArrowRight, BalloonString, ClockIcon } from "./art";
+import { Ago } from "./countdown";
+import { raydiumSwapUrl } from "@pop/sdk";
+import { PublicKey } from "@solana/web3.js";
+import { NETWORK } from "@/lib/config";
 
 /** Compact horizontal launch row: balloon avatar, name and tagline, progress, percentage, time left, action. */
 export function LaunchRow({ l }: { l: Launch }) {
@@ -13,10 +17,10 @@ export function LaunchRow({ l }: { l: Launch }) {
   const href = `/launch/${l.id}`;
   return (
     <li className="box bg-surface relative rounded-[16px]">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[142px_292px_363px_95px_174px_auto] items-center gap-x-4 md:gap-x-5 px-4 md:px-0 py-4 md:py-0 md:h-[106px]">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[120px_minmax(0,1fr)_minmax(180px,300px)_80px_130px_auto] 2xl:grid-cols-[142px_292px_363px_95px_174px_auto] items-center gap-x-4 2xl:gap-x-5 px-4 md:px-0 py-4 md:py-0 md:h-[106px]">
         {/* balloon avatar overhanging the row like the mockup */}
-        <div className="relative w-[70px] md:w-[142px] h-[86px] md:h-full">
-          <div className="absolute left-0 md:left-[40px] -top-3 md:-top-[6px] z-10">
+        <div className="relative w-[70px] md:w-[120px] 2xl:w-[142px] h-[86px] md:h-full">
+          <div className="absolute left-0 md:left-[24px] 2xl:left-[40px] -top-3 md:-top-[6px] z-10">
             <BalloonFrame l={l} size={88} className="w-[70px] md:w-[88px] drop-shadow-[-6px_8px_6px_rgba(0,0,0,0.12)]" />
             <BalloonString className="absolute left-[34px] md:left-[40px] top-[82px] md:top-[100px]" height={42} />
           </div>
@@ -31,8 +35,8 @@ export function LaunchRow({ l }: { l: Launch }) {
         </div>
         <div className="font-extrabold text-[24px] md:text-[27px] num md:text-left mt-2 md:mt-0 self-start md:self-center">{pct.text}</div>
         <div className="flex items-center gap-2.5 font-semibold text-[17px] md:text-[18px] num mt-2 md:mt-0 justify-end md:justify-start"><ClockIcon /><Countdown deadline={l.fundingDeadline} /></div>
-        <div className="col-span-2 md:col-span-1 mt-4 md:mt-0 md:pr-[30px]">
-          <Link href={href} className="btn btn-red btn-lg w-full md:w-[243px]" aria-label={`Help ${l.name} pop`}>Help it pop <ArrowRight /></Link>
+        <div className="col-span-2 md:col-span-1 mt-4 md:mt-0 md:pr-[20px] 2xl:pr-[30px]">
+          <Link href={href} className="btn btn-red btn-lg w-full md:w-[200px] 2xl:w-[243px]" aria-label={`Help ${l.name} pop`}>Help it pop <ArrowRight /></Link>
         </div>
       </div>
     </li>

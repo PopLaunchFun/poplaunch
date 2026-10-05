@@ -160,7 +160,7 @@ export function CreateCoin() {
       {step === 1 ? (
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); if (valid) setStep(2); }}>
           {field("Name", <input className="input mt-1" value={name} onChange={(e) => setName(clean(e.target.value, 32))} placeholder="CAT.EXE" maxLength={32} required />, "Up to 32 characters. Fixed once published.")}
-          {field("Ticker", <input className="input mt-1 w-44 uppercase" value={symbol} onChange={(e) => setSymbol(clean(e.target.value.toUpperCase(), 10).replace(/[^A-Z0-9]/g, ""))} placeholder="CATEXE" maxLength={10} required />, "1 to 10 letters or digits. Fixed once published.")}
+          {field("Ticker", <input className="input mt-1 w-44 uppercase block" value={symbol} onChange={(e) => setSymbol(clean(e.target.value.toUpperCase(), 10).replace(/[^A-Z0-9]/g, ""))} placeholder="CATEXE" maxLength={10} required />, "1 to 10 letters or digits. Fixed once published.")}
           {field("Image", <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="block mt-1 text-[15px]" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />, "PNG, JPEG, GIF or WebP up to 1 MB. Square works best in the balloon.")}
           {preview && <img src={preview} alt="" className="w-24 h-24 rounded-full border-[3px] border-ink object-cover" />}
           {file && !validFile && <p className="text-red-deep text-[15px]">That file type or size is not accepted.</p>}
