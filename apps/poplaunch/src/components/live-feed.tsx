@@ -58,8 +58,8 @@ export function LiveFeed({ initialFilling, initialLaunched, initialStale }: { in
       {rows.length === 0 ? (
         <div className="box p-10 mt-6 text-center">
           <div className="display text-[28px]">{filling.length + launched.length === 0 ? "The next pop could be yours." : q ? "No launches match." : tab === "filling" ? "Nothing is filling up right now." : "Nothing has launched yet."}</div>
-          <p className="label mt-2">{filling.length + launched.length === 0 ? "Create a coin and let the crowd fill its balloon." : q ? "Try another name, ticker or mint." : tab === "filling" && launched.length > 0 ? "See what just launched, or create a coin." : "Create a coin and let the crowd fill its balloon."}</p>
-          {filling.length + launched.length === 0 && <Link href="/create" className="btn btn-red mt-5">Create a coin <ArrowRight /></Link>}
+          <p className="label mt-2">{filling.length + launched.length === 0 ? "Launch a token and let the crowd fill its balloon." : q ? "Try another name, ticker or mint." : tab === "filling" && launched.length > 0 ? "See what just launched, or create a coin." : "Launch a token and let the crowd fill its balloon."}</p>
+          {filling.length + launched.length === 0 && <Link href="/create" className="btn btn-red mt-5">Launch a token <ArrowRight /></Link>}
         </div>
       ) : (
         <ul className="mt-6 md:mt-[22px] space-y-[18px]" role="list">

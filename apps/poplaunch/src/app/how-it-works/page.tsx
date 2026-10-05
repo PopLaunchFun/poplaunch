@@ -39,7 +39,7 @@ export default function HowItWorks() {
           </details>
         ))}
       </div>
-      <p className="label mt-8">Ready? <Link href="/" className="link">Explore launches</Link> or <Link href="/create" className="link">create a coin</Link>.</p>
+      <p className="label mt-8">Ready? <Link href="/" className="link">Explore launches</Link> or <Link href="/create" className="link">launch a token</Link>.</p>
     </div>
   );
 }

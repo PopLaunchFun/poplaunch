@@ -80,12 +80,12 @@ export function MyPops() {
         ))}
       </div>
       {drafts.length > 0 && tab === "created" && (
-        <p className="label mt-3">Unpublished drafts: {drafts.map((d) => `${d.name} (${d.symbol})`).join(", ")}. Drafts cost nothing; publish them from <Link href="/create" className="link">Create a coin</Link>.</p>
+        <p className="label mt-3">Unpublished drafts: {drafts.map((d) => `${d.name} (${d.symbol})`).join(", ")}. Drafts cost nothing; publish them from <Link href="/create" className="link">Launch a token</Link>.</p>
       )}
       {lists[tab].length === 0 ? (
         <div className="box p-8 mt-5 text-center">
           <div className="display text-[26px]">{tab === "created" ? "You have not created a coin yet." : "Nothing here right now."}</div>
-          <Link href={tab === "created" ? "/create" : "/"} className="btn btn-red mt-4">{tab === "created" ? "Create a coin" : "Explore launches"} <ArrowRight /></Link>
+          <Link href={tab === "created" ? "/create" : "/"} className="btn btn-red mt-4">{tab === "created" ? "Launch a token" : "Explore launches"} <ArrowRight /></Link>
         </div>
       ) : (
         <ul className="mt-5 space-y-[18px]" role="list">

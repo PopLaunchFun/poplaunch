@@ -57,7 +57,6 @@ function Hero({ featured }: { featured: Launch | null }) {
           <span className="block">Fill it.</span>
           <span className="block text-red-deep">Pop it.</span>
         </h1>
-        <p className="font-bold text-[20px] md:text-[25px] mt-5 md:mt-[12px] tracking-[-0.01em]">Fill the balloon. Launch a coin together.</p>
       </div>
       {featured ? (
         <div className="md:w-[760px] md:h-[347px] 2xl:w-[887px] 2xl:h-[405px]">
