@@ -54,7 +54,10 @@ if (cfg) {
   ok("AmmConfig index matches", index === net.ammConfigIndex, String(index));
   ok("AmmConfig allows pool creation", !disableCreatePool);
   info("AmmConfig fees", `trade ${Number(tradeFee) / 10_000}%  protocol share ${Number(protocolFee) / 10_000}%  fund share ${Number(fundFee) / 10_000}%  creator ${Number(creatorFee) / 10_000}%  create_pool_fee ${Number(createPoolFee) / 1e9} SOL`);
-  ok("creator fee rate is zero (no hidden fee on the pool)", creatorFee === 0n);
+  // Mainnet config 0 carries no creator fee. Raydium's devnet configs all do (it accrues to the pool creator, i.e.
+  // the launch authority PDA, where nothing collects it); acceptable for testing, a hard failure for mainnet.
+  if (cluster === "mainnet-beta") ok("creator fee rate is zero (no hidden fee on the pool)", creatorFee === 0n);
+  else info("creator fee rate", creatorFee === 0n ? "0 (none)" : `${Number(creatorFee) / 10_000}% (devnet test config; accrues to the launch authority, uncollectable)`);
 }
 
 const fee = await connection.getAccountInfo(net.createPoolFeeReceiver);
