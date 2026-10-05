@@ -26,6 +26,8 @@ audit still has to be commissioned and is a mainnet gate. Every finding is liste
 | P8 | Low | Two token accounts created during settlement (~0.004 SOL rent) were never closed, so the creator could not reclaim that part of the reserve. | Both are closed into the authority PDA at the end of settlement; the creator's reclaim now returns their rent too. | hardening test asserts both accounts are gone and the reclaim empties the reserve to the rent minimum |
 | P9 | Info | Stack frame of `finalize_launch` exceeded the limit after the changes. | Split into three non-inlined helpers; the build reports no stack warnings. | build log |
 
+Added after the review (and after the owner's audit): `transfer_authority`, a six-line authority-only instruction that hands the protocol authority (settings and pause, never funds) to another key, with an event; covered by `launch-hardening`. The owner should tell the auditor about it if the engagement allows.
+
 Not changed, by decision: receipts are not closed on refund (backers keep ~0.0016 SOL of rent locked;
 closing would need a terminal-state guarantee that is better reviewed independently); there is no
 authority-transfer instruction (changing the protocol authority needs an upgrade; documented in the
