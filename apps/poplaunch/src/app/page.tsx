@@ -49,7 +49,7 @@ export default async function Home() {
 
 function Hero({ featured }: { featured: Launch | null }) {
   return (
-    <section className="mx-auto max-w-[1536px] px-4 md:px-[55px] pt-6 md:pt-[22px] pb-8 md:pb-[26px] overflow-x-clip grid md:grid-cols-[minmax(0,1fr)_760px] 2xl:grid-cols-[minmax(0,1fr)_887px] gap-x-12 gap-y-10 items-start">
+    <section className="mx-auto max-w-[1536px] px-4 md:px-[55px] pt-6 md:pt-[22px] pb-8 md:pb-[26px] overflow-x-clip grid md:grid-cols-[minmax(0,1fr)_760px] 2xl:grid-cols-[minmax(0,1fr)_887px] gap-x-12 gap-y-10 items-start md:items-center">
       <div className="pt-1 md:pt-[26px]">
         <PromoBubble className="mb-5 md:mb-6 ml-1" />
         <h1 className="display text-[66px] sm:text-[92px] md:text-[112px] 2xl:text-[132px] leading-[0.85] tracking-[-0.045em]">
