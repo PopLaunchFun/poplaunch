@@ -5,15 +5,16 @@ import { IS_MAINNET, NETWORK } from "@/lib/config";
 export const dynamic = "force-dynamic";
 
 export default async function Launch() {
-  const pop = await api.pop();
+  const status = await api.status();
+  const bb = await api.buyback();
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold">Launch a market</h1>
-      <p className="text-sm text-paper-2 mt-2">Every launched coin uses the same rules as POP: a fixed-supply mint created by the factory, 100% of supply committed as seed inventory, zero creator allocation, the same fees, and the same graduation thresholds. You may buy through the ordinary market like anyone else.</p>
+    <div className="max-w-5xl">
+      <h1 className="text-2xl font-bold tracking-tight">Launch a coin</h1>
+      <p className="text-sm text-muted mt-1">Fixed supply, 100% committed to seed inventory, zero creator allocation. You earn the published 0.25% creator fee on every trade and can buy like anyone else.</p>
       {IS_MAINNET ? (
-        <div className="panel p-4 mt-6 text-sm text-scar">Mainnet launches are disabled until the release gates in docs/deployment.md pass.</div>
+        <div className="panel p-4 mt-6 text-sm text-neg">Mainnet launches are disabled until the release gates in docs/deployment.md pass.</div>
       ) : (
-        <LaunchForm network={NETWORK} settings={pop?.protocol.settings ?? null} launchesEnabled={pop?.protocol.launchesEnabled ?? false} />
+        <LaunchForm network={NETWORK} indexerOk={!!status} popMint={bb?.popMint ?? null} />
       )}
     </div>
   );

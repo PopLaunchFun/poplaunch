@@ -1,11 +1,19 @@
 # POP — Proof of Pain
-## Complete Fable implementation brief · v1 · October 4, 2026
+## Launchpad build and redesign brief · v2 · October 4, 2026
 
 ## 0. Instruction to Fable
 
-Build POP: a Solana market and eventual token launch platform where trading fees build nonwithdrawable liquidity at the price locations where trading occurred. POP is also the platform token, ticker **POP**, and the first market demonstrating the mechanism.
+Build **POP / Proof of Pain as a Solana token launchpad**. The main experience is: **discover coins → launch a coin → trade → watch fee-funded liquidity scars form**. Every new coin launched here uses the Proof of Pain mechanism.
 
-Read this entire document before implementation. Implement the mathematics, simulator, Solana program, SDK, indexer, wallet transactions, and polished frontend. This is a functional protocol project, not a landing page with simulated trading disguised as live trading. First ship a complete local-validator and devnet product. Keep real-money mainnet deployment disabled until the release gates in this document pass. Do not substitute a Pump.fun launch for the custom mechanism.
+The separate **$POP token is launched externally on Pump.fun**. That external token launch is outside this project. This application neither launches nor hosts a special genesis POP market. Do not recreate its mint, supply, allocations, vesting, trading page, buybacks, or tokenomics. There is no requirement to hold $POP to use the launchpad. The product name can remain POP; it names the launchpad in the interface.
+
+### Immediate correction for the existing Fable build
+
+This v2 supersedes the previous brief wherever scope or design differs. Refactor the existing project; retain functioning launch, wallet, market and scar logic. Replace the token-centric homepage and visual system. Remove the /pop page, “Trade POP” calls to action, genesis-market pin, allocation/vesting widgets, buyback dashboards, and POP-specific contract dependencies introduced by v1. Remove navigation and internal links to those features. An old /pop route may redirect to / solely for compatibility.
+
+Start by inspecting the existing routes and components, then implement the redesign. Do not stop at describing it. The homepage must immediately look like an active launchpad: searchable coin listings and a prominent **Launch coin** action. The market page must make the liquidity mechanism observable during actual trading. Keep protocol explanations short and contextual, with deeper documentation secondary.
+
+Read this entire document before implementation. Implement the mathematics, simulator, Solana program, SDK, indexer, wallet transactions, and polished frontend. This is a functional protocol project, not a landing page with simulated trading disguised as live trading. First ship a complete local-validator and devnet product. Keep real-money mainnet deployment disabled until the release gates in this document pass. The external $POP launch on Pump.fun is separate; coins launched through this application still require the custom Proof of Pain mechanism.
 
 Work autonomously through the phases below. If your environment cannot compile or deploy Solana programs, still write the program, tests, client, and deployment instructions; clearly identify the unexecuted checks. A working simulator is useful but is not evidence that the deployed contract works. Do not claim audit, novelty, immutable custody, live revenue, or mainnet readiness without evidence.
 
@@ -13,11 +21,11 @@ Deliver a repository, reproducible commands, working preview, devnet transaction
 
 ## 1. Product and scope
 
-**Name:** POP / Proof of Pain. **Chain:** Solana. **First pair:** POP/WSOL. **Core line:** “The market remembers.” **Supporting line:** “Trading builds liquidity where the battle happened.”
+**Name:** POP / Proof of Pain. **Product:** token launchpad. **Chain:** Solana. **Market pairs:** each newly created coin/WSOL. **Primary action:** “Launch coin.” **Compact headline:** “Launch a coin. Build its liquidity.” **Secondary line:** “The market remembers.”
 
 The defining primitive is a price-bin market with two classes of inventory: launch seed inventory and fee-funded scar inventory. Fees collected from buyers arrive in quote tokens; fees collected from sellers arrive in base tokens. At each price bin, matched base and quote fee inventories activate as scar liquidity. The bin location never moves; its inventory changes when traders buy and sell against it.
 
-V1 has one functioning POP market and the reusable market factory. Permissionless public launches follow only after the POP pilot passes testing. Include the launch UI and devnet factory flow now. All launched coins use the same rules. POP is a separate platform asset, not the mandatory quote currency for other markets.
+V1 includes the reusable factory, coin discovery, wallet-connected creation, per-coin trading, and a live scar map. Test with multiple ordinary devnet coins; no privileged platform-token market. Public mainnet launches become available once the release gates pass. Every newly launched coin follows the same initialization, fees and scar rules.
 
 ### Critical corrections to the initial concept
 
@@ -27,30 +35,27 @@ V1 has one functioning POP market and the reusable market factory. Permissionles
 4. Match only collected buy and sell fees in v1. Remove the earlier separate 20% token Scar Reserve: subsidizing the token side would muddy the two-sided rule and graduation accounting.
 5. Use a fixed scar fee in v1. The prior impact integral was conceptual, not a dimensionally complete fee equation. Dynamic impact fees are a later research track.
 6. Graduation is a status transition, not migration. Moving to a conventional pool would erase the promised stationary scar structure.
-7. POP buybacks come from other markets’ quote-denominated protocol revenue. Exclude POP’s own market from buybacks to avoid a self-referential loop.
+7. The launchpad has no dependency on the externally launched $POP token. Platform-token economics and integrations require a separate scope; do not implement the earlier buyback design.
 
 Do not use “every dump makes the coin stronger,” “liquidity cannot go backwards,” “guaranteed support,” or “you must pay $50k to fake $50k of scars” as factual claims. Use: “Every eligible trade contributes fees. Matched fees create nonwithdrawable inventory at fixed price bins.”
 
-## 2. POP token and value flow
+## 2. New coin defaults and launchpad fees
 
-### Proposed token defaults
+These defaults apply identically to coins created by the factory, not to the external $POP token.
 
 | Parameter | Default |
 |---|---|
-| Total minted supply | 1,000,000,000 POP |
+| Total supply per new coin | 1,000,000,000 tokens |
 | Decimals | 6 |
 | Token program | Standard SPL Token; no transfer tax or transfer hook |
-| Market allocation | 900,000,000 POP, permanently committed as seed inventory |
-| Founder allocation | 50,000,000 POP; 12-month cliff, 24-month linear vesting thereafter |
-| Ecosystem allocation | 50,000,000 POP; 36-month linear vesting from activation |
-| Mint authority | Revoked after exact allocation |
+| Initial token allocation | 100% committed to nonwithdrawable seed inventory |
+| Creator allocation | Zero; creator may buy through ordinary trading |
+| Mint authority | Revoked after exact initial allocation |
 | Freeze authority | Absent/revoked |
-| Founder and ecosystem custody | On-chain vesting accounts with published beneficiaries |
-| Mandatory POP ownership | None for trading or launching |
+| Creator income | Published creator trading fee |
+| Platform token required | No |
 
-These are recommended build defaults, not a claim that the owner has funded a launch. Show all allocations, unlocks, addresses, and supply definitions publicly. No owner mint override, hidden allocation, airdrop promises, or staking yield. Vesting starts at actual mainnet activation; devnet uses independently identifiable test timestamps.
-
-Other market tokens default to 100% supply committed to seed inventory, zero creator allocation. Creators may buy through the ordinary market. POP’s published founder/ecosystem allocations are an explicit exception. No arbitrary token imports in v1; the factory creates standard fixed-supply mints itself.
+The factory creates standard fixed-supply mints; arbitrary token imports are out of scope for v1. Show seed funding, creation costs, creator fee address and supply rules on the creation review screen. Do not include platform-token allocation or vesting in this flow.
 
 ### Fees: gross input asset on both sides
 
@@ -61,19 +66,13 @@ Other market tokens default to 100% supply committed to seed inventory, zero cre
 | Creator revenue | 25 bps |
 | Total | 200 bps / 2.00% |
 
-Buy input is WSOL; sell input is the market’s base token. Creator and protocol claims are separate balances, never claims on scar or seed custody. POP market creator fees go to the disclosed operating treasury.
-
-For non-POP markets only, **50% of collected WSOL protocol fees** is earmarked for POP buyback-and-burn; the other 50% funds operations. Do not count base-token protocol fees as buyback funds until actually converted into WSOL; v1 leaves them claimable by the operating treasury and reports them separately. Thus a 100 SOL gross buy in another market creates 0.25 SOL protocol revenue, of which 0.125 SOL is eligible for buybacks, before execution costs. There is no fee on external venues unless those venues invoke this program.
-
-Implement buybacks as a segregated WSOL escrow and bounded keeper instruction. Spend only realized funds, no leverage or token issuance. Buy POP through the normal market, then SPL-burn purchased POP atomically. Exclude buyback executions from scar matching and graduation counters; charge the scar fee into ordinary scar escrow but flag it ineligible for maturity scoring, and do not charge protocol/creator fees to this internal instruction. Track eligible and ineligible escrow separately so accounting cannot mix them. Slippage protection, independent reference-price guard, spend cap, and time interval are mandatory. If no credible independent POP price reference exists, automatic buybacks stay disabled; show accrued funds, not fictional burns. Implement manual multisig-approved execution with explicit quote bounds as the initial alternative, with public transactions. Never permit the keeper to choose an arbitrary recipient or unrelated mint.
-
-This supports fee-funded token demand if other markets get activity. It does not guarantee price appreciation or provide holders a redeemable revenue claim. No governance power to withdraw scars. Buyback shares are immutable for deployed markets or changed only for newly created markets under a disclosed config version.
+Buy input is WSOL; sell input is the coin's base token. Creator and protocol claims are separate balances, never claims on scar or seed custody. Protocol fees accrue to the configured disclosed treasury. Creator fees accrue to the creator address fixed at market creation. No POP buyback, burn, staking or token-gating module in this launchpad build. This brief makes no claim about the economics of the externally launched token.
 
 ## 3. Market initialization and seed inventory
 
 Use a custom discrete constant-price-bin AMM for v1. Do not assume an existing Meteora pool can enforce mandatory custom fees: direct swaps can bypass a wrapper. Existing bin-market implementations are design references, not an integration dependency.
 
-### Pilot defaults
+### Proposed factory defaults
 
 | Parameter | Default |
 |---|---|
@@ -83,14 +82,14 @@ Use a custom discrete constant-price-bin AMM for v1. Do not assume an existing M
 | Seed WSOL | 20 SOL, externally funded and locked |
 | Seed quote placement | Uniform across bins -64 through -1 |
 | Seed base placement | Uniform across bins 0 through 511 |
-| POP seed base | 900M POP |
-| Reference price P0 | 20 SOL / 900M POP, in human units |
+| Seed base | 1 billion tokens of the newly launched coin |
+| Reference price P0 | 20 SOL / 1 billion tokens, in human units |
 | Price at bin i | P_i = P0 × 1.01^i |
 | Max bins inspected per swap | 32, including empty bins |
 | Scar maturity target | 100 SOL of historical paired quote contribution |
 | Territory target | 10 distinct 10-bin bands with ≥1 SOL paired quote contribution each |
 
-P0 is an initialization convention, not a valuation appraisal. It does not mean every token can be redeemed at that price or that seed reserves collateralize total supply. WSOL funding and rent are real deployment requirements; do not synthesize reserves. Other markets use total seed token supply in the denominator, with the same default seed quote amount.
+P0 is an initialization convention, not a valuation appraisal. It does not mean every token can be redeemed at that price or that seed reserves collateralize total supply. WSOL funding and rent are real deployment requirements; do not synthesize reserves. Every market uses its total seed token supply in the denominator. The existing 20 SOL seed requirement is an experimental economic parameter, not a platform charge. Show it clearly before wallet approval. It may impede easy public launches: benchmark smaller funded configurations before choosing mainnet defaults. Do not quietly substitute fake reserves or promise free launches. A simplified form does not remove real funding requirements.
 
 Compute price tables deterministically using checked fixed-point arithmetic; no float or log on-chain. Quantize P0 once, derive bounded prices with a documented error bound, and refuse markets whose extremes cannot represent a nonzero price or whose arithmetic overflows. Prices in contract math are quote atomic units per base atomic unit, including decimal scaling. A 10-bin territory is grouped by floor_div(i,10), with true floor division for negatives.
 
@@ -125,7 +124,7 @@ Let B be eligible pending base escrow, Q eligible pending quote escrow, and P_i 
 
 Example in human units: P=0.000001 SOL/token, Q=0.46 SOL, B=315,000 tokens. Match 315,000 tokens with 0.315 SOL. The remaining 0.145 SOL waits. Do not report 0.46 SOL as activated paired quote.
 
-Scar fees remain pending indefinitely if opposing flow never appears. No timeout refund or admin sweep. Do not match seed inventories against fees or count founder/ecosystem holdings as scar capital. Ineligible buyback escrow may be matched with separate ineligible opposing inventory only; it cannot create eligible graduation contributions. Simplest v1 implementation leaves these ineligible fees pending and discloses that behavior.
+Scar fees remain pending indefinitely if opposing flow never appears. No timeout refund or admin sweep. Do not match seed inventories against fees or count unrelated transfers as scar capital. Only recorded swap fees qualify for the matching counters.
 
 ## 5. Graduation and honest metrics
 
@@ -137,7 +136,7 @@ Graduation marks **historical fee-funded maturity**, not a $50k vault balance or
 
 `progress = min(1, paired_quote_lifetime/100 SOL, hardened_bands/10)`
 
-Graduation requires both thresholds. The transition is irreversible, emits an event, unlocks directory highlighting and an embeddable graduation badge, and leaves reserves, prices, fee rules, and trading unchanged. No external pool migration in v1. Graduation has no creator payout or POP reward, removing an obvious manufactured-volume reward.
+Graduation requires both thresholds. The transition is irreversible, emits an event, unlocks directory highlighting and an embeddable graduation badge, and leaves reserves, prices, fee rules, and trading unchanged. No external pool migration in v1. Graduation has no creator payout or platform-token reward, removing an obvious manufactured-volume reward.
 
 Maintain three separate metrics:
 
@@ -157,18 +156,16 @@ Rust + Anchor; exact compatible toolchain versions pinned in the repository afte
 
 ### Accounts
 
-- ProtocolConfig: version, factory settings for new markets, POP mint, published fee recipients and launch enable flag.
+- ProtocolConfig: version, factory settings for new markets, published fee recipients and launch enable flag.
 - Market: base/quote mints, cursor, boundaries, price constants, immutable fee/threshold settings, allocated/unallocated seed balances, maturity counters, status, immutable creator address.
-- BinPage: fixed bins with seed base/quote, scar base/quote, eligible pending base/quote, ineligible pending escrow, cumulative buy/sell volume, paired quote counters, last execution slot. Keep instrumentation bounded; do not store unbounded trade history on-chain.
+- BinPage: fixed bins with seed base/quote, scar base/quote, pending base/quote, cumulative buy/sell volume, paired quote counters, last execution slot. Keep instrumentation bounded; do not store unbounded trade history on-chain.
 - BandState: per-band cumulative paired quote and threshold-crossed bit; update the global hardened count once.
 - Market vaults: segregated seed/scar trading and pending-fee custody from withdrawable protocol/creator accounts; exact physical layout can combine locked assets only with rigorous reconciliation.
 - FeeClaim: protocol or creator claimable balances by mint; no recipient override at claim time.
-- BuybackVault: realized quote funds, last execution slot, capped policy, excluded source markets.
-- Vesting: immutable schedule, beneficiary, claimed amount and custody. No revoke/clawback of POP allocations.
 
 ### Instructions
 
-`initialize_protocol`, `create_market`, `initialize_bin_page`, `activate_market`, `swap_exact_in`, `match_bins` (permissionless, bounded), `claim_creator_fees`, `claim_protocol_fees`, `execute_pop_buyback`, `claim_vested_pop`, and factory-only `disable_new_markets`.
+`initialize_protocol`, `create_market`, `initialize_bin_page`, `activate_market`, `swap_exact_in`, `match_bins` (permissionless, bounded), `claim_creator_fees`, `claim_protocol_fees`, and factory-only `disable_new_markets`.
 
 Market graduation is evaluated automatically when eligible matching updates thresholds. Any standalone `evaluate_graduation` must be permissionless and derive results from stored counters, not caller assertions.
 
@@ -176,33 +173,64 @@ No instructions for scar withdrawal, seed withdrawal, relocation, arbitrary vaul
 
 Upgrade authority is a material custody power: an upgradeable program could add withdrawals. Devnet may be upgradeable. Mainnet remains labeled “upgradeable / multisig-controlled” until independent review and explicit authority revocation. Only then describe custody as immutable. Do not imply a PDA alone makes funds permanently locked. Token mint-authority revocation is separate from program upgrade-authority revocation.
 
-## 7. Frontend design
+## 7. Launchpad interface and visual redesign
 
-Create a distinctive market interface, not a dashboard of generic cards. Ink-black background, off-white type, electric coral/red for fee-funded scars, restrained lime for confirmed success, subtle violet for pending inventory. Bold POP wordmark; use a clean geometric sans and monospace numerals. No fake hacker terminals, excessive gradients, generic AI imagery, skull imagery, or confetti. Financial controls must remain legible on a phone.
+### Visual direction: dark grey × Matrix green
 
-Desktop: left navigation; central price chart and scar map; right trade ticket. Mobile: top price/maturity summary, chart/map toggle, sticky trade button opening a bottom sheet. Clearly separate market direction colors from scar state colors. Respect reduced-motion and accessibility contrast.
+Build a sleek, futuristic exchange interface with restrained neon details. Dark grey surfaces must remain visibly distinct; avoid flattening everything into pure black. Green is the signature accent for actions, active controls and newly formed scars. Use whitespace, fine borders and clean typography rather than glow-heavy decoration.
 
-### Routes
+| Design token | Value / application |
+|---|---|
+| Page background | #141719 — dark charcoal grey |
+| Primary panel | #1B2023 |
+| Raised/hover surface | #232A2E |
+| Fine border | #303A3F |
+| Matrix green | #00FF85 — primary buttons, active tabs, scar highlights |
+| Green hover | #5CFFAF |
+| Muted green surface | #153329 — selected controls and understated badges |
+| Main text | #F0F4F2 |
+| Secondary text | #A1ACA7 |
+| Negative/error | #F07886 — reserved for loss/direction/error semantics |
+| Main font | Inter or a comparable clean sans-serif |
+| Numerals and small labels | JetBrains Mono or a comparable monospace |
+| Panel/button rounding | 8–12px, consistent |
 
-**/** — Landing and market entry. Hero “The market remembers.” One sentence explanation, “Trade POP” and “Explore markets.” Three-step explanation: trade pays fees; opposing fees pair; fixed bins gain nonwithdrawable inventory. Live verified totals only; otherwise show unavailable, never invented popularity. Link token allocation and mechanism docs.
+Primary green buttons use near-black text. Check contrast for actual small text and controls; never use dim green as essential text. Thin grid lines or a faint static coordinate pattern can add atmosphere behind a small header region. No Matrix rain, full-screen terminal, large animated background, excessive bloom, coral/violet theme, giant marketing hero, or bulky stacks of unrelated cards. Neon edge highlights should occupy little of the screen.
 
-**/markets** — POP pinned as genesis market; directory with price, current quote depth, historical paired quote, graduation progress, volume and network labels. Filters: all, forming, graduated. No default “safest” ranking based on scar metrics. Sort labels state their actual metric.
+### Product hierarchy
 
-**/market/[mint]** — Name, verified mint and explorer links, last/reference prices, current quote reserves, graduation badge. Main chart includes optional stationary scar overlay. Adjacent scar map: logarithmic price ladder, current cursor, active base/quote composition, pending buy/sell fees, historical matched amounts. Click a band for breakdown. Tooltips explain historic counters versus current inventory.
+Main navigation: **Explore · Launch coin · My launches**, plus wallet connection. Use the POP wordmark as a home link, with “Proof of Pain” as a small descriptor if space permits. “How it works” and technical status belong in the footer or help menu. No platform-token navigation. Show the network accurately and visibly without turning the page into a developer console.
 
-Trade ticket: buy/sell, SOL amount or base amount, wallet balance, quoted output, explicit 2% fee breakdown, price impact, minimum received, slippage control, network fee and rent estimate, deadline and stale state. Slippage tolerance excludes known protocol fees; quote after fees and explain that convention. Failure states: insufficient depth, traversal limit, disconnected wallet, wrong network, simulation failure, rejection, expired blockhash. Never silently raise slippage. Include transaction simulation before wallet approval.
+Above the fold on a 1440×900 desktop: navigation, compact headline, search/filter controls, and actual coin listings. On a 390px-wide phone: header, search, launch action, and the first coin listings without scrolling past promotional sections. Use a consistent spacing scale and aligned numeric columns.
 
-Recent trades show real signatures, direction, executed amount, fees, time and program source. Founder vesting and large ownership concentration appear in a compact transparent panel. Do not fabricate unique trader counts without methodology.
+### Routes and behavior
 
-**/launch** — Name, symbol, description, image, published seed funding requirement and fees. Explain zero creator allocation and fee address. Preview exact seed schedule and token supply. Require wallet signatures; no server custody. Devnet fully functional; mainnet launches disabled until release gates pass. Validate metadata, sanitize rich text, restrict uploaded content size/types, and disclose metadata mutability.
+**/ — Explore launchpad.** Make this the working coin directory, not a token landing page. Compact heading “Launch a coin. Build its liquidity.” Supporting copy: “Every launch uses Proof of Pain. Trade and watch its liquidity scars form.” Primary **Launch coin** button. Search by name, symbol or mint. Filters **New · Active · Graduated**; explicit sort options for newest, volume and paired-fee contributions. Use a crisp responsive row/grid system: coin image/name/ticker, age, price or market cap, volume, scar progress and a tiny sparkline. One subtle green progress strip per coin. No featured external $POP chart or pinned genesis token. Use real data. An empty directory says “Be the first to launch” with a creation CTA, not fake coins. Dev fixtures appear only in clearly labeled development/test mode. /markets can redirect to / to avoid two competing discovery pages.
 
-**/pop** — Token page: supply allocation table, mint, vesting addresses and schedule, treasury addresses, buyback-eligible realized funds, actually burned supply, execution history and public policy. Distinguish funded buyback escrow from executed purchases. No APY, price forecasts or guaranteed revenue.
+**/launch — Create a coin.** One compact form: name, ticker, image, description, optional social links. Default economic settings are fixed by the factory; do not expose bin spacing and advanced AMM controls in the normal flow. Show the wallet balance and an upfront cost summary: seed SOL locked into the market, network/rent costs, and any actual creation fee (do not invent one). A review step shows supply, zero creator allocation, creator fee address and 2% trading fee breakdown. Button **Launch coin**. Submit real on-chain creation/funding/activation instructions. If several signatures are required, explain progress and resume from the last confirmed step; do not create duplicates on retry. A market appears in the public active list only after activation succeeds. After confirmation navigate directly to /coin/[mint] with “Your coin is live” and **Copy link / Trade** actions. Distinguish rejected signatures, inadequate seed funds, creation pending, activation pending, and failures. No mandatory $POP purchase. Mainnet availability follows release readiness, not a POP-token launch prerequisite.
 
-**/mechanism** — Short plain-language guide and equations with definitions, examples, fee policy, graduation, limits, authority status, external-venue bypass, and exhaustion risk.
+**/coin/[mint] — Trade and watch the mechanism.** The user-created coin is the subject. Desktop: token header and standard price chart at left/center, a stable trade ticket at right, an integrated scar map immediately below or beside the chart, then activity. Mobile: header, chart, clearly labeled **Price / Liquidity scars** toggle, compact progress summary, sticky **Trade** control with bottom sheet. The scar view must be discoverable in one tap, not buried in documentation. Existing /market/[mint] routes may redirect here.
 
-**/lab** — Clearly labeled simulator, no wallet transfers. Presets: straight pump, dump, chop, round-trip actor, split trades, thin-bin gap, and exhausted bid inventory. Charts: price, historical contributions, current quote inventory and scar composition. Seed and scar money tracked separately. Users can inspect every simulated swap and download a run. Real dashboards never use lab data as a fallback.
+Keep a familiar chart and trade ticket so people can trade immediately. Buy/sell, SOL or base-token amount, wallet balance, estimated output, fee breakdown, slippage, minimum received and network cost are clear. Keep advanced information collapsed unless it affects approval. Never silently increase slippage. Quote and simulate before requesting a signature. Handle depleted reserves, traversal limits, stale quotes, wallet rejection and wrong network plainly.
 
-**/status** — Network, program IDs, git commit, verified releases, upgrade authorities, RPC/indexer freshness, and missing launch prerequisites.
+The **Liquidity scars** panel is the differentiating feature. Show a price ladder with scar intensity, active cursor, and pending opposing fee balances. A confirmed swap highlights the bins it touched; a real ScarFormed event gives the corresponding band a brief green pulse and a compact “Scar formed” event. No pulse, progress increase or completion notification based solely on clicking Trade or receiving a wallet signature. Respect reduced-motion; update data without animation. Show a simple caption: “Buy and sell fees pair here to add locked liquidity.”
+
+Progress label **Pain proven** has a tooltip: “Historical paired-fee milestone; not a safety rating.” Keep current scar quote inventory separately labeled **SOL currently in scars**, and pending fees labeled **Waiting to pair**. Band details can expand to show token/quote composition and historical matched contributions. Graduation is a milestone badge with a small celebration; trading stays in the same market. Keep full formulas in help, not in the main trade flow.
+
+Recent trades and scar events use actual signatures and timestamps with explorer links. A copyable mint, creator address and available ownership concentration data belong in a compact details drawer. Do not show founder vesting or platform-token allocations. Do not equate historical fee contributions with present sell-side depth.
+
+**/my-launches — Creator workspace.** Connected wallet sees its created coins, real activation status, links to each market and claimable creator fees by asset. Claiming can only access creator fee accounts. Include a retry/resume action for unfinished creation where supported. No token staking or platform-token holdings panel.
+
+**/mechanism — Secondary help.** Brief explanation of buy fees, sell fees, matching and fixed bins, followed by precise limitations and optional formulas. Keep accessible from help, not a required onboarding step. **/status** contains operational/authority details. **/lab** remains an internal/developer simulation tool, omitted from primary navigation and never used as live trading data.
+
+### Design and experience acceptance checks
+
+- Homepage reads as a coin launchpad in five seconds; the main action is Launch coin.
+- A new visitor can create a coin, reach its trading screen, make trades and see real matching events without opening protocol documentation.
+- Multiple user-created coins receive equal treatment; no mandatory flagship $POP market.
+- No $POP price, allocation, vesting, burn, buyback or Pump.fun token-sales content anywhere in the customer flow.
+- Dark grey backgrounds and Matrix green accents match the palette consistently across all routes.
+- Verify rendered desktop and phone screenshots, chart/ticket alignment, long names, empty/error states, keyboard navigation, contrast and reduced-motion behavior. Fix overflow and clipped controls before delivery.
 
 ## 8. Backend, SDK and transaction flow
 
@@ -224,15 +252,15 @@ docs/
 
 Chain is authority for custody, swaps and graduation. The database caches only. Wallet signs swaps, launch and claims. Backend never asks for or stores seed phrases/private wallet keys. Local devnet deployment keys are separate test credentials and excluded from git.
 
-Endpoints: markets listing/detail, bounded bin snapshots, indexed trades/candles, token allocations, buyback history, status. Quote endpoint optional: return block/slot, market state fingerprint, fee breakdown and instruction params. Local SDK quotes use identical math; on-chain min_output is final protection. Frontend can read vaults and quote from RPC if indexing is stale; do not synthesize a successful fill from cached state.
+Endpoints: markets listing/detail, bounded bin snapshots, indexed trades/candles, creator markets/claims, launch activation status, status. Quote endpoint optional: return block/slot, market state fingerprint, fee breakdown and instruction params. Local SDK quotes use identical math; on-chain min_output is final protection. Frontend can read vaults and quote from RPC if indexing is stale; do not synthesize a successful fill from cached state.
 
-Indexer records events idempotently keyed by signature plus instruction/event index, tracks commitment, reconciles finalized state, catches up after downtime and handles transaction rollback. Keep confirmed events labeled pending until finalized. Database trade volume must not double-count replayed events, buybacks, or simulation runs. Chart history must survive reload.
+Indexer records events idempotently keyed by signature plus instruction/event index, tracks commitment, reconciles finalized state, catches up after downtime and handles transaction rollback. Keep confirmed events labeled pending until finalized. Database trade volume must not double-count replayed events or simulation runs. Chart history must survive reload.
 
 Persist metadata with a documented durable provider and size limits. Do not log secrets or signed transaction payloads indiscriminately. Rate-limit unauthenticated APIs; sanitize metadata and uploads; no arbitrary URL fetch proxy. Configure env examples for network, RPC, program IDs, database and optional price feed. USD displays degrade to SOL when unavailable.
 
 ## 9. Reference simulator and required tests
 
-Implement a deterministic event-based simulator with the same integer math as the program. Every run reports starting inventory, deposits, withdrawals to authorized fee recipients, trades, fees by destination, pending inventory, matched contributions, burned tokens and ending inventory. This brief does not claim simulations have already validated the mechanism.
+Implement a deterministic event-based simulator with the same integer math as the program. Every run reports starting inventory, deposits, withdrawals to authorized fee recipients, trades, fees by destination, pending inventory, matched contributions and ending inventory. This brief does not claim simulations have already validated the mechanism.
 
 ### Required scenarios
 
@@ -249,7 +277,8 @@ Implement a deterministic event-based simulator with the same integer math as th
 | Complete sell depletion | Revert cleanly; no fabricated SOL or redemption guarantee |
 | Complete buy depletion / boundary | Revert or quote unavailable consistently |
 | Maturity threshold | Both conditions needed; exactly one graduation event |
-| Buyback from POP’s own fees | Rejected; no self-funded circular loop |
+| Multiple independent launches | Scar, reserve and creator-fee state isolated per market |
+| Interrupted creation | Resume without duplicate mint, funding or page allocation |
 | Unauthorized claims/upgrades | Locked vault withdrawal absent; report actual upgrade authority |
 | Wrong page/mint/token program | Constraint failure, no transferred funds |
 | Keeper/indexer outage | Swaps remain chain-valid, pending matches recover idempotently |
@@ -262,21 +291,20 @@ Performance checks on validator: worst-case 32 inspected bins, account count, co
 
 **Phase A — executable math specification.** Implement integer price tables, swap walker, matching, allocation, fee arithmetic and simulator. Produce scenario outputs and a written economic findings report, including round-trip attacks. If fee matching requires impractically high turnover, say so and calibrate parameters in new config versions before mainnet.
 
-**Phase B — local Solana program.** Implement all relevant accounts/instructions, mint initialization and vesting, factory, tests and typed SDK. Demonstrate real local-validator swaps, scar formation, fee claims and graduation with small test thresholds in a separately labeled test config.
+**Phase B — local Solana program.** Implement all relevant accounts/instructions, mint initialization, factory, tests and typed SDK. Demonstrate real local-validator swaps, scar formation, fee claims and graduation with small test thresholds in a separately labeled test config.
 
-**Phase C — devnet full product.** Deploy if supported, connect real wallets, index real transactions, build the polished UI, test mobile, launch a second test market and demonstrate non-POP fee eligibility. Verify authorities and vault reconciliation. No fake activity on live views.
+**Phase C — devnet full product.** Deploy if supported, connect real wallets, index real transactions, build the polished UI, test mobile, create multiple coins through the public launch form and demonstrate isolated scar formation and creator fee claims. Verify authorities and vault reconciliation. No fake activity on live views.
 
 **Phase D — mainnet candidate.** Deliver production config proposal, funding requirements, audit package, release checklist, authority plan and deployment scripts. Keep production actions disabled unless explicitly authorized and prerequisites satisfied. Do not declare mainnet deployability merely because the website builds.
 
-Acceptance: a fresh developer can install, run validator, initialize funded test markets, buy/sell via browser, inspect scar formation, trigger graduation with test config, reconcile balances, claim only allowed fees, see vesting and replay simulation runs using documented commands. Automated program and SDK checks pass; frontend production build passes; wallet failure paths are usable; no sensitive keys committed.
+Acceptance: a fresh developer can install, run validator, initialize funded test markets, buy/sell via browser, inspect scar formation, trigger graduation with test config, reconcile balances, claim only allowed fees, complete discovery/creation/creator-fee flows and replay simulation runs using documented commands. Automated program and SDK checks pass; frontend production build passes; wallet failure paths are usable; no sensitive keys committed.
 
 ### Mainnet release gates
 
-- Independent smart-contract review of custody, AMM math, fee accounting, vesting and buybacks; unresolved critical/high findings block launch.
+- Independent smart-contract review of custody, AMM math, fee accounting and factory initialization; unresolved critical/high findings block launch.
 - Simulator and validator evidence covering the above cases, documented parameter calibration and economic limitations.
-- Real funding and published POP allocation/vesting/treasury addresses; no undisclosed founder purchase or allocation.
+- Real seed funding and published per-market mint/vault/creator-fee and protocol treasury addresses; factory allocation rules match the launch review screen.
 - Chosen authority state disclosed accurately; immutable custody claims only after program upgrade authority is revoked.
-- No automatic buybacks without an independently defensible price guard and bounded execution policy; manual policy clearly labeled if used.
 - Verified deployed program matches reviewed source, indexed data reconciles, and bootstrap/boundary trade behavior is documented.
 - Mainnet deployment and token activation separately authorized by the owner; no tool-generated test key reused as treasury custody.
 
@@ -284,10 +312,10 @@ Acceptance: a fresh developer can install, run validator, initialize funded test
 
 1. Full repository and commit identifier; working UI preview.
 2. README with exact pinned install/build/test/local-validator/devnet commands, environment template and realistic funding/rent estimates.
-3. `docs/mechanism.md`, `docs/tokenomics.md`, `docs/authority-model.md`, `docs/deployment.md`, `docs/economic-findings.md` and tested math/rounding definitions.
+3. `docs/mechanism.md`, `docs/launch-rules.md`, `docs/authority-model.md`, `docs/deployment.md`, `docs/economic-findings.md` and tested math/rounding definitions.
 4. Simulator outputs for every required scenario; no invented pass results.
 5. Tests and actual command results; explain any unavailable compiler, RPC, wallet or deployment capability.
-6. Devnet program/mint/vault/vesting addresses and real transaction signatures if deployed.
+6. Devnet program and per-market mint/vault addresses and real transaction signatures if deployed.
 7. A candid status table: implemented and tested / implemented but untested / blocked / deliberately out of scope.
 
 Do not finish after producing only mockups. Do not invent deployments or replace custom contracts with a wallet-connected demo. Build as much of the full stack as your environment supports and make remaining steps explicit.
@@ -300,4 +328,4 @@ This is an original proposed specification, not an audited protocol, verified ec
 - Anchor documentation: https://www.anchor-lang.com/docs — framework reference for Solana program development and testing.
 - Meteora official pool-creation documentation source: https://github.com/MeteoraAg/docs/blob/main/user-guides/creating-a-liquidity-pool.mdx — reference for bin spacing, initial prices and liquidity placement. POP v1 is its own proposed program and does not claim Meteora implements scar rules.
 
-Verify current SDKs, program APIs and toolchain versions during implementation. Do not use the earlier hypothetical impact-fee equation, wash-trading argument or migration architecture as an alternative source of truth. This document supersedes those sketches.
+Verify current SDKs, program APIs and toolchain versions during implementation. Do not use the earlier hypothetical impact-fee equation, wash-trading argument or migration architecture as an alternative source of truth. This document supersedes those sketches and all v1 platform-token launch, allocation, vesting and buyback requirements. The separate external $POP token does not change the mechanism for coins created on this launchpad.

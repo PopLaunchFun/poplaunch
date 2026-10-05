@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_GIT_COMMIT: process.env.NEXT_PUBLIC_GIT_COMMIT ?? process.env.GIT_COMMIT ?? "dev",
   },
+  async redirects() {
+    return [
+      { source: "/pop", destination: "/", permanent: false },
+      { source: "/markets", destination: "/", permanent: false },
+      { source: "/market/:mint", destination: "/coin/:mint", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

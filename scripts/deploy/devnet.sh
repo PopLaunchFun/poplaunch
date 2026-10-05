@@ -5,7 +5,7 @@
 #   scripts/deploy/devnet.sh keygen     # create deployer + treasury keys (gitignored)
 #   scripts/deploy/devnet.sh airdrop    # fund deployer from the devnet faucet (rate limited; repeat)
 #   scripts/deploy/devnet.sh deploy     # anchor deploy (upgradeable, authority = deployer)
-#   scripts/deploy/devnet.sh bootstrap  # initialize protocol, create + activate POP market (20 SOL seed), vesting, pages
+#   POP_MINT=<mint> scripts/deploy/devnet.sh bootstrap  # initialize protocol, publish the POP mint; --demo creates a labeled test coin
 #   scripts/deploy/devnet.sh verify     # print program/upgrade authority, mint authorities, vault balances
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

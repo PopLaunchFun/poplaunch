@@ -9,23 +9,25 @@ export function WalletButton({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   if (connected && publicKey) {
     return (
-      <button className={`btn w-full ${compact ? "text-xs px-2 py-1" : ""}`} onClick={() => void disconnect()} title="Disconnect">
+      <button className={`btn ${compact ? "btn-sm" : ""}`} onClick={() => void disconnect()} title="Disconnect">
+        <span className="w-2 h-2 rounded-full bg-green" aria-hidden />
         <span className="num">{short(publicKey.toBase58())}</span>
       </button>
     );
   }
   return (
     <div className="relative">
-      <button className={`btn btn-primary w-full ${compact ? "text-xs px-2 py-1" : ""}`} onClick={() => setOpen((o) => !o)} disabled={connecting}>
+      <button className={`btn btn-green ${compact ? "btn-sm" : ""}`} onClick={() => setOpen((o) => !o)} disabled={connecting} aria-haspopup="menu" aria-expanded={open}>
         {connecting ? "Connecting…" : "Connect wallet"}
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 panel p-2 z-30 w-48">
-          {wallets.length === 0 && <div className="text-xs text-paper-3 p-2">No wallet-standard wallets detected. Install Phantom or Solflare.</div>}
+        <div className="absolute right-0 mt-1 panel p-1.5 z-30 w-52" role="menu">
+          {wallets.length === 0 && <div className="text-xs text-muted p-2">No wallet-standard wallets detected. Install Phantom or Solflare.</div>}
           {wallets.map((w) => (
             <button
               key={w.adapter.name}
-              className="w-full text-left px-2 py-2 rounded hover:bg-ink-3 text-sm"
+              role="menuitem"
+              className="w-full text-left px-2 py-2 rounded-lg hover:bg-raised text-sm flex justify-between"
               onClick={async () => {
                 setOpen(false);
                 select(w.adapter.name as WalletName);
@@ -36,7 +38,8 @@ export function WalletButton({ compact = false }: { compact?: boolean }) {
                 }
               }}
             >
-              {w.adapter.name} <span className="text-paper-3 text-xs">{w.readyState}</span>
+              <span>{w.adapter.name}</span>
+              <span className="text-muted text-xs">{w.readyState === "Installed" ? "installed" : w.readyState.toLowerCase()}</span>
             </button>
           ))}
         </div>

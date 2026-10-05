@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Nav } from "@/components/nav";
+import { Footer } from "@/components/footer";
 import { NETWORK } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "POP — The market remembers",
-  description: "Proof of Pain: a Solana price-bin market where matched trading fees become nonwithdrawable liquidity at fixed price bins.",
+  title: "POP — Launch a coin. Build its liquidity.",
+  description: "Proof of Pain launchpad on Solana: every launch builds nonwithdrawable liquidity from matched trading fees at fixed price bins.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
+      <body className="min-h-screen flex flex-col">
         <Providers>
-          <div className="md:grid md:grid-cols-[220px_1fr] min-h-screen">
-            <Nav network={NETWORK} />
-            <main className="min-w-0 px-4 md:px-8 py-6 pb-28 md:pb-10">{children}</main>
-          </div>
+          <Nav network={NETWORK} />
+          <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 py-5 pb-24 md:pb-10">{children}</main>
+          <Footer network={NETWORK} />
         </Providers>
       </body>
     </html>

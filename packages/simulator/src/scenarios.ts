@@ -433,7 +433,7 @@ export const seedSizeSweep: Scenario = {
       }
       reports.push(sim.report());
     }
-    reports[0]!.findings.push("Calibration: seed size sets how much a single transaction can move; a 1 SOL seed makes a 0.1 SOL buy a ~25% price move. The launch form shows the largest single buy for the chosen seed. Experimental calibration choice, not validated economics.");
+    reports[0]!.findings.push("Calibration: the seed sets how much one transaction can move. The largest single buy within the 32-bin cap scales linearly with the seed (about 0.075 SOL at 1 SOL, 0.37 SOL at 5 SOL, 1.5 SOL at 20 SOL), and a 0.01 SOL buy moves a 1 SOL-seeded coin about 4%. Larger orders must be split into separately signed transactions; the launch form shows this limit for the chosen seed. Experimental calibration choice, not validated economics.");
     return reports;
   },
 };

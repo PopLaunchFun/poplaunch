@@ -1,0 +1,23 @@
+{
+  "name": "@pop/keeper",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Buyback keeper: withdraws bounded WSOL from the protocol escrow and, in the same transaction, buys the external POP mint via Jupiter and burns it.",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "1.2.0",
+    "@pop/sdk": "workspace:*",
+    "@solana/spl-token": "0.4.15",
+    "@solana/web3.js": "1.99.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,6 +1,6 @@
 # Economic findings from the reference simulator
 
-Status: simulator results only. Nothing here is validator evidence, an audit, or a validated economic model. All parameters are the brief's experimental calibration defaults (`packages/math/src/config.ts`, `POP_PILOT_DEFAULTS`). Reproduce with:
+Status: simulator results only. Nothing here is validator evidence, an audit, or a validated economic model. Unless stated, runs use the factory defaults with a 20 SOL seed and a 1B-token supply (`packages/math/src/config.ts`, `FACTORY_DEFAULTS`). Reproduce with:
 
 ```sh
 pnpm install && pnpm --filter @pop/math build && pnpm sim
@@ -28,7 +28,7 @@ Implications:
 
 ## 3. Launch density limits single-trade size
 
-With 900M POP spread uniformly over 512 bins and P0 = 20 SOL / 900M, each buy-side bin holds only ~0.039 SOL of POP at P0 (growing 1% per bin). The sell side holds 0.3125 SOL per bin. Consequences (`launch-calibration`):
+With 1B tokens spread uniformly over 512 bins and P0 = 20 SOL / 1B, each buy-side bin holds only ~0.039 SOL of tokens at P0 (growing 1% per bin). The sell side holds 0.3125 SOL per bin. Consequences (`launch-calibration`):
 
 - The largest single buy that fills within the 32-bin traversal cap on a fresh market is about 1.49 SOL gross.
 - The largest single sell is about 500M POP (~11.1 SOL at P0).
@@ -59,11 +59,29 @@ Scars formed near bins 199..201 during a pump stayed at those bins after the pri
 
 With TEST thresholds (1 SOL paired, 2 bands at 0.01 SOL) the market graduated exactly once at trade 137; 13 later swaps paid identical fees and a keeper match pass emitted nothing new. Runs that satisfied only the paired target (3 of 40 bands) or only the band target (0.88 of 1,000 SOL) stayed `active` (`maturity-threshold`).
 
-## 9. Buybacks are segregated and bounded
+## 9. Seed size decides single-swap capacity (`seed-size-sweep`)
 
-The POP market accrued 0.0125 SOL of protocol fees and zero buyback earmark; its sweep is rejected (`BuybackSourceExcluded`). A non-POP market earmarked exactly 50% of its WSOL protocol fee (0.00625 SOL) and swept it. Executing that amount on the POP market bought and burned 123,736 POP; the scar fee went to ineligible escrow (93,750 lamports) and the paired counter did not move. Spending beyond realized funds is rejected (`buyback-from-pop`). Base-token protocol fees are never counted as buyback funds.
+| Seed | Largest single buy (32 bins) | Largest single sell | 0.01 SOL buy |
+|---|---|---|---|
+| 1 SOL | 0.0747 SOL | 500M tokens (0.5 SOL at P0) | 5 bins, +4.1% |
+| 5 SOL | 0.3736 SOL | 500M tokens (2.5 SOL at P0) | 2 bins, +1.0% |
+| 20 SOL | 1.4944 SOL | 500M tokens (10 SOL at P0) | 1 bin, 0.0% |
 
-## 10. What the simulator cannot show
+Capacity scales linearly with the seed because the base schedule is uniform over 512 bins. With the owner's 1 SOL minimum, a fresh coin cannot absorb a 0.1 SOL buy in one transaction. The launch review shows this limit; the ticket tells traders to split. This is the brief's calibration, not validated economics; a denser base schedule near the cursor is the obvious alternative for a new config version.
+
+## 10. Markets are isolated (`multiple-launches`)
+
+Three coins with 1 / 5 / 20 SOL seeds traded in interleaved rounds. After every round the two untouched markets' snapshots were byte-for-byte unchanged, each market reconciled, and creator fees and buyback earmarks accrued only to the market that traded (coin 1: 0.000625 SOL + 575k tokens creator claimable after 20 swaps). Sweeping the earmark moved only the fee-vault earmark; locked vaults stayed intact.
+
+## 11. Interrupted creation resumes without duplicates (`interrupted-creation`)
+
+A launch that stopped after page 0 resumed by creating pages −1, 1 and 2 only; a second resume created nothing; activation succeeded once and was refused the second time. A later 0.05 SOL buy from bin 40 needed page 3, which the trader created first; the virtual-page quote predicted the on-chain output exactly. The validator suite covers the same flow with real accounts.
+
+## 12. Buybacks are escrow-only
+
+Every market earmarks 50% of its SOL protocol fee; sweeping is permissionless; withdrawal is bounded (cap, interval, published POP mint, destination fixed to the authority's own WSOL account) and is meant to be executed in the same transaction as a Jupiter buy and an SPL burn (`services/keeper`). The simulator models the earmark and sweep; execution is off-program and shown on `/status` with "burn in same tx" per withdrawal.
+
+## 13. What the simulator cannot show
 
 - Compute budget, account limits, rent and transaction size: measured on the validator (see `docs/deployment.md` and the status report).
 - Mint/vault/program substitution: account constraints in the Anchor program, exercised by the integration tests.

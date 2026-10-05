@@ -161,7 +161,7 @@
     "A 0.010000 SOL buy inspects 5 bins and moves the cursor price 4.1%.",
     "A 0.100000 SOL buy fails: TraversalLimit.",
     "A 1.000000 SOL buy fails: TraversalLimit.",
-    "Calibration: seed size sets how much a single transaction can move; a 1 SOL seed makes a 0.1 SOL buy a ~25% price move. The launch form shows the largest single buy for the chosen seed. Experimental calibration choice, not validated economics."
+    "Calibration: the seed sets how much one transaction can move. The largest single buy within the 32-bin cap scales linearly with the seed (about 0.075 SOL at 1 SOL, 0.37 SOL at 5 SOL, 1.5 SOL at 20 SOL), and a 0.01 SOL buy moves a 1 SOL-seeded coin about 4%. Larger orders must be split into separately signed transactions; the launch form shows this limit for the chosen seed. Experimental calibration choice, not validated economics."
   ],
   "binsWithScars": 0,
   "binsWithCurrentQuote": 64

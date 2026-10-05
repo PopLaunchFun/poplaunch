@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { ALL_SCENARIOS, Simulation, serializeReport, type RunReport } from "@pop/simulator";
-import { POP_PILOT_DEFAULTS, SOL } from "@pop/math";
+import { FACTORY_DEFAULTS, SOL } from "@pop/math";
 import { fmtSol, fmtBase, fmtPrice } from "@/lib/format";
 
 const PRESETS: { id: string; label: string; scenario: string }[] = [
@@ -13,6 +13,9 @@ const PRESETS: { id: string; label: string; scenario: string }[] = [
   { id: "distant-scar", label: "Thin-bin gap / distant scar", scenario: "distant-scar" },
   { id: "sell-depletion", label: "Exhausted bid inventory", scenario: "sell-depletion" },
   { id: "sandwich", label: "Sandwich", scenario: "sandwich" },
+  { id: "multiple-launches", label: "Multiple launches", scenario: "multiple-launches" },
+  { id: "interrupted-creation", label: "Interrupted creation", scenario: "interrupted-creation" },
+  { id: "seed-size-sweep", label: "Seed size sweep", scenario: "seed-size-sweep" },
 ];
 
 export function Lab() {
@@ -35,7 +38,7 @@ export function Lab() {
   function runCustom() {
     setBusy("custom");
     setTimeout(() => {
-      const sim = new Simulation({ name: "custom", description: `${custom.buys} buys of ${custom.size} SOL${custom.sells ? ", each followed by a full sell" : ""}.`, config: POP_PILOT_DEFAULTS });
+      const sim = new Simulation({ name: "custom", description: `${custom.buys} buys of ${custom.size} SOL${custom.sells ? ", each followed by a full sell" : ""}.`, config: FACTORY_DEFAULTS });
       sim.fund("you", 1000n * SOL);
       const gross = BigInt(Math.round(custom.size * 1e9));
       for (let i = 0; i < custom.buys; i++) {
@@ -62,23 +65,23 @@ export function Lab() {
         <label className="block text-xs">buys <input className="input mt-1" type="number" min={1} max={500} value={custom.buys} onChange={(e) => setCustom({ ...custom, buys: Number(e.target.value) })} /></label>
         <label className="block text-xs">size (SOL) <input className="input mt-1" type="number" step="0.01" min={0.001} value={custom.size} onChange={(e) => setCustom({ ...custom, size: Number(e.target.value) })} /></label>
         <label className="text-xs flex gap-2 items-center"><input type="checkbox" checked={custom.sells} onChange={(e) => setCustom({ ...custom, sells: e.target.checked })} /> sell everything after each buy</label>
-        <button className="btn btn-primary w-full" disabled={!!busy} onClick={runCustom}>Run custom</button>
+        <button className="btn btn-green w-full" disabled={!!busy} onClick={runCustom}>Run custom</button>
         {reports && <button className="btn w-full" onClick={() => { const blob = new Blob([serializeReport(reports[selected]!)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${reports[selected]!.name}.json`; a.click(); }}>Download run (JSON)</button>}
       </div>
       <div className="min-w-0">
-        {!r && <div className="panel p-6 text-paper-3 text-sm">Pick a preset. Seed money and scar money are tracked separately; every swap is inspectable.</div>}
+        {!r && <div className="panel p-6 text-muted text-sm">Pick a preset. Seed money and scar money are tracked separately; every swap is inspectable.</div>}
         {r && (
           <div className="space-y-4">
             {reports!.length > 1 && (
-              <div className="flex gap-1">{reports!.map((x, i) => <button key={x.name} className={`tag ${i === selected ? "tag-lime" : ""}`} onClick={() => setSelected(i)}>{x.name}</button>)}</div>
+              <div className="flex gap-1">{reports!.map((x, i) => <button key={x.name} className={`chip ${i === selected ? "chip-on" : ""}`} onClick={() => setSelected(i)}>{x.name}</button>)}</div>
             )}
-            <div className="panel p-3 text-sm"><div className="font-semibold">{r.name} <span className="tag ml-2">{r.configLabel}</span></div><div className="text-paper-2 mt-1">{r.description}</div></div>
+            <div className="panel p-3 text-sm"><div className="font-semibold">{r.name} <span className="chip ml-2">{r.configLabel}</span></div><div className="text-muted mt-1">{r.description}</div></div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs num">
               <Box k="Trades" v={`${r.tradeCount.succeeded} ok / ${r.tradeCount.failed} failed`} />
               <Box k="Historical paired" v={fmtSol(r.matched.pairedQuoteLifetime)} tone="scar" />
-              <Box k="Current scar inventory" v={`${fmtSol(r.endingInventory.scarQuote)} · ${fmtBase(r.endingInventory.scarBase, 6)} POP`} tone="scar" />
-              <Box k="Pending escrow" v={`${fmtSol(r.endingInventory.pendingQuoteEligible)} · ${fmtBase(r.endingInventory.pendingBaseEligible, 6)} POP`} tone="violet" />
-              <Box k="Seed inventory now" v={`${fmtSol(r.endingInventory.seedQuote)} · ${fmtBase(r.endingInventory.seedBase, 6)} POP`} />
+              <Box k="Current scar inventory" v={`${fmtSol(r.endingInventory.scarQuote)} · ${fmtBase(r.endingInventory.scarBase, 6)} tokens`} tone="scar" />
+              <Box k="Pending escrow" v={`${fmtSol(r.endingInventory.pendingQuoteEligible)} · ${fmtBase(r.endingInventory.pendingBaseEligible, 6)} tokens`} tone="violet" />
+              <Box k="Seed inventory now" v={`${fmtSol(r.endingInventory.seedQuote)} · ${fmtBase(r.endingInventory.seedBase, 6)} tokens`} />
               <Box k="Cursor price" v={`${fmtPrice(r.endingInventory.cursorPriceHuman)} SOL (bin ${r.endingInventory.cursor})`} />
               <Box k="Status" v={`${r.matched.status} · ${r.matched.hardenedBands} bands · ${(r.matched.graduationProgress * 100).toFixed(1)}%`} />
               <Box k="Reconciliation" v={r.reconciliation.ok ? "OK" : "FAILED"} tone={r.reconciliation.ok ? "lime" : "scar"} />
@@ -87,26 +90,26 @@ export function Lab() {
             <Spark values={r.trades.filter((t) => t.ok).map((t) => Number(t.scarFee))} label="scar fee per swap (input units)" />
             <div className="panel p-3 text-xs">
               <div className="label mb-1">Findings</div>
-              <ul className="list-disc ml-4 space-y-1 text-paper-2">{r.findings.map((f) => <li key={f}>{f}</li>)}</ul>
+              <ul className="list-disc ml-4 space-y-1 text-muted">{r.findings.map((f) => <li key={f}>{f}</li>)}</ul>
             </div>
             <div className="panel overflow-x-auto">
               <div className="label p-3">Every simulated swap</div>
               <table className="w-full text-xs num">
-                <thead><tr className="text-paper-3 text-left"><th className="px-2">#</th><th>actor</th><th>side</th><th>gross</th><th>output</th><th>bins</th><th>scars formed</th><th>result</th></tr></thead>
+                <thead><tr className="text-muted text-left"><th className="px-2">#</th><th>actor</th><th>side</th><th>gross</th><th>output</th><th>bins</th><th>scars formed</th><th>result</th></tr></thead>
                 <tbody>
                   {r.trades.slice(0, 300).map((t) => (
                     <tr key={t.seq} className="border-t border-line">
-                      <td className="px-2">{t.seq}</td><td>{t.actor}</td><td className={t.direction === "buy" ? "text-up" : "text-down"}>{t.direction}</td>
+                      <td className="px-2">{t.seq}</td><td>{t.actor}</td><td className={t.direction === "buy" ? "text-green" : "text-neg"}>{t.direction}</td>
                       <td>{t.direction === "buy" ? fmtSol(t.grossInput) : fmtBase(t.grossInput, 6)}</td>
                       <td>{t.ok ? (t.direction === "buy" ? fmtBase(t.output!, 6) : fmtSol(t.output!)) : "–"}</td>
                       <td>{t.ok ? `${t.startBin}→${t.endBin} (${t.binsInspected})` : t.binsInspected ?? "–"}</td>
                       <td>{t.scarsFormed?.length ?? 0}</td>
-                      <td className={t.ok ? "text-lime" : "text-scar"}>{t.ok ? (t.graduated ? "ok · GRADUATED" : "ok") : t.error}</td>
+                      <td className={t.ok ? "text-green" : "text-neg"}>{t.ok ? (t.graduated ? "ok · GRADUATED" : "ok") : t.error}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {r.trades.length > 300 && <div className="text-xs text-paper-3 p-2">Showing 300 of {r.trades.length}; download the run for all.</div>}
+              {r.trades.length > 300 && <div className="text-xs text-muted p-2">Showing 300 of {r.trades.length}; download the run for all.</div>}
             </div>
           </div>
         )}
@@ -116,7 +119,7 @@ export function Lab() {
 }
 
 function Box({ k, v, tone }: { k: string; v: string; tone?: "scar" | "lime" | "violet" }) {
-  return <div className="panel p-2"><div className="label">{k}</div><div className={tone === "scar" ? "text-scar" : tone === "lime" ? "text-lime" : tone === "violet" ? "text-violet" : ""}>{v}</div></div>;
+  return <div className="panel p-2"><div className="label">{k}</div><div className={tone === "scar" ? "text-neg" : tone === "lime" ? "text-green" : tone === "violet" ? "text-violet" : ""}>{v}</div></div>;
 }
 
 function Spark({ values, label }: { values: number[]; label: string }) {
@@ -127,7 +130,7 @@ function Spark({ values, label }: { values: number[]; label: string }) {
   return (
     <div className="panel p-2">
       <div className="label">{label}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16"><polyline points={pts} fill="none" stroke="#f2efe9" strokeWidth="1" /></svg>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16"><polyline points={pts} fill="none" stroke="#f0f4f2" strokeWidth="1" /></svg>
     </div>
   );
 }

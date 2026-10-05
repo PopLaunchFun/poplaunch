@@ -10,14 +10,14 @@ This is the normative description. The executable form is `packages/math` (TypeS
 
 ## 2. Price table
 
-- `p0_x64 = floor(seed_quote × 2^64 / seed_base)`; markets with `p0_x64 < 2^32` are refused (precision floor).
+- `p0_x64 = floor(seed_quote × 2^64 / seed_base)` with the creator-chosen `seed_quote ≥ min_seed_quote` (1 SOL); markets with `p0_x64 < 2^32` are refused (precision floor).
 - `P_i = P0 × 1.01^i` for `i ∈ [bin_min, bin_max]` (pilot: `[-64, 511]`). Computed by binary exponentiation with the constants `UP_X64[k] = round(1.01^(2^k) × 2^64)`, `k = 0..8`, and `DOWN_X64[k] = round((100/101)^(2^k) × 2^64)`, `k = 0..6`, flooring after each multiplication.
 - Error bound: each constant has relative error < 4e-20; at most 9 multiplications each lose < 1 ulp = 2^-64 absolute, i.e. ≤ 2^-32 relative given the precision floor. Total relative error < 2.1e-9. Verified by test for every bin of the pilot table.
 - Range validation at market creation: price at `bin_min` must be nonzero and price at `bin_max` must not overflow u128. Because all UP constants are ≥ 1 and DOWN constants ≤ 1, checking the extremes bounds every intermediate product.
 
 ## 3. Layout
 
-- Pages hold 16 bins: `page_index = floor_div(bin, 16)` with true floor division (bin −1 is on page −1). Pilot range uses 36 pages (−4..31).
+- Pages hold 16 bins: `page_index = floor_div(bin, 16)` with true floor division (bin −1 is on page −1). The range uses 36 pages (−4..31). A launch creates pages −1..2; any other page is created by whoever first needs it (`initialize_bin_page` is permissionless, the payer funds the rent). Client quotes treat a missing page as its seed schedule and the swap transaction creates it first.
 - Bands hold 10 bins: `band = floor_div(bin, 10)`; 59 bands for the pilot range; band state lives in the Market account (64 slots).
 - Seed schedule: quote uniform over bins `[bin_min, −1]`, base uniform over `[0, bin_max]`; division remainders go one unit each to the lowest-id bins of that side. Pages are materialized lazily and exactly once, debiting the market's unmaterialized counters; no funds move at page creation.
 
@@ -32,7 +32,7 @@ creator  = floor(g × 25 / 10000)
 tradable = g − scar − protocol − creator
 ```
 
-Internal buyback executions set `protocol = creator = 0`. Inputs below `min_quote_in` / `min_base_in` are rejected. On non-POP markets 50% (`buyback_share_bps`) of the quote protocol fee is earmarked for POP buybacks; base-token protocol fees are never earmarked.
+Inputs below `min_quote_in` / `min_base_in` are rejected. On every market 50% (`buyback_share_bps`) of the quote protocol fee is earmarked for the POP buyback escrow; base-token protocol fees are never earmarked.
 
 ## 5. Swap walker (`swap_exact_in`)
 
@@ -51,7 +51,7 @@ Inputs: direction, `gross_input`, `min_output`, `deadline_slot`, `expected_confi
    - record the fill, `remaining −= in`, `last_fill = bin`, step.
 4. No fill → `NoExecutableFill`; `output < min_output` → `OutputBelowMinimum`.
 5. Scar fee distribution: largest remainder over visited bins weighted by executed `in`, ties to the lower bin id; the shares sum exactly to `scar`.
-6. Commit: apply fills, add shares to pending escrow (eligible, or ineligible for buybacks), credit protocol/creator claimables (and buyback earmark), set `cursor = last_fill`, increment counters.
+6. Commit: apply fills, add shares to pending escrow, credit protocol/creator claimables (and the buyback earmark), set `cursor = last_fill`, increment counters.
 7. Match at each visited bin (section 6). Scars formed here are tradable only by later transactions because the fills were computed first.
 8. Token transfers: `tradable + scar` to the locked vault, `protocol + creator` to the fee vault, `output` from the locked vault to the user. Everything is atomic.
 
@@ -70,7 +70,7 @@ pending −= (b, q); scar += (b, q); paired_quote_lifetime(bin, band, market) +=
 emit ScarFormed(bin, b, q)
 ```
 
-Ineligible escrow (buybacks) is never matched in v1 and stays pending; it is reported separately. There is no timeout, refund or sweep. `match_bins(page)` is permissionless and idempotent.
+Only recorded swap fees enter escrow. There is no timeout, refund or sweep. `match_bins(page)` is permissionless and idempotent.
 
 ## 7. Graduation
 
