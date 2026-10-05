@@ -36,9 +36,9 @@ export function Header() {
   }, []);
   const links = [
     { href: "/", label: "Explore", current: path === "/" || path.startsWith("/launch") },
-    { href: "/how-it-works", label: "How it works", current: path.startsWith("/how-it-works") },
-    { href: "/create", label: "Create a coin", current: path.startsWith("/create") },
+    { href: "/create", label: "Launch", current: path.startsWith("/create") },
     ...(connected && !DEMO ? [{ href: "/my-pops", label: "My pops", current: path.startsWith("/my-pops") }] : []),
+    { href: "/how-it-works", label: "How it works", current: path.startsWith("/how-it-works") },
   ];
   return (
     <header className="bg-bg border-b-[3px] border-ink sticky top-0 z-30">

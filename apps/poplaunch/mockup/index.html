@@ -428,7 +428,7 @@ main { flex: 1; }
   }
 
   function createView() {
-    return '<div class="wrap page"><h1 class="display" style="font-size:40px">Create a coin</h1><p class="label" style="margin-top:8px;max-width:60ch">Pick a name, a ticker and an image. The launch terms are fixed for every coin, so there is nothing else to configure.</p>' +
+    return '<div class="wrap page"><h1 class="display" style="font-size:40px">Launch a coin</h1><p class="label" style="margin-top:8px;max-width:60ch">Pick a name, a ticker and an image. The launch terms are fixed for every coin, so there is nothing else to configure.</p>' +
       '<form class="form" id="create-form" style="margin-top:24px" novalidate>' +
         '<label class="field"><span class="t">Name</span><input class="input" id="c-name" placeholder="CAT.EXE" maxlength="32" required><span class="label hint" style="display:block">Up to 32 characters. Fixed once published.</span></label>' +
         '<label class="field"><span class="t">Ticker</span><input class="input" id="c-ticker" placeholder="CATEXE" maxlength="10" style="width:176px;text-transform:uppercase" required><span class="label hint" style="display:block">1 to 10 letters or digits. Fixed once published.</span></label>' +
@@ -484,7 +484,7 @@ main { flex: 1; }
 
   // ---------- router ----------
   const main = document.getElementById("main");
-  const LINKS = [["#home", "Explore"], ["#how", "How it works"], ["#create", "Create a coin"], ["#mypops", "My pops (example)"]];
+  const LINKS = [["#home", "Explore"], ["#create", "Launch"], ["#mypops", "My pops"], ["#how", "How it works"]];
   let launchState = {};
   function route() {
     const h = (location.hash || "#home").slice(1);
