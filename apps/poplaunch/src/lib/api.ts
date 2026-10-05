@@ -78,6 +78,13 @@ export const api = {
   launch: (id: string) => (isBase58Key(id) ? get<{ launch: LaunchDto; scanSlot: number | null; scanUpdatedAt: string | null; time: string }>(`/api/launches/${encodeURIComponent(id)}`) : Promise.resolve(null)),
   wallet: (address: string) => (isBase58Key(address) ? get<{ entries: WalletEntry[]; created: LaunchDto[]; history: HistoryItem[]; drafts: { mint: string; name: string; symbol: string; createdAt: string }[]; time: string }>(`/api/wallets/${encodeURIComponent(address)}/launches`) : Promise.resolve(null)),
   draft: (mint: string) => (isBase58Key(mint) ? get<{ draft: { mint: string; name: string; symbol: string; image: string; uri: string; metadataHash: string; publishedAt: string | null } }>(`/api/drafts/${encodeURIComponent(mint)}`) : Promise.resolve(null)),
+  site: () => get<{ contractAddress: string; updatedAt: string | null }>("/api/site"),
+  postSite: async (body: { payload: string; signer: string; signature: string; signedAt: number }) => {
+    const r = await fetch(`${API_URL}/api/site`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const j = (await r.json()) as { ok?: boolean; error?: string; contractAddress?: string };
+    if (!r.ok || !j.ok) throw new Error(j.error ?? "update rejected");
+    return j.contractAddress ?? "";
+  },
   postDraft: async (form: FormData) => {
     const r = await fetch(`${API_URL}/api/drafts`, { method: "POST", body: form });
     const j = (await r.json()) as { ok?: boolean; error?: string; mint?: string; uri?: string; metadataHash?: string; image?: string };

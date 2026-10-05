@@ -3,6 +3,11 @@ export function draftMessage(domain: string, payloadHash: string, signedAt: numb
   return `Pop Launch draft\nDomain: ${domain}\nPayload: ${payloadHash}\nSigned at: ${signedAt}\n\nThis signature only authorizes uploading launch metadata. It does not move funds.`;
 }
 
+/** Site-setting message, byte-identical to services/launchd/src/auth.ts. */
+export function siteMessage(domain: string, payloadHash: string, signedAt: number): string {
+  return `Pop Launch site setting\nDomain: ${domain}\nPayload: ${payloadHash}\nSigned at: ${signedAt}\n\nThis signature only updates text shown on the website. It does not move funds.`;
+}
+
 export async function sha256Hex(s: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");

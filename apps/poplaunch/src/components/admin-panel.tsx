@@ -14,6 +14,10 @@ import { DEMO, NETWORK, explorerAddress } from "@/lib/config";
 import { fmtSol } from "@/lib/launch";
 import { IDLE, runTx, type TxState } from "@/lib/tx";
 import { TxStatus } from "./live-panel";
+import { api } from "@/lib/api";
+import { SIGN_DOMAIN } from "@/lib/config";
+import { canonical, sha256Hex, siteMessage } from "@/lib/sign";
+import bs58 from "bs58";
 
 type Cfg = { authority: string; paused: boolean; version: number; feeSol: string; feeRecipient: string; targetSol: string; windowH: number; timeoutM: number; cpSwap: string; ammConfig: string };
 
@@ -27,6 +31,22 @@ export function AdminPanel() {
   const [newAuth, setNewAuth] = useState("");
   const [initFee, setInitFee] = useState("0");
   const [err, setErr] = useState<string | null>(null);
+  const [ca, setCa] = useState("");
+  const [caSaved, setCaSaved] = useState<string | null>(null);
+  const [caBusy, setCaBusy] = useState(false);
+  useEffect(() => { if (!DEMO) void api.site().then((r) => { if (r) { setCa(r.contractAddress); setCaSaved(r.contractAddress); } }); }, []);
+  /** Signs the site message with the authority wallet; the backend checks the signer against the on-chain authority. */
+  const saveContractAddress = async () => {
+    if (!wallet.publicKey || !wallet.signMessage) { setErr("this wallet cannot sign messages"); return; }
+    setErr(null); setCaBusy(true);
+    try {
+      const payload = canonical({ contractAddress: ca.trim() });
+      const signedAt = Math.floor(Date.now() / 1000);
+      const sig = await wallet.signMessage(new TextEncoder().encode(siteMessage(SIGN_DOMAIN, await sha256Hex(payload), signedAt)));
+      const saved = await api.postSite({ payload, signer: wallet.publicKey.toBase58(), signature: bs58.encode(sig), signedAt });
+      setCa(saved); setCaSaved(saved);
+    } catch (e) { setErr((e as Error).message); } finally { setCaBusy(false); }
+  };
 
   const load = async () => {
     try {
@@ -111,6 +131,15 @@ export function AdminPanel() {
             <h2 className="display text-[22px]">New launches</h2>
             <p className="label mt-2">Pausing blocks new launches only. Filling, settlement, claims and refunds keep working.</p>
             <button type="button" className="btn mt-4" disabled={busy} onClick={() => void sendIx(async (c) => c.setPausedIx(wallet.publicKey!, !(cfg as Cfg).paused))}>{(cfg as Cfg).paused ? "Resume new launches" : "Pause new launches"}</button>
+          </section>
+          <section className="box p-5 md:p-6 mt-6">
+            <h2 className="display text-[22px]">Contract address chip</h2>
+            <p className="label mt-2">The CA shown in the site header. Changes apply within a minute, no redeploy. Leave empty to show &ldquo;CA soon&rdquo;. This signs a message with your wallet; it is not a transaction and costs nothing.</p>
+            <div className="flex flex-wrap items-end gap-3 mt-4">
+              <label className="block flex-1 min-w-[260px]"><span className="label">Contract address</span><input className="input mt-1" value={ca} onChange={(e) => setCa(e.target.value.trim())} placeholder="token mint address (empty for none)" /></label>
+              <button type="button" className="btn btn-red" disabled={caBusy || ca === caSaved} onClick={() => void saveContractAddress()}>{caBusy ? "Signing…" : "Save CA"}</button>
+            </div>
+            {caSaved !== null && <p className="label mt-2">Currently shown: {caSaved ? <span className="addr">{caSaved}</span> : "CA soon"}</p>}
           </section>
           <section className="box p-5 md:p-6 mt-6">
             <h2 className="display text-[22px]">Hand over the authority</h2>

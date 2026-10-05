@@ -21,7 +21,15 @@ export function draftMessage(domain: string, payloadHash: string, signedAt: numb
   return `Pop Launch draft\nDomain: ${domain}\nPayload: ${payloadHash}\nSigned at: ${signedAt}\n\nThis signature only authorizes uploading launch metadata. It does not move funds.`;
 }
 
-export async function verifyDraftSignature(payload: string, signer: string, signature: string, signedAt: number): Promise<PublicKey> {
+/** Site-setting message (contract address chip). Kept identical in apps/poplaunch/src/lib/sign.ts. */
+export function siteMessage(domain: string, payloadHash: string, signedAt: number): string {
+  return `Pop Launch site setting\nDomain: ${domain}\nPayload: ${payloadHash}\nSigned at: ${signedAt}\n\nThis signature only updates text shown on the website. It does not move funds.`;
+}
+
+export const verifyDraftSignature = (payload: string, signer: string, signature: string, signedAt: number) => verifySignedPayload(draftMessage, payload, signer, signature, signedAt);
+export const verifySiteSignature = (payload: string, signer: string, signature: string, signedAt: number) => verifySignedPayload(siteMessage, payload, signer, signature, signedAt);
+
+async function verifySignedPayload(message: typeof draftMessage, payload: string, signer: string, signature: string, signedAt: number): Promise<PublicKey> {
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(signedAt) || Math.abs(now - signedAt) > SIGN_WINDOW_SECS) throw new Error("signature expired");
   let pk: PublicKey;
@@ -30,7 +38,7 @@ export async function verifyDraftSignature(payload: string, signer: string, sign
   } catch {
     throw new Error("invalid signer");
   }
-  const msg = new TextEncoder().encode(draftMessage(config.signDomain, sha256Hex(payload), signedAt));
+  const msg = new TextEncoder().encode(message(config.signDomain, sha256Hex(payload), signedAt));
   let sig: Uint8Array;
   try {
     sig = bs58.decode(signature);

@@ -119,3 +119,11 @@ CREATE TABLE IF NOT EXISTS used_signatures (
   signature          TEXT PRIMARY KEY,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Owner-editable text shown by the site (e.g. the contract-address chip). Only the on-chain protocol authority may write.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL,
+  updated_by  TEXT NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

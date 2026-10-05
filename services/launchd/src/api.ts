@@ -3,10 +3,10 @@ import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { PublicKey, type Connection } from "@solana/web3.js";
-import { entitlement, launchPda } from "@pop/sdk";
+import { PopLaunchClient, entitlement, launchPda } from "@pop/sdk";
 import { config } from "./config.js";
 import { query } from "./db.js";
-import { consumeSignature, sha256Hex, verifyDraftSignature } from "./auth.js";
+import { consumeSignature, sha256Hex, verifyDraftSignature, verifySiteSignature } from "./auth.js";
 import type { Keeper } from "./keeper.js";
 
 type Row = Record<string, string | number | null>;
@@ -285,6 +285,39 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
         [mint, pk.toBase58(), name, symbol, description || null, website || null, x || null, imageId, metadataJson, metadataHash, signedAt],
       );
       return c.json({ ok: true, mint, name, symbol, image, uri: `${config.publicUrl}/api/launches/${mint}/metadata.json`, metadataHash });
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 400);
+    }
+  });
+
+  /** Text the site shows but the owner may change without a redeploy. Public read; writes need the protocol authority's signature. */
+  app.get("/api/site", async (c) => {
+    const rows = await query<{ key: string; value: string; updated_at: string }>(`SELECT key, value, updated_at FROM site_settings`);
+    const site: Record<string, string> = {};
+    for (const r of rows) site[r.key] = r.value;
+    c.header("cache-control", "public, max-age=30");
+    return c.json({ contractAddress: site.contractAddress ?? "", updatedAt: rows.find((r) => r.key === "contractAddress")?.updated_at ?? null });
+  });
+
+  /**
+   * Body: JSON { payload, signer, signature, signedAt } where payload is the canonical JSON string
+   * {"contractAddress": "<base58 or empty>"} signed with the site message. The signer must be the current
+   * on-chain protocol authority (read live from the config account), so no server-side secret is involved.
+   */
+  app.post("/api/site", async (c) => {
+    try {
+      const b = (await c.req.json()) as { payload?: unknown; signer?: unknown; signature?: unknown; signedAt?: unknown };
+      const payload = String(b.payload ?? ""), signer = String(b.signer ?? ""), signature = String(b.signature ?? ""), signedAt = Number(b.signedAt ?? 0);
+      if (payload.length > 1024) throw new Error("payload too large");
+      const pk = await verifySiteSignature(payload, signer, signature, signedAt);
+      const cfg = await PopLaunchClient.readOnly(connection).fetchConfig();
+      if (!cfg.authority.equals(pk)) throw new Error("only the protocol authority can change site settings");
+      const p = JSON.parse(payload) as Record<string, unknown>;
+      const contractAddress = String(p.contractAddress ?? "").trim();
+      if (contractAddress !== "") new PublicKey(contractAddress); // throws on anything that is not a Solana address
+      await consumeSignature(signature);
+      await query(`INSERT INTO site_settings (key, value, updated_by, updated_at) VALUES ('contractAddress', $1, $2, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`, [contractAddress, pk.toBase58()]);
+      return c.json({ ok: true, contractAddress });
     } catch (e) {
       return c.json({ error: (e as Error).message }, 400);
     }
