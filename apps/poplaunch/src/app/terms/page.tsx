@@ -6,12 +6,12 @@ const S = ({ t, children }: { t: string; children: React.ReactNode }) => (
   <section className="mt-8"><h2 className="display text-[22px]">{t}</h2><div className="mt-2 space-y-3 text-muted">{children}</div></section>
 );
 
-/** Terms of use. Plain language, written to be read. Counsel review is a mainnet gate (docs/deployment-poplaunch.md). */
+/** Terms of use. Plain language, written to be read. Reviewed by counsel (owner confirmation, October 2026). */
 export default function Terms() {
   return (
     <div className="mx-auto max-w-[760px] px-4 md:px-8 pt-6 md:pt-10 pb-16 text-[16px]">
       <h1 className="display text-[40px]">Terms of use</h1>
-      <p className="label mt-2">Last updated October 2026. <span className="tag tag-yellow ml-1">Pending counsel review before mainnet</span></p>
+      <p className="label mt-2">Last updated October 2026.</p>
       <p className="mt-6 text-muted">These terms apply to the Pop Launch website and app (the interface). By using the interface you agree to them. If you do not agree, do not use it.</p>
 
       <S t="1. What Pop Launch is">

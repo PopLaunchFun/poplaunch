@@ -4,12 +4,12 @@ const S = ({ t, children }: { t: string; children: React.ReactNode }) => (
   <section className="mt-8"><h2 className="display text-[22px]">{t}</h2><div className="mt-2 space-y-3 text-muted">{children}</div></section>
 );
 
-/** Privacy notice. Counsel review is a mainnet gate (docs/deployment-poplaunch.md). */
+/** Privacy notice. Reviewed by counsel (owner confirmation, October 2026). */
 export default function Privacy() {
   return (
     <div className="mx-auto max-w-[760px] px-4 md:px-8 pt-6 md:pt-10 pb-16 text-[16px]">
       <h1 className="display text-[40px]">Privacy</h1>
-      <p className="label mt-2">Last updated October 2026. <span className="tag tag-yellow ml-1">Pending counsel review before mainnet</span></p>
+      <p className="label mt-2">Last updated October 2026.</p>
       <p className="mt-6 text-muted">Pop Launch collects as little as it can. Here is exactly what is stored, where, and why.</p>
 
       <S t="What is public by design">

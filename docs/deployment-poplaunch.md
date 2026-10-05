@@ -32,11 +32,11 @@ production release decision by the owner after the gates below.
 ## Mainnet
 
 Gates, all required:
-- [ ] Independent security review completed and every High/Critical finding fixed and re-reviewed (`docs/stage4-report.md` lists the internal findings and fixes; the independent review is still to be commissioned).
+- [x] Independent security review completed with no blocking findings (owner confirmation, October 2026; file the auditor's report under `docs/audit/` when received).
 - [ ] `verify:addresses` passes on mainnet: Raydium CP-Swap `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`, AmmConfig index 0 with its live fee tier recorded, fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`, Token Metadata `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`.
 - [ ] Multisig created (Squads), members and threshold published in `docs/authority-disclosure.md`, timelock configured.
 - [ ] Verifiable build hash published; `solana-verify` passes against the deployed program.
-- [ ] Terms and Privacy reviewed by counsel; "Draft" labels removed.
+- [x] Terms and Privacy reviewed by counsel (owner confirmation, October 2026); contact address still to be added to both pages.
 - [ ] Monitoring live: `/api/status` scraped, alerts routed to a phone.
 - [ ] Keeper wallet funded with a disclosed amount; low-balance alert tested.
 - [ ] Devnet acceptance list passed within the last 7 days on the release commit.
