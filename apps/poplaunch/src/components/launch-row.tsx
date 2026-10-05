@@ -27,7 +27,7 @@ export function LaunchRow({ l }: { l: Launch }) {
         </div>
         <div className="col-span-2 md:col-span-1 mt-3 md:mt-0">
           <div className="bar" role="progressbar" aria-valuenow={Math.round(pct.bps / 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${l.name} funded ${pct.text}`}><span className={fill} style={{ width: `${fillPct}%` }} /></div>
-          <div className="mono font-bold text-[14px] num mt-2 md:mt-2.5">{fmtSol(raised, 0)} / {fmtSol(target, 0)} SOL</div>
+          <div className="mono font-bold text-[14px] num mt-2 md:mt-2.5">{fmtSol(raised, 2)} / {fmtSol(target, 0)} SOL</div>
         </div>
         <div className="font-extrabold text-[24px] md:text-[27px] num md:text-left mt-2 md:mt-0 self-start md:self-center">{pct.text}</div>
         <div className="flex items-center gap-2.5 font-semibold text-[17px] md:text-[18px] num mt-2 md:mt-0 justify-end md:justify-start"><ClockIcon /><Countdown deadline={l.fundingDeadline} /></div>

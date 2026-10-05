@@ -65,6 +65,16 @@ export interface Launch {
   /** Creator's own backing on the same terms, lamports string. */
   creatorContributionLamports: string;
   poolUrl: string | null;
+  // Present for live launches (from launchd or chain); absent on demo fixtures.
+  address?: string;
+  poolState?: string | null;
+  lpBurned?: string;
+  supply?: string;
+  decimals?: number;
+  backerAllocation?: string;
+  poolAllocation?: string;
+  settlementAttempts?: { signature: string | null; status: "sent" | "confirmed" | "failed"; error: string | null; createdAt: string }[];
+  updatedSlot?: number;
 }
 
 /** Entitlement = floor(contribution × backerAllocation / target). */

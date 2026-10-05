@@ -62,6 +62,12 @@ export function raydiumAmmConfigPda(index: number, program = RAYDIUM_CP_SWAP): P
 }
 
 /** Sorted mint pair the way Raydium expects (token0 < token1 by bytes). */
+/** Raydium swap page for a launched coin (the only trading surface in V1). */
+export function raydiumSwapUrl(mint: PublicKey, network: string): string {
+  const base = network === "devnet" ? "https://raydium.io/swap/?cluster=devnet&" : "https://raydium.io/swap/?";
+  return `${base}inputMint=sol&outputMint=${mint.toBase58()}`;
+}
+
 export function sortMints(a: PublicKey, b: PublicKey): [PublicKey, PublicKey, boolean] {
   const aFirst = Buffer.compare(a.toBuffer(), b.toBuffer()) < 0;
   return aFirst ? [a, b, true] : [b, a, false];
@@ -163,6 +169,13 @@ export class PopLaunchClient {
   }
   fetchReceipt(launch: PublicKey, owner: PublicKey) {
     return this.program.account.contributionReceipt.fetchNullable(receiptPda(launch, owner, this.programId));
+  }
+  /** All receipts of one wallet, straight from chain (owner is at offset 8 + 32). */
+  fetchReceiptsByOwner(owner: PublicKey) {
+    return this.program.account.contributionReceipt.all([{ memcmp: { offset: 8 + 32, bytes: owner.toBase58() } }]);
+  }
+  fetchAllLaunches() {
+    return this.program.account.launch.all();
   }
   async eventsForSignature(signature: string) {
     const tx = await this.connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });

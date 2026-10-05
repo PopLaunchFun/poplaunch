@@ -71,9 +71,21 @@ checked against the rendered letter shapes.
 ## Stage 2 (done): on-chain mechanism
 
 The escrow program `programs/pop_launch` and its proof against the real Raydium CP-Swap program are
-documented in `docs/pop-launch-mechanism.md`. This app is not wired to it yet (that is Stage 3).
+documented in `docs/pop-launch-mechanism.md`.
+
+## Stage 3 (done): connected app
+
+Wallets (Phantom, Solflare, localnet Dev wallet), live feed and launch pages from `services/launchd`
+with chain fallback, backing / finish launch / claim / reclaim transactions with explicit states, the
+two-step Create a coin flow with signed metadata upload, My pops, How it works, Terms and Privacy
+drafts, share cards. Modes (demo / localnet / devnet) are fixed at build time and never mixed. See
+`docs/pop-launch-app.md` for how to run it and what the end-to-end run verified.
+
+```
+NEXT_PUBLIC_DEMO=0 NEXT_PUBLIC_SOLANA_NETWORK=localnet NEXT_PUBLIC_SIGN_DOMAIN=localhost pnpm --filter @pop/poplaunch build
+```
 
 ## Next (not started)
 
-Stage 3: wallet connection, create-a-coin flow with immutable metadata, live launch feed from an
-indexer, backing / claim / refund transactions, My pops, How it works, keeper for settlement.
+Stage 4: production readiness (security review, verified program addresses, Metaplex metadata,
+monitoring, authority disclosure, final terms, devnet then mainnet deployment).

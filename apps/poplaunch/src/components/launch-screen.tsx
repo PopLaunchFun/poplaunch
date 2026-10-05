@@ -6,10 +6,11 @@ import { Balloon } from "./balloon";
 import { Countdown, Ago } from "./countdown";
 import { BackingPanel, LOCK_TEXT } from "./backing-panel";
 import { LaunchDetails } from "./launch-details";
+import { BackingPanelLive, PositionPanel, SettlementPanel } from "./live-panel";
 
 type Pct = { bps: number; text: string };
 
-export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
+export function LaunchScreen({ l, pct, live = false, onRefresh }: { l: Launch; pct: Pct; live?: boolean; onRefresh?: () => void }) {
   const [sheet, setSheet] = useState(false);
   const [copied, setCopied] = useState(false);
   const raised = BigInt(l.raisedLamports), target = BigInt(l.targetLamports);
@@ -25,7 +26,7 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
     l.state === "funding" ? null
     : l.state === "ready" ? "Filled! Getting your launch ready."
     : l.state === "live" ? `POP! ${l.name} is live.`
-    : `This one didn’t launch. Your ${fmtSol(exampleBacking)} SOL is ready to reclaim.`;
+    : live ? "This one didn’t launch. Your SOL is ready to reclaim." : `This one didn’t launch. Your ${fmtSol(exampleBacking)} SOL is ready to reclaim.`;
 
   return (
     <div className="mt-5 grid lg:grid-cols-12 gap-8 lg:gap-10 items-start">
@@ -52,23 +53,23 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
           <div className="relative flex flex-col items-center text-center">
             <Balloon l={l} bps={pct.bps} size={300} popped={l.state === "live"} calm={l.state !== "funding"} />
             {headline && <h2 className="display text-[30px] md:text-[40px] mt-3 max-w-[16ch]">{headline}</h2>}
-            {l.state === "live" && (
+            {!live && l.state === "live" && (
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 <button type="button" className="btn btn-red btn-lg" aria-describedby="live-demo-note">Claim {fmtTokens(exampleTokens, V1.decimals)} {l.ticker}</button>
                 <a className="btn btn-lg" href={l.poolUrl ?? "#"} target="_blank" rel="noreferrer noopener">Trade {l.ticker}</a>
               </div>
             )}
-            {l.state === "refundable" && (
+            {!live && l.state === "refundable" && (
               <div className="mt-5 flex flex-col items-center gap-2">
                 <button type="button" className="btn btn-red btn-lg" aria-describedby="live-demo-note">Reclaim SOL</button>
                 <span className="label">{l.refundReason === "missed-target" ? `The target was not reached by the deadline (${fmtSol(raised, 2)} of ${fmtSol(target, 0)} SOL).` : "Settlement did not complete before its deadline."}</span>
               </div>
             )}
-            {(l.state === "live" || l.state === "refundable") && <p id="live-demo-note" className="label mt-3">Demo preview: this wallet position is an example. Actions become real in Stage 3.</p>}
+            {!live && (l.state === "live" || l.state === "refundable") && <p id="live-demo-note" className="label mt-3">Demo preview: this wallet position is an example. Actions become real in Stage 3.</p>}
           </div>
           <div className="relative mt-6">
             <div className="flex items-end justify-between gap-3 flex-wrap">
-              <div className="mono font-bold num text-[22px]">{fmtSol(raised, 0)} / {fmtSol(target, 0)} SOL</div>
+              <div className="mono font-bold num text-[22px]">{fmtSol(raised, 2)} / {fmtSol(target, 0)} SOL</div>
               <div className="condensed text-[56px] num leading-[0.8]">{pct.text}</div>
             </div>
             <div className="progress mt-3" role="progressbar" aria-valuenow={Math.round(pct.bps / 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`Funded ${pct.text}`}><span style={{ width: `${Math.min(100, pct.bps / 100)}%` }} /></div>
@@ -82,15 +83,17 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
           </div>
         </div>
 
-        {l.state === "ready" && <SettlementProgress l={l} />}
+        {!live && l.state === "ready" && <SettlementProgress l={l} />}
 
         <div className="mt-6"><LaunchDetails l={l} /></div>
         <p className="label mt-4">A successful launch does not promise profit or a minimum resale value. Backing counts can be manufactured by related wallets. Trading happens on a public DEX and is not confined to Pop Launch.</p>
       </div>
 
       {/* Right: backing panel (desktop) */}
-      <aside className="lg:col-span-5 hidden lg:block lg:sticky lg:top-24">
-        {l.state === "funding" ? <BackingPanel l={l} /> : <SidePanel l={l} exampleBacking={exampleBacking} exampleTokens={exampleTokens} />}
+      <aside className={`lg:col-span-5 lg:sticky lg:top-24 ${l.state === "funding" ? "hidden lg:block" : ""}`}>
+        {live
+          ? l.state === "funding" ? <BackingPanelLive l={l} onDone={() => onRefresh?.()} /> : l.state === "ready" ? <SettlementPanel l={l} onDone={() => onRefresh?.()} /> : <PositionPanel l={l} onDone={() => onRefresh?.()} />
+          : l.state === "funding" ? <BackingPanel l={l} /> : <SidePanel l={l} exampleBacking={exampleBacking} exampleTokens={exampleTokens} />}
       </aside>
 
       {/* Mobile sticky action: sits in its own bar; page bottom padding keeps disclosures reachable. */}
@@ -102,7 +105,7 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
       {sheet && (
         <div className="lg:hidden fixed inset-0 z-40 bg-ink/40" onClick={() => setSheet(false)} role="dialog" aria-modal="true" aria-label="Back this launch">
           <div className="absolute bottom-0 inset-x-0 max-h-[92vh] overflow-y-auto rounded-t-3xl bg-bg p-3" onClick={(e) => e.stopPropagation()}>
-            <BackingPanel l={l} onClose={() => setSheet(false)} />
+            {live ? <BackingPanelLive l={l} onClose={() => setSheet(false)} onDone={() => onRefresh?.()} /> : <BackingPanel l={l} onClose={() => setSheet(false)} />}
           </div>
         </div>
       )}

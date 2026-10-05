@@ -45,7 +45,7 @@ export function FeaturedPanel({ l }: { l: Launch }) {
         <div className="md:absolute md:right-[27px] md:top-[66px] md:w-[288px]">
           <Sparkle className="absolute -right-2 -top-7 hidden md:block" size={44} />
           <div className="condensed text-[84px] md:text-[124px] num leading-[0.8] md:text-right md:pr-1">{pct.text}</div>
-          <div className="mono font-bold text-[20px] md:text-[26px] num mt-3 md:mt-[14px] md:text-right md:pr-6">{fmtSol(raised, 0)} / {fmtSol(target, 0)} SOL</div>
+          <div className="mono font-bold text-[20px] md:text-[26px] num mt-3 md:mt-[14px] md:text-right md:pr-6">{fmtSol(raised, 2)} / {fmtSol(target, 0)} SOL</div>
           <div className="bar bar-lg mt-3 md:mt-[18px] bg-white" role="progressbar" aria-valuenow={Math.round(pct.bps / 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${l.name} funded ${pct.text}`}>
             <span className="bg-red" style={{ width: `${fillPct}%` }} />
           </div>

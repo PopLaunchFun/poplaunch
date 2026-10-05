@@ -101,7 +101,9 @@ The product has pivoted to **Pop Launch**: community-funded coin launches (back 
 launch together). The earlier Proof of Pain market under `apps/web`, `programs/pop_market` and the
 indexer is superseded and kept only for reference.
 
-- `apps/poplaunch` — the approved homepage and launch-detail screens on labeled demo fixtures.
+- `apps/poplaunch` — the approved screens, wired to wallets, the program and the backend (demo / localnet / devnet modes).
 - `programs/pop_launch` — escrow, receipts, atomic Raydium pool seeding with LP burn, claims, refunds.
+- `services/launchd` — chain sync cache, metadata uploads, discovery API, settlement keeper.
 - `docs/pop-launch-mechanism.md` — Stage 2 proof: what is implemented, what the tests show, limits.
+- `docs/pop-launch-app.md` — Stage 3: running the connected app and what the end-to-end run verified.
 - `scripts/raydium-fixture.sh`, `scripts/localnet.sh` — real Raydium CP-Swap program as a localnet fixture.
