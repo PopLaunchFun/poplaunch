@@ -7,11 +7,11 @@ import { Burst, WalletIcon } from "./art";
 export function Wordmark({ size = 48 }: { size?: number }) {
   return (
     <Link href="/" className="relative inline-flex items-baseline rounded-md whitespace-nowrap" aria-label="Pop Launch home">
-      <span className="wordmark text-[28px] sm:text-[32px] md:text-[48px]">
+      <span className="wordmark text-[30px] sm:text-[34px] md:text-[54px]">
         pop
         <span className="relative inline-block w-0" aria-hidden>
           <Burst className="absolute" size={Math.round(size * 0.52)} />
-          <style>{`.wordmark svg { left: -9px; top: -27px; width: 16px; height: 16px; } @media (min-width: 768px) { .wordmark svg { left: ${Math.round(-size * 0.3)}px; top: ${Math.round(-size * 0.98)}px; width: ${Math.round(size * 0.52)}px; height: ${Math.round(size * 0.52)}px; } }`}</style>
+          <style>{`.wordmark svg { left: -11px; top: -30px; width: 17px; height: 17px; } @media (min-width: 768px) { .wordmark svg { left: -19px; top: -54px; width: 30px; height: 30px; } }`}</style>
         </span>
         &nbsp;launch
       </span>

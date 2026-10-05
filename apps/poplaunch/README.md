@@ -45,13 +45,16 @@ gloss, knot), so every coin keeps the mockup's balloon framing.
 
 ## Fonts (self-hosted, OFL via Fontsource)
 
-- Display: Archivo Black (headline, coin names, "Demo launches", percentages in the panel).
-- Wordmark: Nunito Variable 900.
+- Headline, wordmark, coin names, "Demo launches": Rubik Variable at weight 900 with a thin
+  text stroke to match the mockup's very heavy rounded lettering.
+- "84%" and "CAT.EXE" in the featured panel: Anton (heavy condensed).
 - Mono: Space Mono (note card, captions, SOL amounts).
 - UI: Inter Variable (nav, buttons, times).
 
-The mockup's display face is slightly more condensed than Archivo Black; the mockup's exact
-font is not identified. This is the one visible difference left on desktop.
+Font loading is verified in the browser (`document.fonts` reports Rubik Variable, Anton,
+Space Mono and Inter Variable loaded; computed styles resolve to them, not to fallbacks).
+The mockup's exact typefaces are not identified; these are the closest licensed matches
+checked against the rendered letter shapes.
 
 ## Checks run
 

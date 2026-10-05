@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "@fontsource/archivo-black";
-@import "@fontsource-variable/nunito";
+@import "@fontsource-variable/rubik";
+@import "@fontsource/anton";
 @import "@fontsource/space-mono/400.css";
 @import "@fontsource/space-mono/700.css";
 @import "@fontsource-variable/inter";
@@ -18,8 +18,9 @@
   --color-peach: #fbe6c5;
   --color-green: #37c04a;
   --color-amber: #ffbf5e;
-  --font-display: "Archivo Black", "Arial Black", Impact, sans-serif;
-  --font-wordmark: "Nunito Variable", "Nunito", "Arial Rounded MT Bold", sans-serif;
+  --font-display: "Rubik Variable", "Rubik", "Arial Rounded MT Bold", "Arial Black", sans-serif;
+  --font-condensed: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --font-wordmark: "Rubik Variable", "Rubik", "Arial Black", sans-serif;
   --font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
 }
@@ -36,14 +37,15 @@ body {
 }
 
 @layer components {
-  .display { font-family: var(--font-display); font-weight: 400; line-height: 0.9; letter-spacing: -0.01em; }
-  .wordmark { font-family: var(--font-wordmark); font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+  .display { font-family: var(--font-display); font-weight: 900; line-height: 0.88; letter-spacing: -0.035em; -webkit-text-stroke: 0.018em currentColor; paint-order: stroke fill; }
+  .condensed { font-family: var(--font-condensed); font-weight: 400; line-height: 0.9; letter-spacing: 0; }
+  .wordmark { font-family: var(--font-wordmark); font-weight: 900; letter-spacing: -0.04em; line-height: 1; -webkit-text-stroke: 0.035em currentColor; paint-order: stroke fill; }
   .mono { font-family: var(--font-mono); }
   .num { font-variant-numeric: tabular-nums; }
   .addr { font-family: var(--font-mono); font-size: 0.9em; }
 
   /* Thick black outlines with a hard offset shadow: the mockup's panel/button/row treatment. */
-  .box { background: var(--color-white); border: 3px solid var(--color-ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--color-ink); }
+  .box { background: var(--color-white); border: 3.5px solid var(--color-ink); border-radius: 16px; box-shadow: 6px 6px 0 var(--color-ink); }
   .box-sm { border: 2.5px solid var(--color-ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--color-ink); }
 
   .btn {
@@ -115,7 +117,7 @@ body {
   .card, .card-sm { background: var(--color-white); border: 3px solid var(--color-ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--color-ink); }
   .btn-primary { background: var(--color-red); color: #fff; }
   .btn-ghost { border-color: transparent; box-shadow: none; background: transparent; }
-  .display-md { font-family: var(--font-display); font-weight: 400; line-height: 1; }
+  .display-md { font-family: var(--font-display); font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
   .tab { font-weight: 700; font-size: 1rem; padding: 0.5rem 0.875rem; border-radius: 10px; min-height: 2.5rem; border: 2px solid transparent; }
   .tab[aria-selected="true"], .tab[aria-current="page"] { background: var(--color-yellow); border-color: var(--color-ink); }
   .pill { display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 700; font-size: 0.875rem; padding: 0.25rem 0.625rem; border-radius: 8px; border: 2px solid var(--color-ink); background: var(--color-white); white-space: nowrap; }

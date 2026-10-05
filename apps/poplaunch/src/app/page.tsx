@@ -21,13 +21,13 @@ export default function Home() {
     <>
       {/* Hero: stacked headline left, featured panel right */}
       <section className="mx-auto max-w-[1536px] px-4 md:px-[55px] pt-6 md:pt-[22px] pb-8 md:pb-[26px] grid md:grid-cols-[minmax(0,1fr)_887px] gap-x-12 gap-y-10 items-start">
-        <div className="pt-1 md:pt-[30px]">
-          <h1 className="display text-[64px] sm:text-[88px] md:text-[118px] leading-[0.86]">
+        <div className="pt-1 md:pt-[26px]">
+          <h1 className="display text-[66px] sm:text-[92px] md:text-[132px] leading-[0.85] tracking-[-0.045em]">
             <span className="block">Back it.</span>
             <span className="block">Fill it.</span>
             <span className="block text-red-deep">Pop it.</span>
           </h1>
-          <p className="font-bold text-[20px] md:text-[25px] mt-5 md:mt-[14px] tracking-[-0.01em]">Fill the balloon. Launch a coin together.</p>
+          <p className="font-bold text-[20px] md:text-[25px] mt-5 md:mt-[12px] tracking-[-0.01em]">Fill the balloon. Launch a coin together.</p>
         </div>
         {featured ? (
           <FeaturedPanel l={featured} />
@@ -43,7 +43,7 @@ export default function Home() {
 
       <section id="launches" className="mx-auto max-w-[1536px] px-4 md:px-[45px] pt-5 md:pt-[18px] scroll-mt-24">
         <div className="flex items-end justify-between gap-4 px-0 md:px-[10px]">
-          <h2 className="display text-[32px] md:text-[40px]"><span className="marker">Demo</span> launches</h2>
+          <h2 className="display text-[32px] md:text-[42px]"><span className="marker">Demo</span> launches</h2>
           <a href="#launches" className="font-semibold text-[15px] md:text-[16px] inline-flex items-center gap-2 pr-0 md:pr-[7px] whitespace-nowrap shrink-0">See all launches <ArrowRight size={18} /></a>
         </div>
         {rows.length === 0 ? (
