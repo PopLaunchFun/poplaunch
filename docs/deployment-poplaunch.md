@@ -66,3 +66,18 @@ second claim shows nothing to claim; missed-target refund; reserve reclaim; stal
 The web app and launchd roll back by redeploying the previous image. The program never rolls back: a
 flawed deployment is fixed by a reviewed upgrade through the multisig, or, if the flaw is in settlement,
 by pausing new launches and letting open launches refund.
+
+## Devnet deployment record (5 October 2026)
+
+| Item | Value |
+|---|---|
+| Program | `Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy`, deployed in slot 507823557, 565,536 bytes |
+| Upgrade and protocol authority | `FyGTAZcvCBP3ZuSs8aNjLbcRGQxGZvYqD1Xrg1y3uC23` (devnet deployer, throwaway) |
+| Protocol settings | version 1: target **1 SOL** (devnet test value; mainnet uses 50), 24 h window, 60 min timeout, 0.1 SOL fee, 0.2 SOL minimum reserve, Raydium devnet `DRaycp…`, AmmConfig 0 `5MxLgy9oPdTC3YgkiePHqr3EoCRD9uLVYRQS2ANAs7wy` |
+| Keeper fee wallet | `78iGSuqLxgoart2gJJLmFTobVyctCJDFqKygbmd9b3oU` |
+| Backend | Railway project `poplaunch-devnet`: `launchd` from this repo's `services/launchd/Dockerfile`, Postgres 16 with a volume; `https://launchd-production-6acc.up.railway.app` |
+| Website | Vercel project `pop-launch-devnet`, root `apps/poplaunch`: `https://pop-launch-devnet.vercel.app` (browser RPC: public devnet endpoint; backend RPC: Helius) |
+| Sign domain | `poplaunch-devnet` (same string in the site and the backend) |
+
+`verify:addresses` passed on devnet after `initialize_protocol`. Raydium's devnet configs all carry a 0.25%
+creator fee that mainnet config 0 does not; it accrues to the launch authority and is harmless for testing.

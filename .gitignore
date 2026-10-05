@@ -17,3 +17,5 @@ programs/**/target/
 .DS_Store
 coverage/
 *.tsbuildinfo
+.vercel
+.env*
