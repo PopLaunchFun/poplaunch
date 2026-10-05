@@ -37,7 +37,7 @@ export function PromoBubble({ className = "" }: { className?: string }) {
     <div className={`relative inline-block ${className}`} role="status">
       <div className="promo-bubble bg-red text-white border-[3px] border-ink rounded-[18px] px-4 py-3 md:px-5 md:py-4 shadow-[5px_5px_0_#000] -rotate-[4deg]">
         <div className="display text-[22px] md:text-[30px] leading-[0.9]">Feeless for 24 hours!</div>
-        <div className="mono font-bold text-[12px] md:text-[14px] uppercase tracking-[0.12em] mt-1.5">No 0.1 SOL creation fee · {left(until - Date.now())} left</div>
+        <div className="mono font-bold text-[12px] md:text-[14px] uppercase tracking-[0.12em] mt-1.5">No SOL creation fee · {left(until - Date.now())} left</div>
         <svg className="absolute -bottom-[14px] left-8" width="26" height="16" viewBox="0 0 26 16" aria-hidden><path d="M2 0 L24 0 L8 15 Z" fill="#fb473b" stroke="#000" strokeWidth="3" strokeLinejoin="round" /><path d="M5 0 L21 0" stroke="#fb473b" strokeWidth="4" /></svg>
       </div>
     </div>
