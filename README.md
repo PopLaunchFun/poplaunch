@@ -94,3 +94,14 @@ To trade or launch from a browser on localnet, point Phantom/Solflare at `http:/
 - The simulator is an executable specification; the local-validator suite is the evidence for localnet only.
 - Graduation ("Pain proven") marks fees paid on both sides; one actor can manufacture it. It is not a safety rating.
 - Reserves can go down. There is no floor, no guaranteed exit, no rescue minting.
+
+## Pop Launch (current direction)
+
+The product has pivoted to **Pop Launch**: community-funded coin launches (back a coin, fill the balloon,
+launch together). The earlier Proof of Pain market under `apps/web`, `programs/pop_market` and the
+indexer is superseded and kept only for reference.
+
+- `apps/poplaunch` — the approved homepage and launch-detail screens on labeled demo fixtures.
+- `programs/pop_launch` — escrow, receipts, atomic Raydium pool seeding with LP burn, claims, refunds.
+- `docs/pop-launch-mechanism.md` — Stage 2 proof: what is implemented, what the tests show, limits.
+- `scripts/raydium-fixture.sh`, `scripts/localnet.sh` — real Raydium CP-Swap program as a localnet fixture.

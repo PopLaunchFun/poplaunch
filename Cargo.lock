@@ -962,6 +962,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pop_launch"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "pop_market"
 version = "0.1.0"
 dependencies = [

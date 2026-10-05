@@ -29,9 +29,9 @@ type Seed = Omit<Launch, "targetLamports" | "creator" | "mint" | "openedAt" | "f
 };
 
 const seeds: Seed[] = [
-  { id: "cat-exe", name: "CAT.EXE", ticker: "CATEXE", hue: 4, art: { balloon: "/art/balloon-cat.png", featured: "/art/balloon-cat-featured.png", color: "red" }, tagline: "Terminal cat. Higher together.", description: "A coin by the people. For the people.", socials: { x: "catexe" }, state: "funding", raisedLamports: (42n * SOL).toString(), backerWallets: 212, hoursLeft: 2, creatorSol: 1n * SOL },
-  { id: "froggo", name: "FROGGO", ticker: "FROGGO", hue: 128, art: { balloon: "/art/balloon-frog.png", featured: null, color: "green" }, tagline: "Just a frog. Big plans.", description: "Just a frog. Big plans.", socials: {}, state: "funding", raisedLamports: (28n * SOL).toString(), backerWallets: 131, hoursLeft: 5 },
-  { id: "goodboy", name: "GOODBOY", ticker: "GOODBOY", hue: 40, art: { balloon: "/art/balloon-dog.png", featured: null, color: "yellow" }, tagline: "Good dogs go higher.", description: "Good dogs go higher.", socials: {}, state: "funding", raisedLamports: (19n * SOL).toString(), backerWallets: 88, hoursLeft: 8 },
+  { id: "cat-exe", name: "CAT.EXE", ticker: "CATEXE", hue: 4, art: { balloon: "/art/balloon-cat.png", featured: "/art/balloon-cat-featured.png", face: "/art/face-cat.png", color: "red" }, tagline: "Terminal cat. Higher together.", description: "A coin by the people. For the people.", socials: { x: "catexe" }, state: "funding", raisedLamports: (42n * SOL).toString(), backerWallets: 212, hoursLeft: 2, creatorSol: 1n * SOL },
+  { id: "froggo", name: "FROGGO", ticker: "FROGGO", hue: 128, art: { balloon: "/art/balloon-frog.png", featured: null, face: "/art/face-frog.png", color: "green" }, tagline: "Just a frog. Big plans.", description: "Just a frog. Big plans.", socials: {}, state: "funding", raisedLamports: (28n * SOL).toString(), backerWallets: 131, hoursLeft: 5 },
+  { id: "goodboy", name: "GOODBOY", ticker: "GOODBOY", hue: 40, art: { balloon: "/art/balloon-dog.png", featured: null, face: "/art/face-dog.png", color: "yellow" }, tagline: "Good dogs go higher.", description: "Good dogs go higher.", socials: {}, state: "funding", raisedLamports: (19n * SOL).toString(), backerWallets: 88, hoursLeft: 8 },
 ];
 
 /** Builds the demo set relative to `now` (ms) so countdowns look alive without pretending to be real. */

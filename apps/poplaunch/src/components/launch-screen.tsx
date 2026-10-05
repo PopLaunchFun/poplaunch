@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { type Launch, V1, fmtSol, fmtTokens, short, entitlementBaseUnits } from "@/lib/launch";
-import { Avatar } from "./avatar";
+import { BalloonFrame } from "./balloon-frame";
 import { Balloon } from "./balloon";
 import { Countdown, Ago } from "./countdown";
 import { BackingPanel, LOCK_TEXT } from "./backing-panel";
@@ -32,9 +32,9 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
       {/* Left: identity, balloon, progress, details */}
       <div className="lg:col-span-7 min-w-0">
         <div className="flex items-start md:items-center gap-4">
-          <Avatar name={l.name} ticker={l.ticker} hue={l.hue} size={64} />
+          <BalloonFrame l={l} size={64} className="w-[64px]" />
           <div className="min-w-0 flex-1">
-            <h1 className="display text-[30px] md:text-[40px] break-words"><span className="md:hidden"><StatePill state={l.state} /></span><span className="md:hidden block h-1" />{l.name} <span className="text-muted font-extrabold text-[20px] md:text-[24px] whitespace-nowrap">${l.ticker}</span></h1>
+            <h1 className="display text-[32px] md:text-[44px] break-words"><span className="md:hidden"><StatePill state={l.state} /></span><span className="md:hidden block h-1" />{l.name} <span className="text-muted font-extrabold text-[20px] md:text-[24px] whitespace-nowrap">${l.ticker}</span></h1>
             <div className="label mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
               <span>by <span className="addr">{short(l.creator, 5)}</span></span>
               {l.socials.website && <a className="link" href={l.socials.website} target="_blank" rel="noreferrer noopener">Website</a>}
@@ -46,21 +46,21 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
         </div>
         <p className="mt-4 text-[17px] text-muted max-w-[56ch]">{l.tagline}</p>
 
-        <div className="card mt-6 p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-yellow/60" aria-hidden />
-          <div className="absolute -left-10 bottom-6 w-28 h-28 rounded-full bg-lilac/50" aria-hidden />
+        <div className="box mt-6 p-6 md:p-8 relative overflow-hidden">
+          <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-yellow" aria-hidden />
+          <div className="absolute -left-10 bottom-6 w-28 h-28 rounded-full bg-yellow" aria-hidden />
           <div className="relative flex flex-col items-center text-center">
-            <Balloon bps={pct.bps} name={l.name} ticker={l.ticker} hue={l.hue} size={280} popped={l.state === "live"} calm={l.state !== "funding"} />
-            {headline && <h2 className="display text-[28px] md:text-[36px] mt-2 max-w-[18ch]">{headline}</h2>}
+            <Balloon l={l} bps={pct.bps} size={300} popped={l.state === "live"} calm={l.state !== "funding"} />
+            {headline && <h2 className="display text-[30px] md:text-[40px] mt-3 max-w-[16ch]">{headline}</h2>}
             {l.state === "live" && (
               <div className="mt-5 flex flex-wrap justify-center gap-3">
-                <button type="button" className="btn btn-primary btn-lg" aria-describedby="live-demo-note">Claim {fmtTokens(exampleTokens, V1.decimals)} {l.ticker}</button>
+                <button type="button" className="btn btn-red btn-lg" aria-describedby="live-demo-note">Claim {fmtTokens(exampleTokens, V1.decimals)} {l.ticker}</button>
                 <a className="btn btn-lg" href={l.poolUrl ?? "#"} target="_blank" rel="noreferrer noopener">Trade {l.ticker}</a>
               </div>
             )}
             {l.state === "refundable" && (
               <div className="mt-5 flex flex-col items-center gap-2">
-                <button type="button" className="btn btn-primary btn-lg" aria-describedby="live-demo-note">Reclaim SOL</button>
+                <button type="button" className="btn btn-red btn-lg" aria-describedby="live-demo-note">Reclaim SOL</button>
                 <span className="label">{l.refundReason === "missed-target" ? `The target was not reached by the deadline (${fmtSol(raised, 2)} of ${fmtSol(target, 0)} SOL).` : "Settlement did not complete before its deadline."}</span>
               </div>
             )}
@@ -68,8 +68,8 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
           </div>
           <div className="relative mt-6">
             <div className="flex items-end justify-between gap-3 flex-wrap">
-              <div className="num"><span className="display text-[34px]">{fmtSol(raised, 2)}</span> <span className="text-muted text-[18px]">of {fmtSol(target, 0)} SOL</span></div>
-              <div className="display-md text-[24px] num text-coral">{pct.text}</div>
+              <div className="mono font-bold num text-[22px]">{fmtSol(raised, 0)} / {fmtSol(target, 0)} SOL</div>
+              <div className="condensed text-[56px] num leading-[0.8]">{pct.text}</div>
             </div>
             <div className="progress mt-3" role="progressbar" aria-valuenow={Math.round(pct.bps / 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`Funded ${pct.text}`}><span style={{ width: `${Math.min(100, pct.bps / 100)}%` }} /></div>
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 label">
@@ -96,7 +96,7 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
       {/* Mobile sticky action: sits in its own bar; page bottom padding keeps disclosures reachable. */}
       {l.state === "funding" && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 z-20 px-4 py-3 bg-surface/95 backdrop-blur-sm border-t border-line">
-          <button type="button" className="btn btn-primary btn-lg w-full" onClick={() => setSheet(true)}>Help it pop</button>
+          <button type="button" className="btn btn-red btn-lg w-full" onClick={() => setSheet(true)}>Help it pop</button>
         </div>
       )}
       {sheet && (
@@ -111,17 +111,17 @@ export function LaunchScreen({ l, pct }: { l: Launch; pct: Pct }) {
 }
 
 function StatePill({ state }: { state: Launch["state"] }) {
-  if (state === "funding") return <span className="pill pill-peach">Filling up</span>;
-  if (state === "ready") return <span className="pill pill-lilac">Getting ready</span>;
-  if (state === "live") return <span className="pill pill-mint">Live</span>;
-  return <span className="pill pill-line">Refund available</span>;
+  if (state === "funding") return <span className="tag tag-yellow">Filling up</span>;
+  if (state === "ready") return <span className="tag">Getting ready</span>;
+  if (state === "live") return <span className="tag tag-green">Live</span>;
+  return <span className="tag">Refund available</span>;
 }
 
 function SidePanel({ l, exampleBacking, exampleTokens }: { l: Launch; exampleBacking: bigint; exampleTokens: bigint }) {
   if (l.state === "ready") {
     return (
-      <div className="card p-6">
-        <h2 className="display-md text-[22px]">Filled. No more backing.</h2>
+      <div className="box p-6">
+        <h2 className="display text-[22px]">Filled. No more backing.</h2>
         <p className="text-[15px] text-muted mt-2">The target was reached, so deposits are closed. A settlement transaction creates the pool, burns the LP tokens and enables claims in one step. If that does not happen before the recovery deadline, every backer can reclaim their SOL.</p>
         <p className="label mt-3">{LOCK_TEXT}</p>
       </div>
@@ -129,8 +129,8 @@ function SidePanel({ l, exampleBacking, exampleTokens }: { l: Launch; exampleBac
   }
   if (l.state === "live") {
     return (
-      <div className="card p-6">
-        <h2 className="display-md text-[22px]">Your position (example)</h2>
+      <div className="box p-6">
+        <h2 className="display text-[22px]">Your position (example)</h2>
         <dl className="mt-3 space-y-2 text-[15px]">
           <div className="flex justify-between"><dt className="text-muted">Backed</dt><dd className="num">{fmtSol(exampleBacking)} SOL</dd></div>
           <div className="flex justify-between"><dt className="text-muted">Claimable</dt><dd className="num">{fmtTokens(exampleTokens, V1.decimals)} {l.ticker}</dd></div>
@@ -141,8 +141,8 @@ function SidePanel({ l, exampleBacking, exampleTokens }: { l: Launch; exampleBac
     );
   }
   return (
-    <div className="card p-6">
-      <h2 className="display-md text-[22px]">Your position (example)</h2>
+    <div className="box p-6">
+      <h2 className="display text-[22px]">Your position (example)</h2>
       <dl className="mt-3 space-y-2 text-[15px]">
         <div className="flex justify-between"><dt className="text-muted">Backed</dt><dd className="num">{fmtSol(exampleBacking)} SOL</dd></div>
         <div className="flex justify-between"><dt className="text-muted">Reclaimable</dt><dd className="num">{fmtSol(exampleBacking)} SOL</dd></div>
@@ -162,15 +162,15 @@ function SettlementProgress({ l }: { l: Launch }) {
     { t: "Enable claims", s: "waiting" },
   ];
   return (
-    <div className="card mt-6 p-5 md:p-6">
+    <div className="box mt-6 p-5 md:p-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="display-md text-[20px]">Settlement progress</h2>
-        <span className="pill pill-line">Demo steps</span>
+        <h2 className="display text-[20px]">Settlement progress</h2>
+        <span className="tag">Demo steps</span>
       </div>
       <ol className="mt-3 space-y-2">
         {steps.map((s) => (
           <li key={s.t} className="flex items-center gap-3 text-[15px]">
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold ${s.s === "done" ? "bg-mint text-success" : s.s === "pending" ? "bg-yellow" : "bg-bg border border-line text-muted"}`} aria-hidden>{s.s === "done" ? "✓" : s.s === "pending" ? "…" : ""}</span>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold ${s.s === "done" ? "bg-[#bff0c6] text-[#1f7a4d]" : s.s === "pending" ? "bg-yellow" : "bg-bg border border-line text-muted"}`} aria-hidden>{s.s === "done" ? "✓" : s.s === "pending" ? "…" : ""}</span>
             <span className={s.s === "waiting" ? "text-muted" : ""}>{s.t}</span>
             <span className="label ml-auto">{s.s === "done" ? "confirmed" : s.s === "pending" ? "in progress" : "waiting"}</span>
           </li>

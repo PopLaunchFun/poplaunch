@@ -10,9 +10,11 @@ skip-lint = false
 
 [programs.localnet]
 pop_market = "6pTC8K5PtUKGpQdHZoEsu26qLEehFDh2m1BLKRndNggx"
+pop_launch = "Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy"
 
 [programs.devnet]
 pop_market = "6pTC8K5PtUKGpQdHZoEsu26qLEehFDh2m1BLKRndNggx"
+pop_launch = "Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy"
 
 [provider]
 cluster = "localnet"

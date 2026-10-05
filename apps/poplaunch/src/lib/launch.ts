@@ -33,7 +33,7 @@ export const LAMPORTS_PER_SOL = 1_000_000_000n;
 export interface SocialLinks { website?: string; x?: string }
 
 /** Demo artwork: extracted balloon PNGs. Production launches use `image` inside the SVG balloon frame. */
-export interface LaunchArt { balloon: string; featured: string | null; color: "red" | "green" | "yellow" }
+export interface LaunchArt { balloon: string; featured: string | null; face?: string | null; color: "red" | "green" | "yellow" }
 
 export interface Launch {
   id: string;

@@ -1,0 +1,2177 @@
+{
+  "address": "Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy",
+  "metadata": {
+    "name": "pop_launch",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Pop Launch: community-funded coin launches with escrowed SOL, atomic Raydium pool seeding, LP burn, claims and refunds"
+  },
+  "instructions": [
+    {
+      "name": "claim_tokens",
+      "docs": [
+        "Transfer a wallet's remaining entitlement to that wallet's associated token account. Anyone may pay for it;",
+        "nobody can redirect it. Claims never expire. Cumulative claimed amount is recorded before the transfer."
+      ],
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "Anyone may sponsor a claim; tokens only ever go to the receipt owner's ATA."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          },
+          "relations": [
+            "receipt"
+          ]
+        },
+        {
+          "name": "receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "relations": [
+            "receipt"
+          ]
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "launch"
+          ]
+        },
+        {
+          "name": "auth",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backer_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  99,
+                  107,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "contribute",
+      "docs": [
+        "Commit SOL. Rejected whole if it exceeds the remaining target; the exact remainder may be below the minimum.",
+        "Reaching the target flips the launch to READY in the same transaction."
+      ],
+      "discriminator": [
+        82,
+        33,
+        68,
+        131,
+        32,
+        0,
+        205,
+        95
+      ],
+      "accounts": [
+        {
+          "name": "backer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              },
+              {
+                "kind": "account",
+                "path": "backer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_launch",
+      "docs": [
+        "Create the mint, mint the fixed supply into program vaults, revoke the mint authority, freeze the",
+        "terms, fund the escrow's rent and the creator's setup reserve, pay the creation fee, and open funding."
+      ],
+      "discriminator": [
+        239,
+        223,
+        255,
+        134,
+        39,
+        121,
+        127,
+        62
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "The coin mint: created here, fully minted into program vaults, mint authority revoked, no freeze authority."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "auth",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backer_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  99,
+                  107,
+                  101,
+                  114,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_recipient",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "CreateLaunchArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "expire_launch",
+      "docs": [
+        "Convenience only: persist the derived REFUNDABLE state so indexers and UIs can read it. Not required for refunds."
+      ],
+      "discriminator": [
+        98,
+        30,
+        30,
+        129,
+        233,
+        249,
+        51,
+        187
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "finalize_launch",
+      "docs": [
+        "Permissionless settlement, strictly before the settlement deadline: wrap exactly the target SOL,",
+        "create the Raydium CP-Swap pool with exactly the pool allocation, burn every LP token issued to the",
+        "launch, verify the pool reserves, and mark LIVE. All or nothing."
+      ],
+      "discriminator": [
+        113,
+        133,
+        62,
+        196,
+        58,
+        212,
+        118,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Anyone: the operated keeper normally, or any backer if the keeper is late. Pays only the network fee."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "launch"
+          ]
+        },
+        {
+          "name": "auth",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quote_mint"
+        },
+        {
+          "name": "auth_quote",
+          "writable": true
+        },
+        {
+          "name": "auth_lp",
+          "writable": true
+        },
+        {
+          "name": "cp_swap_program"
+        },
+        {
+          "name": "amm_config"
+        },
+        {
+          "name": "cp_authority"
+        },
+        {
+          "name": "pool_state",
+          "writable": true
+        },
+        {
+          "name": "lp_mint",
+          "writable": true
+        },
+        {
+          "name": "token_0_vault",
+          "writable": true
+        },
+        {
+          "name": "token_1_vault",
+          "writable": true
+        },
+        {
+          "name": "create_pool_fee",
+          "writable": true
+        },
+        {
+          "name": "observation_state",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_protocol",
+      "docs": [
+        "One-time protocol configuration. The authority can only change settings for NEW launches and pause NEW launches."
+      ],
+      "discriminator": [
+        188,
+        233,
+        252,
+        106,
+        134,
+        146,
+        202,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "settings",
+          "type": {
+            "defined": {
+              "name": "LaunchSettings"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reclaim_unused_setup_reserve",
+      "docs": [
+        "After LIVE or REFUNDABLE the creator takes back whatever setup reserve was not consumed. Consumed pool and",
+        "network costs, and the creation fee, are not returned. The authority keeps its own rent minimum."
+      ],
+      "discriminator": [
+        52,
+        3,
+        68,
+        141,
+        33,
+        56,
+        24,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "auth",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "refund",
+      "docs": [
+        "Reclaim a wallet's entire accepted principal once the launch is refundable. Refundability is derived from",
+        "chain time inside this call; no keeper is needed. Only the receipt owner can receive the lamports."
+      ],
+      "discriminator": [
+        2,
+        96,
+        183,
+        251,
+        63,
+        208,
+        46,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Anyone may trigger a refund; lamports only ever go to the receipt owner."
+          ],
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          },
+          "relations": [
+            "receipt"
+          ]
+        },
+        {
+          "name": "receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "relations": [
+            "receipt"
+          ]
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "set_paused",
+      "docs": [
+        "A global pause blocks NEW launches only; it cannot disable settlement, claims or refunds."
+      ],
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "top_up_setup_reserve",
+      "docs": [
+        "Anyone may add to the setup reserve without gaining any privilege."
+      ],
+      "discriminator": [
+        70,
+        184,
+        224,
+        53,
+        49,
+        53,
+        146,
+        127
+      ],
+      "accounts": [
+        {
+          "name": "funder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "launch",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  97,
+                  117,
+                  110,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch.mint",
+                "account": "Launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "auth",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "launch"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_settings",
+      "docs": [
+        "Versioned settings for launches created from now on. Never alters an existing launch."
+      ],
+      "discriminator": [
+        81,
+        166,
+        51,
+        213,
+        158,
+        84,
+        157,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "settings",
+          "type": {
+            "defined": {
+              "name": "LaunchSettings"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ContributionReceipt",
+      "discriminator": [
+        191,
+        236,
+        159,
+        86,
+        162,
+        165,
+        122,
+        95
+      ]
+    },
+    {
+      "name": "Launch",
+      "discriminator": [
+        144,
+        51,
+        51,
+        163,
+        206,
+        85,
+        213,
+        38
+      ]
+    },
+    {
+      "name": "ProtocolConfig",
+      "discriminator": [
+        207,
+        91,
+        250,
+        28,
+        152,
+        179,
+        215,
+        209
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
+      ]
+    },
+    {
+      "name": "Contributed",
+      "discriminator": [
+        196,
+        199,
+        157,
+        136,
+        180,
+        222,
+        100,
+        118
+      ]
+    },
+    {
+      "name": "LaunchCreated",
+      "discriminator": [
+        59,
+        38,
+        190,
+        230,
+        33,
+        34,
+        89,
+        20
+      ]
+    },
+    {
+      "name": "LaunchLive",
+      "discriminator": [
+        206,
+        172,
+        115,
+        190,
+        36,
+        200,
+        163,
+        93
+      ]
+    },
+    {
+      "name": "LaunchRefundable",
+      "discriminator": [
+        23,
+        0,
+        229,
+        18,
+        205,
+        107,
+        228,
+        165
+      ]
+    },
+    {
+      "name": "Refunded",
+      "discriminator": [
+        35,
+        103,
+        149,
+        246,
+        196,
+        123,
+        221,
+        99
+      ]
+    },
+    {
+      "name": "SetupReserveReclaimed",
+      "discriminator": [
+        88,
+        181,
+        98,
+        111,
+        52,
+        188,
+        20,
+        102
+      ]
+    },
+    {
+      "name": "SetupReserveToppedUp",
+      "discriminator": [
+        146,
+        180,
+        64,
+        137,
+        37,
+        132,
+        22,
+        69
+      ]
+    },
+    {
+      "name": "TargetReached",
+      "discriminator": [
+        149,
+        209,
+        57,
+        9,
+        106,
+        52,
+        127,
+        219
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidSettings",
+      "msg": "Invalid protocol settings"
+    },
+    {
+      "code": 6001,
+      "name": "Paused",
+      "msg": "New launches are paused"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidMetadata",
+      "msg": "Invalid name, symbol or uri"
+    },
+    {
+      "code": 6003,
+      "name": "SetupReserveTooLow",
+      "msg": "Setup reserve below the required minimum"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidFeeRecipient",
+      "msg": "Fee recipient does not match protocol settings"
+    },
+    {
+      "code": 6005,
+      "name": "NotFunding",
+      "msg": "Launch is not accepting contributions"
+    },
+    {
+      "code": 6006,
+      "name": "FundingClosed",
+      "msg": "Funding window has closed"
+    },
+    {
+      "code": 6007,
+      "name": "ZeroAmount",
+      "msg": "Contribution must be positive"
+    },
+    {
+      "code": 6008,
+      "name": "ExceedsRemaining",
+      "msg": "Contribution exceeds the remaining target; nothing was taken"
+    },
+    {
+      "code": 6009,
+      "name": "BelowMinimum",
+      "msg": "Contribution below the minimum (unless it is the exact remainder)"
+    },
+    {
+      "code": 6010,
+      "name": "NotReady",
+      "msg": "Launch is not ready for settlement"
+    },
+    {
+      "code": 6011,
+      "name": "SettlementExpired",
+      "msg": "Settlement deadline has passed; the launch is refundable"
+    },
+    {
+      "code": 6012,
+      "name": "NotLive",
+      "msg": "Launch is not live"
+    },
+    {
+      "code": 6013,
+      "name": "NotRefundable",
+      "msg": "Launch is not refundable"
+    },
+    {
+      "code": 6014,
+      "name": "NothingToClaim",
+      "msg": "Nothing to claim"
+    },
+    {
+      "code": 6015,
+      "name": "NothingToRefund",
+      "msg": "Nothing to refund"
+    },
+    {
+      "code": 6016,
+      "name": "WrongDex",
+      "msg": "Wrong DEX program or configuration"
+    },
+    {
+      "code": 6017,
+      "name": "WrongDexAccount",
+      "msg": "Derived DEX account does not match"
+    },
+    {
+      "code": 6018,
+      "name": "WrongAta",
+      "msg": "Wrong associated token account"
+    },
+    {
+      "code": 6019,
+      "name": "EscrowShort",
+      "msg": "Escrow balance below recorded obligations"
+    },
+    {
+      "code": 6020,
+      "name": "PoolVaultShort",
+      "msg": "Pool vault does not hold the full pool allocation"
+    },
+    {
+      "code": 6021,
+      "name": "ReserveMismatch",
+      "msg": "Pool reserves after seeding do not match the launch terms"
+    },
+    {
+      "code": 6022,
+      "name": "LpNotBurned",
+      "msg": "LP tokens were not fully burned"
+    },
+    {
+      "code": 6023,
+      "name": "NotCreator",
+      "msg": "Only the creator may do this"
+    },
+    {
+      "code": 6024,
+      "name": "ReserveLocked",
+      "msg": "Setup reserve can only be reclaimed after the launch is live or refundable"
+    },
+    {
+      "code": 6025,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "wallet_claimed_total",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Contributed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "wallet_total",
+            "type": "u64"
+          },
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "backer_wallets",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContributionReceipt",
+      "docs": [
+        "Nontransferable accounting account keyed by launch and wallet. Multiple contributions update one receipt."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "contributed_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "claimed_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateLaunchArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "metadata_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "setup_reserve_lamports",
+            "docs": [
+              "Creator-funded reserve for pool and account costs (quoted client-side; must be >= the protocol minimum)."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Launch",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u16"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "state",
+            "type": "u8"
+          },
+          {
+            "name": "refund_reason",
+            "type": "u8"
+          },
+          {
+            "name": "target_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "supply",
+            "type": "u64"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "backer_allocation",
+            "type": "u64"
+          },
+          {
+            "name": "pool_allocation",
+            "type": "u64"
+          },
+          {
+            "name": "settlement_timeout_secs",
+            "type": "i64"
+          },
+          {
+            "name": "cp_swap_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "amm_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "create_pool_fee_receiver",
+            "type": "pubkey"
+          },
+          {
+            "name": "quote_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "creation_fee_paid",
+            "type": "u64"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "metadata_hash",
+            "docs": [
+              "Hash of the finalized off-chain metadata (image, description, links). Frozen at opening."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "opened_at",
+            "type": "i64"
+          },
+          {
+            "name": "funding_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "filled_at",
+            "type": "i64"
+          },
+          {
+            "name": "settlement_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "live_at",
+            "type": "i64"
+          },
+          {
+            "name": "raised_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "backer_wallets",
+            "type": "u32"
+          },
+          {
+            "name": "total_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "setup_reserve_funded",
+            "type": "u64"
+          },
+          {
+            "name": "setup_reserve_reclaimed",
+            "type": "u64"
+          },
+          {
+            "name": "pool_state",
+            "type": "pubkey"
+          },
+          {
+            "name": "lp_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "lp_burned",
+            "type": "u64"
+          },
+          {
+            "name": "settled_quote",
+            "type": "u64"
+          },
+          {
+            "name": "settled_base",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "auth_bump",
+            "type": "u8"
+          },
+          {
+            "name": "escrow_bump",
+            "type": "u8"
+          },
+          {
+            "name": "backer_vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "pool_vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "version",
+            "type": "u16"
+          },
+          {
+            "name": "target_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "opened_at",
+            "type": "i64"
+          },
+          {
+            "name": "funding_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "creation_fee",
+            "type": "u64"
+          },
+          {
+            "name": "setup_reserve",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchLive",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_state",
+            "type": "pubkey"
+          },
+          {
+            "name": "lp_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "lp_burned",
+            "type": "u64"
+          },
+          {
+            "name": "quote_seeded",
+            "type": "u64"
+          },
+          {
+            "name": "base_seeded",
+            "type": "u64"
+          },
+          {
+            "name": "live_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchRefundable",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "u8"
+          },
+          {
+            "name": "at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LaunchSettings",
+      "docs": [
+        "Versioned protocol settings. Copied into every launch at creation; changing them never alters an existing launch."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "target_lamports",
+            "docs": [
+              "Funding target in lamports (V1: 50 SOL)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "funding_window_secs",
+            "docs": [
+              "Funding window in seconds from on-chain opening (V1: 24h)."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "settlement_timeout_secs",
+            "docs": [
+              "Settlement timeout in seconds after the target is reached (V1: 60 minutes)."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "supply",
+            "docs": [
+              "Fixed total supply in base units (V1: 1,000,000,000 × 10^6)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "backer_allocation",
+            "docs": [
+              "Backer allocation in base units (V1: 500,000,000 tokens)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "pool_allocation",
+            "docs": [
+              "Pool allocation in base units (V1: 500,000,000 tokens), paired with all target SOL."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "creation_fee_lamports",
+            "docs": [
+              "Platform creation fee in lamports, paid by the creator only when creation succeeds (V1: 0.1 SOL)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "min_contribution_lamports",
+            "docs": [
+              "Minimum contribution in lamports (V1: 0.01 SOL); the exact final remainder may be smaller."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "min_setup_reserve_lamports",
+            "docs": [
+              "Minimum creator-funded setup reserve for pool/account costs."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "fee_recipient",
+            "docs": [
+              "Receives the creation fee."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "cp_swap_program",
+            "docs": [
+              "Approved external AMM program (Raydium CP-Swap) and its config; verified on every settlement."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "amm_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "create_pool_fee_receiver",
+            "docs": [
+              "Raydium's hardcoded pool-creation fee receiver token account."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "quote_mint",
+            "docs": [
+              "Quote mint (wrapped SOL)."
+            ],
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProtocolConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "docs": [
+              "Blocks NEW launches only. Existing settlement, claims and refunds are never affected."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "version",
+            "docs": [
+              "Bumped on every settings change; launches record the version they were created under."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "settings",
+            "type": {
+              "defined": {
+                "name": "LaunchSettings"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Refunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetupReserveReclaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetupReserveToppedUp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "from",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TargetReached",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "launch",
+            "type": "pubkey"
+          },
+          {
+            "name": "filled_at",
+            "type": "i64"
+          },
+          {
+            "name": "settlement_deadline",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}

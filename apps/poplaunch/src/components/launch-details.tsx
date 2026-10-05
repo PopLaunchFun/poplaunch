@@ -13,9 +13,9 @@ export function LaunchDetails({ l }: { l: Launch }) {
   const fmtDate = (t: number | null) => (t === null ? "—" : new Date(t).toUTCString().replace(" GMT", " UTC"));
   const lpText = l.state === "live" ? "LP tokens burned at launch (demo: not verifiable here)" : "LP tokens will be burned at launch";
   return (
-    <details className="card p-5 md:p-6 group">
+    <details className="box p-5 md:p-6 group">
       <summary className="flex items-center justify-between">
-        <span className="display-md text-[20px]">Launch details</span>
+        <span className="display text-[20px]">Launch details</span>
         <span className="btn btn-sm" aria-hidden><span className="group-open:hidden">Show</span><span className="hidden group-open:inline">Hide</span></span>
       </summary>
       <dl className="mt-4">

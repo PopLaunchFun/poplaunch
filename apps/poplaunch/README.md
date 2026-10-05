@@ -68,7 +68,12 @@ checked against the rendered letter shapes.
 - "Connect wallet" explains that connection arrives with the connected app.
 - "Help it pop" opens the launch detail; backing, claims and refunds perform no transaction.
 
+## Stage 2 (done): on-chain mechanism
+
+The escrow program `programs/pop_launch` and its proof against the real Raydium CP-Swap program are
+documented in `docs/pop-launch-mechanism.md`. This app is not wired to it yet (that is Stage 3).
+
 ## Next (not started)
 
-Launch detail, Create a coin, My pops and How it works in the same visual language, then the
-Anchor program, Raydium CPMM adapter proof and the connected app.
+Stage 3: wallet connection, create-a-coin flow with immutable metadata, live launch feed from an
+indexer, backing / claim / refund transactions, My pops, How it works, keeper for settlement.
