@@ -57,7 +57,7 @@ export function WalletButton() {
           <span className="addr">{short(publicKey.toBase58())}</span>
         </button>
       ) : (
-        <button type="button" className="btn btn-red btn-sm px-3 md:min-h-12 md:px-6 md:text-[18px]" onClick={() => setOpen((o) => !o)} disabled={connecting || busy} aria-haspopup="menu" aria-expanded={open}>
+        <button type="button" className="btn btn-red btn-sm px-2.5 md:min-h-12 md:px-6 md:text-[18px]" onClick={() => setOpen((o) => !o)} disabled={connecting || busy} aria-haspopup="menu" aria-expanded={open}>
           <WalletIcon /><span className="hidden sm:inline">{connecting || busy ? "Connecting…" : "Connect wallet"}</span><span className="sm:hidden">{connecting || busy ? "…" : "Connect"}</span>
         </button>
       )}

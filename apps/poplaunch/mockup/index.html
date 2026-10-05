@@ -77,18 +77,20 @@ details > summary { list-style: none; cursor: pointer; } details > summary::-web
 .strip .wrap { min-height: 32px; padding-block: 4px; display: flex; align-items: center; gap: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; }
 .strip i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; }
 header.top { background: var(--bg); border-bottom: 3px solid var(--ink); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; }
-header.top .wrap { position: relative; height: 72px; display: flex; align-items: center; }
-.brand { position: relative; display: inline-flex; align-items: baseline; text-decoration: none; white-space: nowrap; font-size: 28px; }
+header.top .wrap { position: relative; height: 72px; display: flex; align-items: center; padding-inline: 12px; }
+#ca-btn, #wallet-btn { padding-inline: 10px; }
+@media (max-width: 639px) { .ca-txt { display: none; } }
+.brand { position: relative; display: inline-flex; align-items: baseline; text-decoration: none; white-space: nowrap; font-size: 25px; }
 .brand .burst { position: absolute; left: 50px; top: -8px; width: 16px; height: 16px; }
 nav.primary { display: none; position: absolute; left: 50%; transform: translateX(-50%); gap: 40px; align-items: center; }
-.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 6px; position: relative; }
+.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 4px; position: relative; }
 .menu { position: absolute; right: 0; top: 56px; width: 224px; padding: 8px; z-index: 40; }
 .menu a, .menu button { display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px; font-weight: 700; text-decoration: none; background: none; border: 0; cursor: pointer; }
 .menu a:hover, .menu button:hover { background: var(--bg); }
 .wmenu { width: 288px; font-size: 15px; }
 .burger { width: 40px; padding: 0; }
 @media (min-width: 768px) {
-  header.top .wrap { height: 92px; } .brand { font-size: 54px; } .brand .burst { left: 96px; top: -20px; width: 30px; height: 30px; }
+  header.top .wrap { height: 92px; padding-inline: 62px; } .brand { font-size: 54px; } #ca-btn, #wallet-btn { padding-inline: 16px; } .brand .burst { left: 96px; top: -20px; width: 30px; height: 30px; }
   nav.primary { display: flex; } .burger { display: none; } .hdr-right { gap: 8px; }
 }
 
