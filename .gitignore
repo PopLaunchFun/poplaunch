@@ -16,3 +16,4 @@ scripts/deploy/keys/
 programs/**/target/
 .DS_Store
 coverage/
+*.tsbuildinfo
