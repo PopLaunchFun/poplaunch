@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { DevnetTip } from "@/components/devnet-tip";
 import { Providers } from "@/components/providers";
 import { DEMO, IS_MAINNET, NETWORK, NETWORK_LABEL } from "@/lib/config";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           )}
           <Header />
+          <DevnetTip />
           <main className="flex-1 w-full">{children}</main>
           <Footer />
         </Providers>
