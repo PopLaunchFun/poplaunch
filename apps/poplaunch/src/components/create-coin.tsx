@@ -19,6 +19,7 @@ import { API_URL, NETWORK, SIGN_DOMAIN, explorerTx } from "@/lib/config";
 import { V1, fmtSol, fmtTokens, launchPriceSolPerToken } from "@/lib/launch";
 import { canonical, draftMessage, hexToBytes, sha256Hex } from "@/lib/sign";
 import { IDLE, runTx, type TxState } from "@/lib/tx";
+import { PromoTag } from "./promo-bubble";
 
 const KEY = "poplaunch.create.pending";
 interface Pending { mintSecret: number[]; name: string; symbol: string; uri: string; metadataHash: string; image: string; network: string; apiUrl: string; programId: string }
@@ -229,7 +230,7 @@ export function CreateCoin() {
             <p className="label mt-3">These terms are fixed by the protocol and cannot be customized, extended, retargeted or canceled once published.</p>
           </div>
           <div className="box p-5">
-            <div className="display text-[20px]">What you pay</div>
+            <div className="flex items-center justify-between gap-3 flex-wrap"><div className="display text-[20px]">What you pay</div><PromoTag /></div>
             <dl className="mt-3 space-y-2 text-[15px]">
               <div className="flex justify-between gap-3"><dt className="text-muted">Creation fee (only if creation succeeds)</dt><dd className="num">{terms ? `${fmtSol(terms.fee)} SOL` : "—"}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted">Setup reserve for pool costs</dt><dd className="num">{reserve ? `${fmtSol(reserve.total)} SOL` : "—"}</dd></div>

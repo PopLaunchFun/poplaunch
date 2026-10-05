@@ -95,6 +95,11 @@ body {
 
 :focus-visible { outline: 3px solid var(--color-red); outline-offset: 3px; border-radius: 8px; }
 
+/* Promo bubble: gentle bob, off under reduced motion. */
+.promo-bubble { animation: promo-bob 2.4s ease-in-out infinite; transform-origin: 30% 100%; }
+@keyframes promo-bob { 0%, 100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(-2deg) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .promo-bubble { animation: none; } }
+
 /* Balloons: idle float is transform-only; shells scale with a short transition when confirmed totals change. */
 .balloon-float { animation: balloon-float 5s ease-in-out infinite; transform-origin: 50% 100%; }
 @keyframes balloon-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }

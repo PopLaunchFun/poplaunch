@@ -3,7 +3,7 @@
  * cluster. The signer must be the program's upgrade authority (initialize) or the protocol authority (update).
  *   CLUSTER=devnet RPC_URL=https://... POP_ADMIN_KEYPAIR=~/.config/poplaunch/devnet-deployer.json \
  *   POP_FEE_RECIPIENT=<treasury> pnpm --filter @pop/integration bootstrap:cluster
- * Optional overrides for test clusters: POP_TARGET_SOL, POP_FUNDING_SECS, POP_SETTLE_SECS.
+ * Optional overrides: POP_TARGET_SOL, POP_FUNDING_SECS, POP_SETTLE_SECS, POP_CREATION_FEE_SOL (e.g. 0 for a feeless period).
  */
 import { readFileSync } from "node:fs";
 import { AnchorProvider } from "@anchor-lang/core";
@@ -32,10 +32,11 @@ const settings = v1Settings(feeRecipient, ammConfig, {
   targetLamports: BigInt(Math.round(Number(process.env.POP_TARGET_SOL ?? 50) * 1e9)),
   fundingWindowSecs: BigInt(process.env.POP_FUNDING_SECS ?? 86_400),
   settlementTimeoutSecs: BigInt(process.env.POP_SETTLE_SECS ?? 3_600),
+  ...(process.env.POP_CREATION_FEE_SOL !== undefined ? { creationFeeLamports: BigInt(Math.round(Number(process.env.POP_CREATION_FEE_SOL) * 1e9)) } : {}),
 });
 const client = new PopLaunchClient(new AnchorProvider(connection, new KeypairWallet(admin), { commitment: "confirmed" }));
 const exists = await connection.getAccountInfo(launchConfigPda());
 const ix = exists ? await client.updateSettingsIx(admin.publicKey, settings) : await client.initializeProtocolIx(admin.publicKey, settings);
 const sig = await client.provider.sendAndConfirm!(PopLaunchClient.ixs(ix), [], { commitment: "confirmed" });
 const cfg = await client.fetchConfig();
-console.log(JSON.stringify({ action: exists ? "update_settings" : "initialize_protocol", signature: sig, authority: cfg.authority.toBase58(), version: cfg.version, cpSwapProgram: net.cpSwapProgram.toBase58(), ammConfig: ammConfig.toBase58(), createPoolFeeReceiver: net.createPoolFeeReceiver.toBase58(), feeRecipient: feeRecipient.toBase58(), targetSol: Number(cfg.settings.targetLamports.toString()) / 1e9, fundingWindowSecs: cfg.settings.fundingWindowSecs.toString(), settlementTimeoutSecs: cfg.settings.settlementTimeoutSecs.toString() }, null, 2));
+console.log(JSON.stringify({ action: exists ? "update_settings" : "initialize_protocol", signature: sig, authority: cfg.authority.toBase58(), version: cfg.version, cpSwapProgram: net.cpSwapProgram.toBase58(), ammConfig: ammConfig.toBase58(), createPoolFeeReceiver: net.createPoolFeeReceiver.toBase58(), feeRecipient: feeRecipient.toBase58(), targetSol: Number(cfg.settings.targetLamports.toString()) / 1e9, creationFeeSol: Number(cfg.settings.creationFeeLamports.toString()) / 1e9, fundingWindowSecs: cfg.settings.fundingWindowSecs.toString(), settlementTimeoutSecs: cfg.settings.settlementTimeoutSecs.toString() }, null, 2));
