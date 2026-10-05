@@ -184,8 +184,19 @@ export function CreateCoin() {
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); if (valid) setStep(2); }}>
           {field("Name", <input className="input mt-1" value={name} onChange={(e) => setName(clean(e.target.value, 32))} placeholder="CAT.EXE" maxLength={32} required />, "Up to 32 characters. Fixed once published.")}
           {field("Ticker", <input className="input mt-1 w-44 uppercase block" value={symbol} onChange={(e) => setSymbol(clean(e.target.value.toUpperCase(), 10).replace(/[^A-Z0-9]/g, ""))} placeholder="CATEXE" maxLength={10} required />, "1 to 10 letters or digits. Fixed once published.")}
-          {field("Image", <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="block mt-1 text-[15px]" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />, "PNG, JPEG, GIF or WebP up to 1 MB. Square works best in the balloon.")}
-          {preview && <img src={preview} alt="" className="w-24 h-24 rounded-full border-[3px] border-ink object-cover" />}
+          <div>
+            <span className="font-bold">Image</span>
+            <div className="mt-2 flex items-center gap-4">
+              {preview ? <img src={preview} alt="" className="w-20 h-20 rounded-full border-[3px] border-ink object-cover shrink-0" /> : <div className="w-20 h-20 rounded-full border-[3px] border-dashed border-ink/40 shrink-0" aria-hidden />}
+              <div className="min-w-0">
+                <label className="btn cursor-pointer">
+                  {file ? "Change image" : "Choose image"}
+                  <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} aria-label="Choose image" />
+                </label>
+                <p className="label mt-2 truncate">{file ? `${file.name} · ${(file.size / 1024).toFixed(0)} KB` : "PNG, JPEG, GIF or WebP up to 1 MB. Square works best in the balloon."}</p>
+              </div>
+            </div>
+          </div>
           {file && !validFile && <p className="text-red-deep text-[15px]">That file type or size is not accepted.</p>}
           {field("Short description", <textarea className="input mt-1 py-3" rows={3} value={description} onChange={(e) => setDescription(clean(e.target.value, 500))} />, `${description.length}/500`)}
           <div className="grid sm:grid-cols-2 gap-4">

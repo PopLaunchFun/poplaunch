@@ -39,3 +39,6 @@ export function explorerAddress(addr: string): string {
   const cluster = NETWORK === "mainnet-beta" ? "" : NETWORK === "devnet" ? "?cluster=devnet" : `?cluster=custom&customUrl=${encodeURIComponent(RPC_URL)}`;
   return `${EXPLORER}/address/${addr}${cluster}`;
 }
+
+/** The project's token contract address, shown as a copyable chip in the header once it exists. Empty hides the chip. */
+export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "").trim();

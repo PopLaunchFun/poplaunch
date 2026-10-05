@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { DEMO } from "@/lib/config";
+import { CONTRACT_ADDRESS, DEMO } from "@/lib/config";
 import { Burst } from "./art";
 import { WalletButton } from "./wallet-button";
 
@@ -48,6 +48,7 @@ export function Header() {
           {links.map((l) => <Link key={l.href} href={l.href} className="nav-link" aria-current={l.current ? "page" : undefined}>{l.label}</Link>)}
         </nav>
         <div className="ml-auto flex items-center gap-1.5 md:gap-2 relative pl-2" ref={ref}>
+          <ContractChip />
           <WalletButton />
           <button type="button" className="btn btn-plain btn-sm md:hidden w-10 px-0" aria-label="Menu" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden><path d="M3 6h16M3 11h16M3 16h16" /></svg>
@@ -60,5 +61,22 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Copyable contract-address chip. Shows "CA soon" until NEXT_PUBLIC_CONTRACT_ADDRESS is set. */
+export function ContractChip() {
+  const [copied, setCopied] = useState(false);
+  if (!CONTRACT_ADDRESS) {
+    return <span className="btn btn-sm px-3 md:min-h-12 md:px-4 md:text-[16px] opacity-70 cursor-default" title="Contract address will be published here" aria-disabled="true">CA <span className="label hidden sm:inline">soon</span></span>;
+  }
+  const short = `${CONTRACT_ADDRESS.slice(0, 4)}…${CONTRACT_ADDRESS.slice(-4)}`;
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(CONTRACT_ADDRESS); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
+  };
+  return (
+    <button type="button" className="btn btn-sm px-3 md:min-h-12 md:px-4 md:text-[16px]" onClick={copy} aria-label={`Copy contract address ${CONTRACT_ADDRESS}`} title={CONTRACT_ADDRESS}>
+      <span className="font-extrabold">CA</span><span className="addr hidden sm:inline">{copied ? "Copied" : short}</span>{copied && <span className="sm:hidden">✓</span>}
+    </button>
   );
 }
