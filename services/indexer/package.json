@@ -1,0 +1,32 @@
+{
+  "name": "@pop/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Indexes pop_market program events into PostgreSQL (idempotent, commitment-aware) and serves the read API.",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "tsx src/main.ts",
+    "migrate": "tsx src/migrate.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "1.2.0",
+    "@hono/node-server": "2.1.3",
+    "@pop/math": "workspace:*",
+    "@pop/sdk": "workspace:*",
+    "@solana/web3.js": "1.99.0",
+    "hono": "4.13.13",
+    "pg": "8.23.1",
+    "bn.js": "5.2.5"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "@types/bn.js": "5.2.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

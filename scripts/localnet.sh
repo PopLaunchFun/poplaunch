@@ -17,7 +17,7 @@ case "${1:-start}" in
     mkdir -p "$ROOT/.anchor/test-ledger"
     docker run -d --name "$NAME" --network host --security-opt seccomp=unconfined \
       -v "$ROOT:/work" -v "$ROOT/.anchor/test-ledger:/ledger" -w /work "$IMAGE" \
-      solana-test-validator --reset --bind-address 127.0.0.1 --rpc-port 8899 \
+      solana-test-validator --reset --bind-address 127.0.0.1 --rpc-port 8899 --limit-ledger-size 100000000 \
       --ledger /ledger --bpf-program "$PROGRAM_ID" /work/target/deploy/pop_market.so >/dev/null
     echo "waiting for validator on http://127.0.0.1:8899 ..."
     for i in $(seq 1 60); do

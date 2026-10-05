@@ -3,7 +3,8 @@
  * @pop/math walker on freshly fetched chain state. The on-chain min_output is the final
  * protection; a client quote is only a prediction over the state it was computed from.
  */
-import { AnchorProvider, BN, EventParser, Program, type Idl, type Provider } from "@anchor-lang/core";
+import { AnchorProvider, EventParser, Program, type Idl, type Provider } from "@anchor-lang/core";
+import BN from "bn.js";
 import {
   ComputeBudgetProgram,
   Connection,
