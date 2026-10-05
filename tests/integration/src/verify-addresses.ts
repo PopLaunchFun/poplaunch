@@ -30,7 +30,7 @@ async function program(label: string, id: PublicKey) {
       const authority = hasAuthority ? new PublicKey(pd.data.subarray(13, 45)).toBase58() : "none (immutable)";
       const slot = Number(pd.data.readBigUInt64LE(4));
       info(`${label} upgrade authority`, `${authority}; last deployed slot ${slot}; ${pd.data.length - 45} bytes`);
-      if (cluster === "mainnet-beta" && label === "pop_launch" && hasAuthority) info("note", "mainnet upgrade authority must be the disclosed multisig (docs/authority-disclosure.md)");
+      if (cluster === "mainnet-beta" && label === "pop_launch" && hasAuthority) info("note", "mainnet upgrade authority must be the owner's disclosed wallet jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx (docs/authority-disclosure.md)");
     }
   } else info(`${label} owner`, acc.owner.toBase58());
 }

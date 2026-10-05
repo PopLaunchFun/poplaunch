@@ -19,7 +19,8 @@ if (!rpc) throw new Error("RPC_URL required");
 const keypairPath = process.env.POP_ADMIN_KEYPAIR;
 if (!keypairPath) throw new Error("POP_ADMIN_KEYPAIR required");
 const admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(keypairPath.replace(/^~/, process.env.HOME ?? ""), "utf8")) as number[]));
-const connection = new Connection(rpc, "confirmed");
+// Confirmation polls getSignatureStatuses; the websocket endpoint is a dead address so no subscription is attempted.
+const connection = new Connection(rpc, { commitment: "confirmed", wsEndpoint: "ws://127.0.0.1:1" });
 console.log(`cluster ${cluster}  admin ${admin.publicKey.toBase58()}  balance ${(await connection.getBalance(admin.publicKey)) / LAMPORTS_PER_SOL} SOL`);
 
 const ammConfig = raydiumAmmConfigPda(net.ammConfigIndex, net.cpSwapProgram);
@@ -37,6 +38,18 @@ const settings = v1Settings(feeRecipient, ammConfig, {
 const client = new PopLaunchClient(new AnchorProvider(connection, new KeypairWallet(admin), { commitment: "confirmed" }));
 const exists = await connection.getAccountInfo(launchConfigPda());
 const ix = exists ? await client.updateSettingsIx(admin.publicKey, settings) : await client.initializeProtocolIx(admin.publicKey, settings);
-const sig = await client.provider.sendAndConfirm!(PopLaunchClient.ixs(ix), [], { commitment: "confirmed" });
+const bh = await connection.getLatestBlockhash("confirmed");
+const tx = PopLaunchClient.ixs(ix);
+tx.recentBlockhash = bh.blockhash;
+tx.feePayer = admin.publicKey;
+tx.sign(admin);
+const sig = await connection.sendRawTransaction(tx.serialize(), { preflightCommitment: "confirmed" });
+for (const started = Date.now(); ; ) {
+  const { value: [st] } = await connection.getSignatureStatuses([sig]);
+  if (st?.err) throw new Error(`failed: ${JSON.stringify(st.err)} (${sig})`);
+  if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) break;
+  if (Date.now() - started > 120_000) throw new Error(`not confirmed after 120s; check ${sig}`);
+  await new Promise((r) => setTimeout(r, 2000));
+}
 const cfg = await client.fetchConfig();
 console.log(JSON.stringify({ action: exists ? "update_settings" : "initialize_protocol", signature: sig, authority: cfg.authority.toBase58(), version: cfg.version, cpSwapProgram: net.cpSwapProgram.toBase58(), ammConfig: ammConfig.toBase58(), createPoolFeeReceiver: net.createPoolFeeReceiver.toBase58(), feeRecipient: feeRecipient.toBase58(), targetSol: Number(cfg.settings.targetLamports.toString()) / 1e9, creationFeeSol: Number(cfg.settings.creationFeeLamports.toString()) / 1e9, fundingWindowSecs: cfg.settings.fundingWindowSecs.toString(), settlementTimeoutSecs: cfg.settings.settlementTimeoutSecs.toString() }, null, 2));
