@@ -40,7 +40,7 @@ export function FeaturedEmpty() {
             <div className="condensed text-[64px] md:text-[80px] num leading-[0.85] tracking-[-0.01em]">49.99<span className="text-[40px] md:text-[52px]">/50</span></div>
             <div className="mono font-bold text-[20px] md:text-[26px] num mt-1 md:mt-1">SOL TARGET</div>
           </div>
-          <div className="bar bar-lg bar-brim mt-3 md:mt-[18px] bg-white" role="presentation"><span className="bg-green" /><i className="brim-tip" aria-hidden /></div>
+          <div className="bar bar-brim mt-3 md:mt-[18px] bg-white" role="presentation"><span className="bg-green" /></div>
           <div className="mt-3 md:mt-[14px] text-center"><Link href="/create" className="btn btn-red">Launch a token <ArrowRight /></Link></div>
         </div>
       </div>
