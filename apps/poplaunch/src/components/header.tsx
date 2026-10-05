@@ -1,17 +1,26 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Burst, WalletIcon } from "./art";
 
-export function Wordmark() {
+export function Wordmark({ size = 48 }: { size?: number }) {
   return (
-    <Link href="/" className="inline-flex items-baseline gap-1.5 rounded-lg" aria-label="Pop Launch home">
-      <span className="display text-[28px] leading-none tracking-tight">pop<span className="text-coral">.</span></span>
-      <span className="font-display font-extrabold text-[11px] uppercase tracking-[0.18em] text-muted">launch</span>
+    <Link href="/" className="relative inline-flex items-baseline rounded-md whitespace-nowrap" aria-label="Pop Launch home">
+      <span className="wordmark text-[28px] sm:text-[32px] md:text-[48px]">
+        pop
+        <span className="relative inline-block w-0" aria-hidden>
+          <Burst className="absolute" size={Math.round(size * 0.52)} />
+          <style>{`.wordmark svg { left: -9px; top: -27px; width: 16px; height: 16px; } @media (min-width: 768px) { .wordmark svg { left: ${Math.round(-size * 0.3)}px; top: ${Math.round(-size * 0.98)}px; width: ${Math.round(size * 0.52)}px; height: ${Math.round(size * 0.52)}px; } }`}</style>
+        </span>
+        &nbsp;launch
+      </span>
     </Link>
   );
 }
 
 export function Header() {
+  const path = usePathname();
   const [menu, setMenu] = useState(false);
   const [walletNote, setWalletNote] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -23,33 +32,32 @@ export function Header() {
     return () => { document.removeEventListener("click", close); document.removeEventListener("keydown", esc); };
   }, []);
   const links = [
-    { href: "/#launches", label: "Explore" },
-    { href: "/#how", label: "How it works" },
-    { href: "/#create", label: "Create a coin" },
+    { href: "/", label: "Explore", current: path === "/" || path.startsWith("/launch") },
+    { href: "/#create", label: "Create a coin", current: false },
   ];
   return (
-    <header className="bg-bg sticky top-0 z-30" ref={ref}>
-      <div className="mx-auto max-w-[1200px] px-4 md:px-8 h-[64px] md:h-[76px] flex items-center gap-3 md:gap-6">
+    <header className="bg-bg border-b-[3px] border-ink sticky top-0 z-30" ref={ref}>
+      <div className="relative mx-auto max-w-[1536px] px-4 md:px-[62px] h-[72px] md:h-[92px] flex items-center">
         <Wordmark />
-        <nav className="hidden md:flex items-center gap-7 ml-4" aria-label="Primary">
-          {links.map((l) => <Link key={l.href} href={l.href} className="font-display font-extrabold text-[15px] text-ink/85 hover:text-ink">{l.label}</Link>)}
+        <nav className="hidden md:flex items-center gap-14 absolute left-1/2 -translate-x-1/2" aria-label="Primary">
+          {links.map((l) => <Link key={l.href} href={l.href} className="nav-link" aria-current={l.current ? "page" : undefined}>{l.label}</Link>)}
         </nav>
-        <div className="ml-auto flex items-center gap-1 md:gap-2 relative">
-          <button type="button" className="btn btn-sm md:btn px-3 md:px-5" aria-haspopup="dialog" aria-expanded={walletNote} onClick={() => setWalletNote((v) => !v)}>
-            <span className="w-2 h-2 rounded-full bg-lilac" aria-hidden />Connect wallet
+        <div className="ml-auto flex items-center gap-1.5 md:gap-2 relative pl-2">
+          <button type="button" className="btn btn-red btn-sm px-3 md:min-h-12 md:px-6 md:text-[18px]" aria-haspopup="dialog" aria-expanded={walletNote} onClick={() => setWalletNote((v) => !v)}>
+            <WalletIcon /><span className="hidden sm:inline">Connect wallet</span><span className="sm:hidden">Connect</span>
           </button>
           {walletNote && (
-            <div role="dialog" aria-label="Wallet connection" className="card-sm absolute right-0 top-12 w-72 p-4 text-sm shadow-lg z-40">
-              <div className="font-display font-extrabold">Browsing needs no wallet.</div>
-              <p className="label mt-1">This is the Stage 1 visual preview. Wallet connection and backing arrive in Stage 3, after the on-chain mechanism is proven.</p>
+            <div role="dialog" aria-label="Wallet connection" className="box absolute right-0 top-14 w-72 p-4 text-[15px] z-40">
+              <div className="font-bold">Browsing needs no wallet.</div>
+              <p className="label mt-1">This is the visual preview. Wallet connection and backing arrive with the connected app, after the on-chain mechanism is proven.</p>
             </div>
           )}
-          <button type="button" className="btn btn-ghost btn-sm md:hidden w-11 px-0" aria-label="Menu" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M3 5h14M3 10h14M3 15h14" /></svg>
+          <button type="button" className="btn btn-plain btn-sm md:hidden w-10 px-0" aria-label="Menu" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden><path d="M3 6h16M3 11h16M3 16h16" /></svg>
           </button>
           {menu && (
-            <div role="menu" className="card-sm absolute right-0 top-12 w-56 p-2 shadow-lg z-40 md:hidden">
-              {links.map((l) => <Link key={l.href} role="menuitem" href={l.href} className="block px-3 py-2.5 rounded-xl font-display font-extrabold hover:bg-bg" onClick={() => setMenu(false)}>{l.label}</Link>)}
+            <div role="menu" className="box absolute right-0 top-14 w-56 p-2 z-40 md:hidden">
+              {links.map((l) => <Link key={l.href} role="menuitem" href={l.href} className="block px-3 py-2.5 rounded-lg font-bold hover:bg-bg" onClick={() => setMenu(false)}>{l.label}</Link>)}
             </div>
           )}
         </div>

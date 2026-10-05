@@ -32,13 +32,18 @@ export const LAMPORTS_PER_SOL = 1_000_000_000n;
 
 export interface SocialLinks { website?: string; x?: string }
 
+/** Demo artwork: extracted balloon PNGs. Production launches use `image` inside the SVG balloon frame. */
+export interface LaunchArt { balloon: string; featured: string | null; color: "red" | "green" | "yellow" }
+
 export interface Launch {
   id: string;
   name: string;
   ticker: string;
   /** Hue (0–360) for the deterministic demo avatar. */
   hue: number;
-  glyph: string;
+  art?: LaunchArt | null;
+  /** Creator-uploaded artwork URL (production). */
+  image?: string | null;
   tagline: string;
   description: string;
   creator: string;

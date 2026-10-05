@@ -7,7 +7,7 @@ function fmt(ms: number): string {
   const h = Math.floor(m / 60);
   const d = Math.floor(h / 24);
   if (d >= 1) return `${d}d ${h % 24}h`;
-  if (h >= 1) return `${h}h ${m % 60}m`;
+  if (h >= 1) return `${h}h`;
   return `${m}m`;
 }
 
