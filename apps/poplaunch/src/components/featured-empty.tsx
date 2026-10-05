@@ -24,8 +24,8 @@ export function FeaturedEmpty() {
         <div className="self-center md:absolute md:left-[258px] md:-top-[21px] -mt-2 md:mt-0 balloon-float"><img src="/art/balloon-cat-featured.png" alt="" width={325} height={420} className="block select-none h-auto w-[230px] md:w-[325px]" draggable={false} /></div>
         <Sparkle className="absolute left-[322px] top-[296px] hidden md:block" size={34} flip />
         <div className="md:absolute md:left-[37px] md:top-[236px] md:w-[300px]">
-          <h2 className="condensed text-[56px] md:text-[84px] leading-[0.85]">THE NEXT POP</h2>
-          <p className="mono font-bold text-[12px] md:text-[15px] uppercase tracking-[0.2em] mt-3 md:mt-[14px] leading-[1.6] max-w-[300px]">Could be yours. Nobody is filling up right now.</p>
+          <h2 className="condensed text-[56px] md:text-[84px] leading-[0.85]">NEXT POP</h2>
+          <p className="mono font-bold text-[12px] md:text-[15px] uppercase tracking-[0.2em] mt-3 md:mt-[14px] leading-[1.6] max-w-[300px]">Could be yours. Start the first one.</p>
         </div>
         <div className="md:absolute md:right-[27px] md:top-[66px] md:w-[288px]">
           <Sparkle className="absolute -right-2 -top-7 hidden md:block" size={44} />
