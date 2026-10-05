@@ -14,7 +14,7 @@
 import { readFileSync } from "node:fs";
 import { AnchorProvider } from "@anchor-lang/core";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, type TransactionInstruction } from "@solana/web3.js";
-import { LAUNCH_STATE, PopLaunchClient, launchAccounts, launchPda, networkAddresses, raydiumAmmConfigPda, receiptPda } from "@pop/sdk";
+import { LAUNCH_STATE, PopLaunchClient, launchAccounts, launchPda, networkAddresses, raydiumAmmConfigPda } from "@pop/sdk";
 import { KeypairWallet } from "./harness.js";
 
 const phase = process.argv[2] ?? "status";
@@ -79,8 +79,8 @@ if (phase === "create") {
   const deadline = Number(l.fundingDeadline.toString());
   const show = async () => {
     const cur = await client.fetchLaunch(launch);
-    const receipt = await connection.getAccountInfo(receiptPda(launch, wallet.publicKey, client.programId));
-    console.log(JSON.stringify({ state: LAUNCH_STATE[cur.state], raised: sol(BigInt(cur.raisedLamports.toString())), escrow: sol(await connection.getBalance(a.escrow)), authReserve: sol(await connection.getBalance(a.auth)), reserveReclaimed: cur.setupReserveReclaimed, receiptOpen: !!receipt, fundingDeadline: new Date(deadline * 1000).toISOString(), secondsToDeadline: deadline - now }, null, 2));
+    const receipt = await client.fetchReceipt(launch, wallet.publicKey);
+    console.log(JSON.stringify({ state: LAUNCH_STATE[cur.state], raised: sol(BigInt(cur.raisedLamports.toString())), escrow: sol(await connection.getBalance(a.escrow)), authReserve: sol(await connection.getBalance(a.auth)), reserveReclaimed: sol(BigInt(cur.setupReserveReclaimed.toString())), receipt: receipt ? { contributed: sol(BigInt(receipt.contributedLamports.toString())), refunded: sol(BigInt(receipt.refundedLamports.toString())) } : null, fundingDeadline: new Date(deadline * 1000).toISOString(), secondsToDeadline: deadline - now }, null, 2));
   };
   await show();
   if (phase === "finish") {
@@ -89,8 +89,9 @@ if (phase === "create") {
       if (now <= deadline) throw new Error(`window still open for ${deadline - now}s`);
       await send("expire_launch", [await client.expireLaunchIx(wallet.publicKey, launch)]);
     }
-    if (await connection.getAccountInfo(receiptPda(launch, wallet.publicKey, client.programId))) await send("refund", [await client.refundIx(wallet.publicKey, launch, wallet.publicKey)]);
-    if (!(await client.fetchLaunch(launch)).setupReserveReclaimed) await send("reclaim_unused_setup_reserve", [await client.reclaimUnusedSetupReserveIx(wallet.publicKey, launch)]);
+    const r = await client.fetchReceipt(launch, wallet.publicKey);
+    if (r && BigInt(r.refundedLamports.toString()) < BigInt(r.contributedLamports.toString())) await send("refund", [await client.refundIx(wallet.publicKey, launch, wallet.publicKey)]);
+    if (BigInt((await client.fetchLaunch(launch)).setupReserveReclaimed.toString()) === 0n) await send("reclaim_unused_setup_reserve", [await client.reclaimUnusedSetupReserveIx(wallet.publicKey, launch)]);
     console.log(`recovered ${sol((await balance()) - before)} in this phase`);
     await show();
   }

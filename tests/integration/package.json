@@ -10,7 +10,8 @@
     "verify:addresses": "tsx src/verify-addresses.ts",
     "measure:costs": "tsx src/measure-costs.ts",
     "bootstrap:cluster": "tsx src/bootstrap-cluster.ts",
-    "dry-run:cluster": "tsx src/dry-run-cluster.ts"
+    "dry-run:cluster": "tsx src/dry-run-cluster.ts",
+    "transfer-authority:cluster": "tsx src/transfer-authority-cluster.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "1.2.0",

@@ -1,7 +1,7 @@
 # Pop Launch deployment plan
 
-Status: localnet verified end to end. **Not deployed to devnet or mainnet.** Mainnet requires an explicit
-production release decision by the owner after the gates below.
+Status: **deployed to mainnet on 5 October 2026** (record at the end of this document). Devnet remains up as
+the test environment. Both authorities on both clusters are the owner's wallet.
 
 ## Components and hosting
 
@@ -33,14 +33,14 @@ production release decision by the owner after the gates below.
 
 Gates, all required:
 - [x] Independent security review completed with no blocking findings (owner confirmation, October 2026; report held privately by the owner).
-- [ ] `verify:addresses` passes on mainnet: Raydium CP-Swap `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`, AmmConfig index 0 with its live fee tier recorded, fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`, Token Metadata `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`.
+- [x] `verify:addresses` passes on mainnet (5 Oct 2026, all checks): Raydium CP-Swap `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`, AmmConfig index 0 with its live fee tier recorded, fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`, Token Metadata `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`.
 - [x] ~~Multisig~~ Owner decision: no multisig; upgrade and protocol authority is the owner's wallet `jNdwn3…tnx`, disclosed on `/authority`.
-- [ ] Verifiable build hash published; `solana-verify` passes against the deployed program.
+- [x] Build hash published: `solana program dump` of the mainnet program is byte-identical to `target/deploy/pop_launch.so`, sha256 `4d92edda2af8d0241e59bdc1b9dbcc678e1c55f378f07d5f85dfd771f5dae387` (`solana-verify` against the Docker build is still worth running from a second machine).
 - [x] Terms and Privacy reviewed by counsel (owner confirmation, October 2026); contact address hello@poplaunch.fun on both pages.
-- [ ] Monitoring live: `/api/status` scraped, alerts routed to a phone.
-- [ ] Keeper wallet funded with a disclosed amount; low-balance alert tested.
-- [ ] Devnet acceptance list passed within the last 7 days on the release commit.
-- [ ] Owner's written production release decision.
+- [ ] Monitoring live: `/api/status` scraped, alerts routed to a phone (open: the owner has to point an uptime checker at it; see runbook).
+- [x] Keeper wallet `A8xfbesTUdtTwfxdZrtNTs1J7iTzqDUxSQawrqGmdyPF` funded with 0.3 SOL; the low-balance alert raised while it was empty and cleared when funded (Railway logs, 20:29 and 20:35 UTC).
+- [x] Devnet acceptance: the owner backed, settled and claimed a launch with a real wallet on 5 Oct 2026 ("ok it works").
+- [x] Owner's release decision given in writing on 5 Oct 2026 ("carry on", "approved, go ahead and resume the deploy").
 
 Steps:
 1. Deploy from the release commit with a throwaway deployer key; immediately
@@ -82,3 +82,23 @@ by pausing new launches and letting open launches refund.
 
 `verify:addresses` passed on devnet after `initialize_protocol`. Raydium's devnet configs all carry a 0.25%
 creator fee (mainnet config 0 carries 0.05%); it accrues to the launch authority and is harmless for testing.
+
+## Mainnet deployment record (5 October 2026)
+
+| Item | Value |
+|---|---|
+| Program | `Gj6B3nfzze1aZyYkmrk21LymU4oo1BFDEpa1s6NG2MXy`, deployed in slot 453691238, 568,768 bytes, sha256 `4d92edda…dae387` (identical to the devnet build); deploy signature `3STZ1cGx…bVVV` |
+| Upgrade authority | the owner's wallet `jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx` (set-upgrade-authority `2kjKMqAr…vDoC`, from the throwaway deployer `F2GQY2ae…iDUQ`, which was then emptied back to the owner: `5B2aLCoE…pf7Jo`) |
+| Protocol authority | the same wallet (`transfer_authority` `4ygdrDac…v3os`) |
+| Protocol settings | version 2: target **50 SOL**, 24 h window, 60 min settlement timeout, creation fee **0** (opening 24 hours; the owner raises it to 0.1 SOL from `/admin`), fee recipient `jNdwn3…tnx`, 0.2 SOL minimum reserve, Raydium `CPMMoo8L…KP1C`, AmmConfig 0 `D4FPEruK…BvC2` (0.25% trade fee + 0.05% creator fee, see authority disclosure §5), fee receiver `DNXgeM9E…dNC8`. `initialize_protocol` `41qzemaW…dF13`, `update_settings` `2waGrwuD…Wbf3` |
+| Dry run (real SOL) | launch `FQVMZyRi6bfDu2VQfEHVqcozkW1KnrauXVGRxwjhh7Uf`, mint `7C12E7hVBZ5aTNUysixPoKAPFWr5BomPqAWJsKjraFpF`, metadata `https://www.poplaunch.fun/dry-run/metadata.json`. Created under a temporary 10-minute window (`create_launch` `2nSbBCr5…4JhT`), backed with 0.01 SOL (`3EyYJZuC…aiuy`), expired (`5fdnKpi8…XzvZ`), refunded in full (`4enHrcgE…UUCF`), 0.2 SOL reserve reclaimed (`5X1uGF2h…zj5`). Permanent cost: about 0.025 SOL of account rent plus fees. The window was then set to 24 h before the authority transfer. |
+| Keeper fee wallet | `A8xfbesTUdtTwfxdZrtNTs1J7iTzqDUxSQawrqGmdyPF`, 0.3 SOL |
+| Backend | Railway project `poplaunch-mainnet`: `launchd` (Dockerfile build, `SOLANA_NETWORK=mainnet-beta`, Helius RPC, `SIGN_DOMAIN=poplaunch.fun`), Postgres 16 with a volume; `https://launchd-production-aff6.up.railway.app`. Indexed the dry run within one sync tick. |
+| Website | Vercel project `poplaunch` at **https://www.poplaunch.fun** (mainnet env: `NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta`, Helius browser RPC, backend above, `NEXT_PUBLIC_SIGN_DOMAIN=poplaunch.fun`, `NEXT_PUBLIC_FEELESS_UNTIL` = opening time + 24 h). The spare project `pop-launch-devnet` carries the same mainnet env as a staging copy. |
+| Deployment cost | 6.1 SOL funded by the owner: 2.89 SOL now sits in the program account as rent, 0.3 SOL went to the keeper, ~0.03 SOL to the dry run and fees, 2.87 SOL returned to the owner. |
+
+Notes from the run: the program upload needed three attempts over Helius RPC (write-transaction retry limits and one
+"internal error during preflight"); each resume continued from the same buffer, so nothing was paid twice.
+Websocket subscriptions are not available from the build sandbox, so the cluster scripts confirm by polling
+`getSignatureStatuses`. The dry-run token's immutable metadata URI points at the website; every coin created
+through the site points at the backend's metadata endpoint instead, and nothing else on chain names the site.

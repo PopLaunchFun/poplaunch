@@ -13,8 +13,8 @@ funds. Mitigations, in the order they apply:
 | Cluster | Upgrade authority | Status |
 |---|---|---|
 | localnet | throwaway key in `scripts/deploy/keys/` (gitignored) | test only |
-| devnet | deployer hot key | test only; funds are test SOL |
-| mainnet | **a single key held by the owner** (`jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`); owner decision, October 2026: no multisig | not deployed |
+| devnet | the owner's wallet `jNdwn3…tnx` (moved from the deployer on 5 Oct 2026) | test only; funds are test SOL |
+| mainnet | **a single key held by the owner** (`jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`); owner decision, October 2026: no multisig | **live since 5 October 2026**, slot 453691238; set-upgrade-authority signature `2kjKMqAr…vDoC` |
 
 Owner decision (October 2026): **no multisig.** The upgrade authority and the protocol authority are one
 key, the owner's wallet `jNdwn3LU6TDj7ZSzhsG4c7WY99BNz1JNs5qxspdvtnx`. That means a single compromised or
