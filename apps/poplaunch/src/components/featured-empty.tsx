@@ -26,8 +26,8 @@ export function FeaturedEmpty() {
         <div className="md:absolute md:left-[37px] md:top-[236px] md:w-[300px] relative">
           <h2 className="condensed text-[56px] md:text-[84px] leading-[0.85]">NEXT POP</h2>
           {/* hand-drawn arrow from the words to the balloon: up-right on desktop (balloon sits above right), up on phones (balloon above) */}
-          <svg className="absolute hidden md:block left-[300px] -top-[72px]" width="110" height="96" viewBox="0 0 110 96" fill="none" stroke="#000" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M6 90 C 30 70, 40 40, 86 12" /><path d="M64 10 L 88 10 L 84 34" />
+          <svg className="absolute hidden md:block left-[255px] -top-[4px]" width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="#000" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M22 94 C 30 70, 44 52, 76 30" /><path d="M56 26 L 80 26 L 76 50" />
           </svg>
           <svg className="absolute md:hidden right-2 -top-[70px]" width="60" height="70" viewBox="0 0 60 70" fill="none" stroke="#000" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M30 66 C 20 50, 40 30, 30 8" /><path d="M14 22 L 30 6 L 46 22" />
