@@ -76,7 +76,7 @@ by pausing new launches and letting open launches refund.
 | Protocol settings | version 1: target **1 SOL** (devnet test value; mainnet uses 50), 24 h window, 60 min timeout, 0.1 SOL fee, 0.2 SOL minimum reserve, Raydium devnet `DRaycp…`, AmmConfig 0 `5MxLgy9oPdTC3YgkiePHqr3EoCRD9uLVYRQS2ANAs7wy` |
 | Keeper fee wallet | `78iGSuqLxgoart2gJJLmFTobVyctCJDFqKygbmd9b3oU` |
 | Backend | Railway project `poplaunch-devnet`: `launchd` from this repo's `services/launchd/Dockerfile`, Postgres 16 with a volume; `https://launchd-production-6acc.up.railway.app` |
-| Website | Vercel project `pop-launch-devnet`, root `apps/poplaunch`: `https://pop-launch-devnet.vercel.app` (browser RPC: public devnet endpoint; backend RPC: Helius) |
+| Website | Vercel project `poplaunch` (root `apps/poplaunch`) at **https://www.poplaunch.fun** (apex redirects to www); the earlier `pop-launch-devnet.vercel.app` project remains as a spare. Browser RPC: public devnet endpoint; backend RPC: Helius. Until the Vercel GitHub app is installed, deploys are pushed from the CLI (`vercel deploy --prod` from the repo root). |
 | Sign domain | `poplaunch-devnet` (same string in the site and the backend) |
 
 `verify:addresses` passed on devnet after `initialize_protocol`. Raydium's devnet configs all carry a 0.25%
