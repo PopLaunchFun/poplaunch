@@ -619,13 +619,13 @@ pub struct InitializeProtocol<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(init, payer = payer, space = 8 + ProtocolConfig::INIT_SPACE, seeds = [SEED_PROTOCOL], bump)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(init, payer = payer, space = 8 + BuybackVault::INIT_SPACE, seeds = [SEED_BUYBACK], bump)]
-    pub buyback_vault: Account<'info, BuybackVault>,
+    pub buyback_vault: Box<Account<'info, BuybackVault>>,
     #[account(init, payer = payer, seeds = [SEED_BUYBACK, b"quote"], bump, token::mint = quote_mint, token::authority = buyback_vault)]
-    pub buyback_quote_account: Account<'info, TokenAccount>,
+    pub buyback_quote_account: Box<Account<'info, TokenAccount>>,
     #[account(address = spl_token::native_mint::ID @ PopError::InvalidQuoteMint)]
-    pub quote_mint: Account<'info, Mint>,
+    pub quote_mint: Box<Account<'info, Mint>>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -634,7 +634,7 @@ pub struct InitializeProtocol<'info> {
 pub struct AdminOnly<'info> {
     pub authority: Signer<'info>,
     #[account(mut, seeds = [SEED_PROTOCOL], bump = protocol_config.bump, has_one = authority @ PopError::Unauthorized)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
 }
 
 #[derive(Accounts)]
@@ -643,21 +643,21 @@ pub struct CreateMarket<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
     #[account(mut, seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(init, payer = creator, mint::decimals = args.decimals, mint::authority = market)]
-    pub base_mint: Account<'info, Mint>,
+    pub base_mint: Box<Account<'info, Mint>>,
     #[account(address = spl_token::native_mint::ID @ PopError::InvalidQuoteMint)]
-    pub quote_mint: Account<'info, Mint>,
+    pub quote_mint: Box<Account<'info, Mint>>,
     #[account(init, payer = creator, space = 8 + Market::INIT_SPACE, seeds = [SEED_MARKET, base_mint.key().as_ref()], bump)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(init, payer = creator, seeds = [SEED_VAULT_BASE, market.key().as_ref()], bump, token::mint = base_mint, token::authority = market)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub base_vault: Box<Account<'info, TokenAccount>>,
     #[account(init, payer = creator, seeds = [SEED_VAULT_QUOTE, market.key().as_ref()], bump, token::mint = quote_mint, token::authority = market)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(init, payer = creator, seeds = [SEED_FEE_BASE, market.key().as_ref()], bump, token::mint = base_mint, token::authority = market)]
-    pub fee_vault_base: Account<'info, TokenAccount>,
+    pub fee_vault_base: Box<Account<'info, TokenAccount>>,
     #[account(init, payer = creator, seeds = [SEED_FEE_QUOTE, market.key().as_ref()], bump, token::mint = quote_mint, token::authority = market)]
-    pub fee_vault_quote: Account<'info, TokenAccount>,
+    pub fee_vault_quote: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -668,15 +668,15 @@ pub struct CreateVesting<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
     #[account(seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(mut, has_one = creator @ PopError::Unauthorized, has_one = base_mint)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub base_mint: Account<'info, Mint>,
+    pub base_mint: Box<Account<'info, Mint>>,
     #[account(init, payer = creator, space = 8 + Vesting::INIT_SPACE, seeds = [SEED_VESTING, market.key().as_ref(), &[args.index]], bump)]
-    pub vesting: Account<'info, Vesting>,
+    pub vesting: Box<Account<'info, Vesting>>,
     #[account(init, payer = creator, seeds = [SEED_VESTING, b"vault", vesting.key().as_ref()], bump, token::mint = base_mint, token::authority = vesting)]
-    pub vesting_vault: Account<'info, TokenAccount>,
+    pub vesting_vault: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -687,7 +687,7 @@ pub struct InitializeBinPage<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(mut)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(init, payer = payer, space = BinPage::LEN, seeds = [SEED_PAGE, market.key().as_ref(), &page_index.to_le_bytes()], bump)]
     pub page: AccountLoader<'info, BinPage>,
     pub system_program: Program<'info, System>,
@@ -697,15 +697,15 @@ pub struct InitializeBinPage<'info> {
 pub struct ActivateMarket<'info> {
     pub creator: Signer<'info>,
     #[account(mut, has_one = creator @ PopError::Unauthorized, has_one = base_mint, has_one = base_vault, has_one = quote_vault)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub base_mint: Account<'info, Mint>,
+    pub base_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub base_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut, token::mint = market.quote_mint, token::authority = creator)]
-    pub creator_quote_account: Account<'info, TokenAccount>,
+    pub creator_quote_account: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -713,26 +713,26 @@ pub struct ActivateMarket<'info> {
 pub struct SwapExactIn<'info> {
     pub user: Signer<'info>,
     #[account(mut, has_one = base_vault @ PopError::InvalidVault, has_one = quote_vault @ PopError::InvalidVault, has_one = fee_vault_base @ PopError::InvalidVault, has_one = fee_vault_quote @ PopError::InvalidVault)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub base_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub fee_vault_base: Account<'info, TokenAccount>,
+    pub fee_vault_base: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub fee_vault_quote: Account<'info, TokenAccount>,
+    pub fee_vault_quote: Box<Account<'info, TokenAccount>>,
     #[account(mut, token::mint = market.base_mint, token::authority = user)]
-    pub user_base: Account<'info, TokenAccount>,
+    pub user_base: Box<Account<'info, TokenAccount>>,
     #[account(mut, token::mint = market.quote_mint, token::authority = user)]
-    pub user_quote: Account<'info, TokenAccount>,
+    pub user_quote: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct MatchBins<'info> {
     #[account(mut)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut, has_one = market @ PopError::InvalidPage)]
     pub page: AccountLoader<'info, BinPage>,
 }
@@ -740,35 +740,32 @@ pub struct MatchBins<'info> {
 #[derive(Accounts)]
 pub struct EvaluateGraduation<'info> {
     #[account(mut)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 }
 
 #[derive(Accounts)]
 pub struct ClaimFees<'info> {
     #[account(seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(mut)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub fee_vault: Account<'info, TokenAccount>,
+    pub fee_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub destination: Account<'info, TokenAccount>,
+    pub destination: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct SweepBuyback<'info> {
     #[account(mut, has_one = fee_vault_quote @ PopError::InvalidVault)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub fee_vault_quote: Account<'info, TokenAccount>,
-    #[account(mut, seeds = [SEED_BUYBACK], bump = buyback_vault.bump, has_one = quote_account @ PopError::InvalidVault)]
-    pub buyback_vault: Account<'info, BuybackVault>,
-    /// CHECK: constrained by has_one on buyback_vault
-    #[account(mut, address = buyback_vault.quote_account)]
-    pub quote_account: Account<'info, TokenAccount>,
-    #[account(mut, address = buyback_vault.quote_account)]
-    pub buyback_quote_account: Account<'info, TokenAccount>,
+    pub fee_vault_quote: Box<Account<'info, TokenAccount>>,
+    #[account(mut, seeds = [SEED_BUYBACK], bump = buyback_vault.bump)]
+    pub buyback_vault: Box<Account<'info, BuybackVault>>,
+    #[account(mut, address = buyback_vault.quote_account @ PopError::InvalidVault)]
+    pub buyback_quote_account: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -776,33 +773,33 @@ pub struct SweepBuyback<'info> {
 pub struct ExecutePopBuyback<'info> {
     pub authority: Signer<'info>,
     #[account(seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
-    pub protocol_config: Account<'info, ProtocolConfig>,
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(mut, seeds = [SEED_BUYBACK], bump = buyback_vault.bump, has_one = authority @ PopError::Unauthorized)]
-    pub buyback_vault: Account<'info, BuybackVault>,
+    pub buyback_vault: Box<Account<'info, BuybackVault>>,
     #[account(mut, address = protocol_config.pop_market @ PopError::NotPopMarket, has_one = base_vault @ PopError::InvalidVault, has_one = quote_vault @ PopError::InvalidVault, has_one = base_mint)]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut)]
-    pub base_mint: Account<'info, Mint>,
+    pub base_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub base_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = buyback_vault.quote_account @ PopError::InvalidVault)]
-    pub buyback_quote_account: Account<'info, TokenAccount>,
+    pub buyback_quote_account: Box<Account<'info, TokenAccount>>,
     #[account(mut, token::mint = base_mint, token::authority = buyback_vault)]
-    pub buyback_pop_account: Account<'info, TokenAccount>,
+    pub buyback_pop_account: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct ClaimVested<'info> {
     pub beneficiary: Signer<'info>,
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
     #[account(mut, has_one = beneficiary @ PopError::Unauthorized, has_one = market, has_one = vault @ PopError::InvalidVault)]
-    pub vesting: Account<'info, Vesting>,
+    pub vesting: Box<Account<'info, Vesting>>,
     #[account(mut)]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: Box<Account<'info, TokenAccount>>,
     #[account(mut, token::mint = vesting.mint, token::authority = beneficiary)]
-    pub destination: Account<'info, TokenAccount>,
+    pub destination: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }

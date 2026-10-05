@@ -1,0 +1,30 @@
+{
+  "name": "@pop/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript client for the pop_market program: PDAs, account views, quotes (via @pop/math) and transaction builders.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "default": "./dist/index.js" },
+    "./idl": "./src/idl/pop_market.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp -r src/idl dist/idl",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "1.2.0",
+    "@pop/math": "workspace:*",
+    "@solana/spl-token": "0.4.15",
+    "@solana/web3.js": "1.99.0",
+    "bn.js": "5.2.5"
+  },
+  "devDependencies": {
+    "@types/bn.js": "5.2.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
