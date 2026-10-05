@@ -32,7 +32,7 @@ production release decision by the owner after the gates below.
 ## Mainnet
 
 Gates, all required:
-- [x] Independent security review completed with no blocking findings (owner confirmation, October 2026; file the auditor's report under `docs/audit/` when received).
+- [x] Independent security review completed with no blocking findings (owner confirmation, October 2026; report held privately by the owner).
 - [ ] `verify:addresses` passes on mainnet: Raydium CP-Swap `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`, AmmConfig index 0 with its live fee tier recorded, fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`, Token Metadata `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`.
 - [ ] Multisig created (Squads), members and threshold published in `docs/authority-disclosure.md`, timelock configured.
 - [ ] Verifiable build hash published; `solana-verify` passes against the deployed program.

@@ -130,8 +130,8 @@ Creator setup reserve quoted at 0.2042 SOL (Raydium's 0.15 SOL pool-creation fee
 
 ## 7. What still needs other people or a public cluster
 
-1. ~~Independent security review~~ Done per the owner (October 2026), no blocking findings. The auditor's
-   report should be filed under `docs/audit/`.
+1. ~~Independent security review~~ Done per the owner (October 2026), no blocking findings; the report is
+   held privately by the owner.
 2. **Devnet deployment** and a Phantom / Solflare desktop and mobile test with real wallets. The sandbox
    has no public RPC access and no browser extensions.
 3. **Mainnet multisig** (Squads) with members, threshold and timelock chosen by the owner.
