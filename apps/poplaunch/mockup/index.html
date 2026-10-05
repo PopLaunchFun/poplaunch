@@ -1,0 +1,533 @@
+<title>Pop Launch Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@900&family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: the POP PRESS screens as one page; views swap by hash. Single committed light look (the brand). */
+:root {
+  --bg: #fcfaf6; --surface: #faf8f4; --white: #fff; --ink: #000; --muted: #4b4638; --line: #d9d3c6;
+  --red: #fb473b; --red-deep: #f33d30; --yellow: #fddf31; --peach: #fbe6c5; --green: #37c04a; --mint: #bff0c6;
+  --display: "Rubik", "Arial Rounded MT Bold", "Arial Black", sans-serif;
+  --condensed: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --mono: "Space Mono", ui-monospace, Menlo, monospace;
+  --body: "Inter", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4; -webkit-font-smoothing: antialiased; min-height: 100%; display: flex; flex-direction: column; overflow-x: hidden; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+img { max-width: 100%; }
+.wrap { width: 100%; max-width: 1536px; margin: 0 auto; padding-inline: 16px; }
+@media (min-width: 768px) { .wrap { padding-inline: 62px; } }
+
+.display { font-family: var(--display); font-weight: 900; line-height: 0.88; letter-spacing: -0.035em; -webkit-text-stroke: 0.018em currentColor; paint-order: stroke fill; }
+.condensed { font-family: var(--condensed); font-weight: 400; line-height: 0.9; }
+.wordmark { font-family: var(--display); font-weight: 900; letter-spacing: -0.04em; line-height: 1; -webkit-text-stroke: 0.035em currentColor; paint-order: stroke fill; }
+.mono { font-family: var(--mono); }
+.num { font-variant-numeric: tabular-nums; }
+.addr { font-family: var(--mono); font-size: 0.9em; word-break: break-all; }
+.muted { color: var(--muted); }
+.label { font-size: 15px; color: var(--muted); }
+.link { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; background: none; border: 0; padding: 0; cursor: pointer; font-weight: inherit; }
+.marker { background: linear-gradient(transparent 62%, var(--yellow) 62%, var(--yellow) 100%); padding: 0 0.1em 0.08em; }
+
+.box { background: var(--white); border: 3.5px solid var(--ink); border-radius: 16px; box-shadow: 6px 6px 0 var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 12px; font-weight: 700; font-size: 18px; line-height: 1; white-space: nowrap; border: 2.5px solid var(--ink); background: var(--white); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); transition: transform 120ms, box-shadow 120ms, background 120ms; cursor: pointer; text-decoration: none; }
+.btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+.btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: var(--red-deep); }
+.btn-lg { min-height: 62px; padding: 0 32px; font-size: 20px; }
+.btn-sm { min-height: 40px; padding: 0 16px; font-size: 16px; box-shadow: 2px 2px 0 var(--ink); }
+.btn-plain { border-color: transparent; box-shadow: none; background: transparent; }
+.btn-plain:hover { transform: none; box-shadow: none; background: #f1ede6; }
+.btn.full { width: 100%; }
+.btn svg { flex: none; }
+
+.input { width: 100%; min-height: 48px; background: var(--white); border: 2.5px solid var(--ink); border-radius: 12px; padding: 0 14px; color: var(--ink); font: inherit; font-size: 16px; }
+textarea.input { padding: 10px 14px; min-height: 96px; resize: vertical; }
+.input::placeholder { color: #7d776a; }
+.bar { height: 30px; background: var(--white); border: 3px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 999px 0 0 999px; transition: width 300ms ease-out; background: var(--yellow); }
+.bar > span.hot { background: var(--red); }
+.bar-lg { height: 40px; }
+.progress { height: 14px; background: var(--white); border: 2.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--red); }
+.chip { display: inline-flex; align-items: center; font-weight: 700; font-size: 17px; padding: 6px 16px; border-radius: 8px; border: 2px solid var(--ink); background: var(--peach); white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; padding: 4px 10px; border-radius: 8px; border: 2px solid var(--ink); background: var(--white); white-space: nowrap; }
+.tag-yellow { background: var(--yellow); } .tag-green { background: var(--mint); } .tag-ink { background: var(--ink); color: #fff; font-size: 11px; }
+.tab { font-weight: 700; font-size: 14px; padding: 6px 12px; border-radius: 10px; min-height: 36px; border: 2px solid transparent; background: none; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--yellow); border-color: var(--ink); }
+.nav-link { font-weight: 700; font-size: 18px; padding: 8px 2px; position: relative; text-decoration: none; }
+.nav-link[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 4px; background: var(--red); border-radius: 2px; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; border-radius: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+dl { margin: 0; } dt, dd { margin: 0; }
+.kv { display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.kv > div { display: flex; justify-content: space-between; gap: 12px; }
+.kv dd { text-align: right; }
+.kv .total { border-top: 2px solid var(--ink); padding-top: 8px; font-weight: 700; }
+h1, h2, h3, p { margin: 0; }
+details > summary { list-style: none; cursor: pointer; } details > summary::-webkit-details-marker { display: none; }
+
+/* strip + header */
+.strip { background: var(--yellow); font-size: 13px; }
+.strip .wrap { min-height: 32px; padding-block: 4px; display: flex; align-items: center; gap: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+.strip i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; }
+header.top { background: var(--bg); border-bottom: 3px solid var(--ink); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; }
+header.top .wrap { position: relative; height: 72px; display: flex; align-items: center; }
+.brand { position: relative; display: inline-flex; align-items: baseline; text-decoration: none; white-space: nowrap; font-size: 28px; }
+.brand .burst { position: absolute; left: 50px; top: -8px; width: 16px; height: 16px; }
+nav.primary { display: none; position: absolute; left: 50%; transform: translateX(-50%); gap: 40px; align-items: center; }
+.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 6px; position: relative; }
+.menu { position: absolute; right: 0; top: 56px; width: 224px; padding: 8px; z-index: 40; }
+.menu a, .menu button { display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px; font-weight: 700; text-decoration: none; background: none; border: 0; cursor: pointer; }
+.menu a:hover, .menu button:hover { background: var(--bg); }
+.wmenu { width: 288px; font-size: 15px; }
+.burger { width: 40px; padding: 0; }
+@media (min-width: 768px) {
+  header.top .wrap { height: 92px; } .brand { font-size: 54px; } .brand .burst { left: 96px; top: -20px; width: 30px; height: 30px; }
+  nav.primary { display: flex; } .burger { display: none; } .hdr-right { gap: 8px; }
+}
+
+/* hero */
+.hero { padding-block: 24px 32px; display: grid; gap: 40px 48px; align-items: start; }
+.hero h1 { font-size: 66px; line-height: .85; letter-spacing: -0.045em; }
+.hero h1 span { display: block; } .hero h1 .pop { color: var(--red-deep); }
+.hero .tag-line { font-weight: 700; font-size: 20px; margin-top: 20px; letter-spacing: -0.01em; }
+@media (min-width: 640px) { .hero h1 { font-size: 92px; } }
+@media (min-width: 1024px) { .hero { grid-template-columns: minmax(0,1fr) auto; padding-block: 22px 26px; } .hero h1 { font-size: 112px; } .hero .tag-line { font-size: 25px; margin-top: 12px; } .hero .copy { padding-top: 26px; } }
+@media (min-width: 1536px) { .hero h1 { font-size: 132px; } }
+.rule { border-top: 3px solid var(--ink); }
+
+/* featured panel: stacked on phones, the mockup's absolute layout at desktop (scaled to fit) */
+.feat-wrap { width: 100%; }
+.feat { background: var(--yellow); position: relative; border-radius: 18px; }
+.feat .clouds { position: absolute; inset: 0; overflow: hidden; border-radius: 15px; pointer-events: none; }
+.feat .cloud-a { position: absolute; bottom: -4px; left: 300px; display: none; }
+.feat .cloud-b { position: absolute; bottom: -4px; right: -6px; width: 220px; }
+.feat .inner { position: relative; padding: 24px 20px 80px; display: flex; flex-direction: column; gap: 20px; }
+.note { position: relative; align-self: flex-start; transform: rotate(-8deg); background: #fff; border: 2.5px solid var(--ink); border-radius: 3px; padding: 12px 14px; font-family: var(--mono); font-weight: 700; font-size: 14px; line-height: 1.25; text-transform: uppercase; letter-spacing: .03em; width: 152px; }
+.note svg { position: absolute; right: -16px; bottom: -20px; }
+.feat .balloon { align-self: center; margin-top: -8px; }
+.feat .balloon img { width: 230px; height: auto; display: block; }
+.feat .name { font-size: 56px; line-height: .85; }
+.feat .cap { font-family: var(--mono); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .2em; margin-top: 12px; line-height: 1.6; max-width: 300px; }
+.feat .pct { font-size: 84px; line-height: .8; }
+.feat .sol { font-family: var(--mono); font-weight: 700; font-size: 20px; margin-top: 12px; }
+.feat .bar { margin-top: 12px; }
+.feat .cd { margin-top: 12px; }
+.feat .deco { display: none; position: absolute; }
+@media (min-width: 1024px) {
+  .feat-wrap { width: 887px; max-width: 100%; height: calc(405px * var(--s, 1)); }
+  .feat { width: 887px; height: 405px; transform: scale(var(--s, 1)); transform-origin: top left; }
+  .feat .cloud-a { display: block; width: 120px; }
+  .feat .inner { padding: 0; height: 100%; display: block; }
+  .feat .inner > * { position: absolute; }
+  .note { left: 37px; top: 26px; font-size: 17px; }
+  .feat .balloon { left: 258px; top: -21px; margin: 0; } .feat .balloon img { width: 325px; }
+  .feat .ident { left: 37px; top: 236px; width: 300px; }
+  .feat .name { font-size: 84px; } .feat .cap { font-size: 15px; margin-top: 14px; }
+  .feat .stats { right: 27px; top: 66px; width: 288px; text-align: right; }
+  .feat .pct { font-size: 124px; padding-right: 4px; } .feat .sol { font-size: 26px; margin-top: 14px; padding-right: 24px; }
+  .feat .bar { margin-top: 18px; text-align: left; } .feat .cd { margin-top: 12px; text-align: left; }
+  .feat .deco { display: block; }
+}
+.balloon-float { animation: balloon-float 5s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes balloon-float { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+
+/* launches */
+.launches { padding-top: 20px; }
+.launches .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.launches h2 { font-size: 32px; }
+.launches .see { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; text-decoration: none; }
+.rows { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.row { background: var(--surface); position: relative; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; column-gap: 16px; padding: 16px; }
+.row .av { position: relative; width: 70px; height: 86px; }
+.row .av .b { position: absolute; left: 0; top: -12px; z-index: 2; }
+.row .av img { width: 70px; height: auto; display: block; filter: drop-shadow(-6px 8px 6px rgba(0,0,0,.12)); }
+.row .av .str { position: absolute; left: 34px; top: 82px; }
+.row h3 { font-size: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row h3 a { text-decoration: none; } .row h3 a:hover { text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 3px; text-underline-offset: 4px; }
+.row .tl { font-family: var(--mono); font-size: 13px; margin-top: 6px; }
+.row .prog { grid-column: 1 / -1; margin-top: 12px; }
+.row .prog .sol { font-family: var(--mono); font-weight: 700; font-size: 14px; margin-top: 8px; }
+.row .pct { font-weight: 800; font-size: 24px; margin-top: 8px; }
+.row .left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; margin-top: 8px; justify-content: flex-end; }
+.row .act { grid-column: 1 / -1; margin-top: 16px; }
+@media (min-width: 768px) {
+  .launches { padding-top: 18px; } .launches .head { padding-inline: 10px; } .launches h2 { font-size: 42px; } .launches .see { font-size: 16px; padding-right: 7px; }
+  .row { grid-template-columns: 120px minmax(0,1fr) minmax(180px,300px) 80px 130px auto; padding: 0; height: 106px; }
+  .row .av { width: 120px; height: 100%; } .row .av .b { left: 24px; top: -6px; } .row .av img { width: 88px; } .row .av .str { left: 40px; top: 100px; }
+  .row h3 { font-size: 30px; } .row .tl { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .prog, .row .act { grid-column: auto; margin-top: 0; } .row .prog .sol { margin-top: 10px; }
+  .row .pct { font-size: 27px; margin-top: 0; } .row .left { margin-top: 0; justify-content: flex-start; font-size: 18px; }
+  .row .act { padding-right: 20px; } .row .act .btn { width: 200px; }
+}
+@media (min-width: 1536px) { .row { grid-template-columns: 142px 292px 363px 95px 174px auto; column-gap: 20px; } .row .av { width: 142px; } .row .av .b { left: 40px; } .row .act { padding-right: 30px; } .row .act .btn { width: 243px; } }
+
+/* launch detail */
+.crumb { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
+.devbar { padding: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; margin-top: 12px; }
+.detail { margin-top: 20px; display: grid; gap: 32px; align-items: start; }
+@media (min-width: 1024px) { .detail { grid-template-columns: 7fr 5fr; gap: 40px; } .detail aside { position: sticky; top: 112px; } }
+.ident-row { display: flex; align-items: flex-start; gap: 16px; }
+.ident-row img.small { width: 64px; height: auto; flex: none; }
+.ident-row h1 { font-size: 32px; overflow-wrap: anywhere; }
+.ident-row h1 .tk { color: var(--muted); font-weight: 800; font-size: 20px; white-space: nowrap; -webkit-text-stroke: 0; }
+.ident-row .meta { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 15px; color: var(--muted); }
+.ident-row .pill-d { display: none; }
+@media (min-width: 768px) { .ident-row { align-items: center; } .ident-row h1 { font-size: 44px; } .ident-row h1 .tk { font-size: 24px; } .ident-row .pill-m { display: none; } .ident-row .pill-d { display: inline-flex; } }
+.tagline { margin-top: 16px; font-size: 17px; color: var(--muted); max-width: 56ch; }
+.stage { margin-top: 24px; padding: 24px; position: relative; overflow: hidden; }
+.stage .blob1 { position: absolute; right: -48px; top: -48px; width: 192px; height: 192px; border-radius: 50%; background: var(--yellow); }
+.stage .blob2 { position: absolute; left: -40px; bottom: 24px; width: 112px; height: 112px; border-radius: 50%; background: var(--yellow); }
+.stage .center { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.stage .big { display: flex; align-items: flex-end; justify-content: center; width: 300px; max-width: 100%; height: 340px; }
+.stage .big img { width: 220px; height: auto; display: block; transform-origin: 50% 100%; }
+@media (min-width: 768px) { .stage { padding: 32px; } .stage .big img { width: 300px; } }
+.stage h2.hl { font-size: 30px; margin-top: 12px; max-width: 16ch; }
+@media (min-width: 768px) { .stage h2.hl { font-size: 40px; } }
+.stage .acts { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.stage .figures { position: relative; margin-top: 24px; }
+.stage .figures .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.stage .figures .sol { font-family: var(--mono); font-weight: 700; font-size: 22px; }
+.stage .figures .pct { font-size: 56px; line-height: .8; }
+.stage .figures .foot { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 4px 24px; }
+.popped { position: relative; display: flex; align-items: center; justify-content: center; width: 300px; max-width: 100%; height: 240px; }
+.popped img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--ink); background: #fff; position: relative; }
+.confetti { position: absolute; left: 50%; top: 50%; border-radius: 2px; border: 1px solid var(--ink); animation: confetti 1.2s ease-out 1 forwards; }
+@keyframes confetti { 0% { transform: translate(0,0) scale(.4) rotate(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx),var(--dy)) scale(1) rotate(var(--rot)); opacity: .9; } }
+.panel { padding: 20px; } @media (min-width: 768px) { .panel { padding: 24px; } }
+.panel h2 { font-size: 22px; }
+.panel .head { display: flex; align-items: center; justify-content: space-between; }
+.presets { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.presets .fill { margin-left: auto; }
+.err { margin-top: 8px; font-size: 14px; min-height: 20px; color: var(--red-deep); }
+.lock { margin-top: 16px; font-size: 15px; border-radius: 16px; background: var(--bg); padding: 16px; border: 1px solid var(--line); }
+.steps { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.steps li { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.steps .dot { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none; background: var(--bg); border: 1px solid var(--line); }
+.steps .done { background: var(--mint); color: #1f7a4d; border: 0; } .steps .pending { background: var(--yellow); border: 0; }
+.steps .st { margin-left: auto; font-size: 15px; color: var(--muted); }
+.drow { display: grid; grid-template-columns: minmax(0,11rem) 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.drow dt { color: var(--muted); } .drow dd { min-width: 0; overflow-wrap: anywhere; }
+.sticky-act { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: rgba(250,248,244,.95); backdrop-filter: blur(4px); border-top: 1px solid var(--line); }
+.sheet-bg { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.4); }
+.sheet { position: absolute; bottom: 0; left: 0; right: 0; max-height: 92vh; overflow-y: auto; border-radius: 24px 24px 0 0; background: var(--bg); padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 1024px) { .sticky-act, .sheet-bg { display: none !important; } .aside-funding { display: block; } }
+.aside-funding { display: none; } @media (min-width: 1024px) { .aside-funding { display: block; } }
+.pb-mobile { padding-bottom: 112px; } @media (min-width: 1024px) { .pb-mobile { padding-bottom: 48px; } }
+
+/* create */
+.form { display: flex; flex-direction: column; gap: 20px; max-width: 760px; }
+.field > span.t { display: block; font-weight: 700; font-size: 15px; }
+.field > .input { margin-top: 4px; }
+.field .hint { margin-top: 4px; }
+.two { display: grid; gap: 20px; } @media (min-width: 640px) { .two { grid-template-columns: 1fr 1fr; } }
+.file-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+.file-row .pv { width: 72px; height: 72px; border-radius: 50%; border: 2.5px solid var(--ink); background: #fff; object-fit: cover; flex: none; }
+.pv-head { display: flex; align-items: center; gap: 16px; }
+.pv-head img, .pv-head .ph { width: 64px; height: 64px; border-radius: 50%; border: 2.5px solid var(--ink); background: var(--peach); object-fit: cover; flex: none; }
+
+/* how it works */
+.hiw h1 { font-size: 40px; } @media (min-width: 768px) { .hiw h1 { font-size: 56px; } }
+.hiw .lead { font-weight: 700; font-size: 18px; margin-top: 12px; max-width: 52ch; }
+.hiw .steps3 { margin-top: 32px; padding: 24px; display: grid; gap: 24px; } @media (min-width: 768px) { .hiw .steps3 { grid-template-columns: repeat(3,1fr); padding: 32px; gap: 32px; } }
+.hiw .step { display: flex; gap: 16px; }
+.hiw .n { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
+.hiw .step h2 { font-size: 22px; } .hiw .step p { font-size: 15px; color: var(--muted); margin-top: 4px; }
+.faq { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+.faq details { padding: 20px; } .faq summary { font-weight: 700; font-size: 17px; } .faq p { font-size: 15px; color: var(--muted); margin-top: 8px; }
+
+/* my pops */
+.plist { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.plist li { padding: 16px; display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px 16px; align-items: center; }
+.plist li img { width: 56px; height: auto; }
+.plist .pact { grid-column: 1 / -1; } @media (min-width: 640px) { .plist li { grid-template-columns: auto minmax(0,1fr) auto; } .plist .pact { grid-column: auto; } }
+
+footer.ft { margin-top: 64px; border-top: 3px solid var(--ink); }
+footer.ft .wrap { padding-block: 28px; display: flex; flex-direction: column; gap: 16px; font-size: 15px; font-weight: 700; }
+footer.ft nav { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+footer.ft .net { font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 400; }
+@media (min-width: 768px) { footer.ft .wrap { flex-direction: row; align-items: center; } footer.ft .net { margin-left: auto; } }
+main { flex: 1; }
+.page { padding-block: 20px 64px; } @media (min-width: 768px) { .page { padding-block: 32px 64px; } }
+.toast { margin-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .balloon-float { animation: none; } .confetti { animation: none; transform: translate(var(--dx),var(--dy)) rotate(var(--rot)); opacity: .9; } * { transition-duration: 0ms !important; } }
+</style>
+
+<div class="strip" role="status"><div class="wrap"><i></i>Demo preview · No chain connected · No real SOL</div></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand wordmark" href="#home" aria-label="Pop Launch home">pop<svg class="burst" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 1 L18 9 L26 4 L21 12 L29 15 L21 18 L26 26 L18 21 L15 29 L12 21 L4 26 L9 18 L1 15 L9 12 L4 4 L12 9 Z" fill="#fb473b"/></svg>&nbsp;launch</a>
+    <nav class="primary" aria-label="Primary" id="nav-desktop"></nav>
+    <div class="hdr-right" id="hdr-right">
+      <button type="button" class="btn btn-red btn-sm" id="wallet-btn" aria-haspopup="menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M15 12.5h6"/><circle cx="16" cy="12.5" r="1" fill="currentColor"/></svg><span>Connect</span></button>
+      <button type="button" class="btn btn-plain btn-sm burger" id="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M3 6h16M3 11h16M3 16h16"/></svg></button>
+      <div class="box menu wmenu" id="wallet-menu" role="menu" hidden><div style="padding:12px"><div style="font-weight:700">Browsing needs no wallet.</div><p class="label" style="margin-top:4px">This is the demo preview. Wallet connection (Phantom, Solflare) works in the localnet and devnet builds.</p></div></div>
+      <div class="box menu" id="mobile-menu" role="menu" hidden></div>
+    </div>
+  </div>
+</header>
+<main id="main"></main>
+<footer class="ft"><div class="wrap">
+  <span class="wordmark" style="font-size:22px">pop launch</span>
+  <nav aria-label="Footer"><a class="link" href="#how">How it works</a><a class="link" href="#terms">Terms</a><a class="link" href="#privacy">Privacy</a></nav>
+  <span class="net">Demo preview · No chain connected · No real SOL</span>
+</div></footer>
+
+<script>
+(function () {
+  "use strict";
+  // ---------- demo data (the three mockup coins; every number is invented) ----------
+  const SOL = 1e9, H = 3600e3, T0 = Date.now();
+  const TARGET = 50 * SOL;
+  const V1 = { supply: 1e9, backerAlloc: 5e8, poolAlloc: 5e8, decimals: 6, fee: 0.1, minContribution: 0.01, windowH: 24, timeoutMin: 60, dex: "Raydium CPMM", version: 1 };
+  const addr = (seed) => { const A = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; let h = 7, o = ""; for (let i = 0; i < 44; i++) { h = (h * 31 + seed.charCodeAt(i % seed.length) + i) % 100003; o += A[h % A.length]; } return o; };
+  const COINS = [
+    { id: "cat-exe", name: "CAT.EXE", ticker: "CATEXE", balloon: "art/balloon-cat.png", featured: "art/balloon-cat-featured.png", face: "art/face-cat.png", tagline: "Terminal cat. Higher together.", description: "A coin by the people. For the people.", x: "catexe", raised: 42 * SOL, backers: 212, hoursLeft: 2, creatorSol: 1 },
+    { id: "froggo", name: "FROGGO", ticker: "FROGGO", balloon: "art/balloon-frog.png", featured: "art/balloon-frog.png", face: "art/face-frog.png", tagline: "Just a frog. Big plans.", description: "Just a frog. Big plans.", x: "", raised: 28 * SOL, backers: 131, hoursLeft: 5, creatorSol: 0 },
+    { id: "goodboy", name: "GOODBOY", ticker: "GOODBOY", balloon: "art/balloon-dog.png", featured: "art/balloon-dog.png", face: "art/face-dog.png", tagline: "Good dogs go higher.", description: "Good dogs go higher.", x: "", raised: 19 * SOL, backers: 88, hoursLeft: 8, creatorSol: 0 },
+  ].map((c) => { const fd = T0 + c.hoursLeft * H + 59e3; return Object.assign(c, { state: "funding", creator: addr("creator:" + c.id), mint: addr("mint:" + c.id), openedAt: fd - V1.windowH * H, fundingDeadline: fd, filledAt: null, settlementDeadline: null, liveAt: null, refundReason: null }); });
+  const STATE_LABEL = { funding: "Filling up", ready: "Getting ready", live: "Live", refundable: "Refund available" };
+  function withState(c, s) {
+    const now = Date.now(), l = Object.assign({}, c, { state: s });
+    if (s === "funding") return c;
+    if (s === "ready") return Object.assign(l, { raised: TARGET, openedAt: now - 19 * H, fundingDeadline: now + 5 * H, filledAt: now - 12 * 60e3, settlementDeadline: now + 48 * 60e3 });
+    if (s === "live") return Object.assign(l, { raised: TARGET, openedAt: now - 30 * H, fundingDeadline: now - 6 * H, filledAt: now - 7 * H, settlementDeadline: now - 6 * H, liveAt: now - 2 * H });
+    return Object.assign(l, { openedAt: now - 40 * H, fundingDeadline: now - 16 * H, refundReason: "missed-target" });
+  }
+  // ---------- formatting ----------
+  const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  const fmtSol = (lamports, places = 4) => { const v = Math.abs(lamports); const whole = Math.floor(v / SOL); let frac = String(Math.round(v - whole * SOL)).padStart(9, "0").slice(0, places).replace(/0+$/, ""); return whole.toLocaleString("en-US") + (frac ? "." + frac : ""); };
+  const fmtTok = (n) => Math.floor(n).toLocaleString("en-US");
+  const pctOf = (raised) => { const bps = Math.floor(raised * 10000 / TARGET); const w = Math.floor(bps / 100), t = Math.floor((bps % 100) / 10); return { bps, text: (t === 0 || w >= 100) ? w + "%" : w + "." + t + "%" }; };
+  const scaleOf = (bps) => 0.62 + 0.38 * Math.sqrt(Math.max(0, Math.min(1, bps / 10000)));
+  const fmtDur = (ms) => { if (ms <= 0) return "0m"; const m = Math.floor(ms / 60000), h = Math.floor(m / 60), d = Math.floor(h / 24); return d >= 1 ? d + "d " + (h % 24) + "h" : h >= 1 ? h + "h" : m + "m"; };
+  const left = (t) => fmtDur(t - Date.now()) + " left";
+  const ago = (t) => fmtDur(Date.now() - t) + " ago";
+  const short = (a, n = 4) => a.slice(0, n) + "…" + a.slice(-n);
+  const utc = (t) => t === null ? "—" : new Date(t).toUTCString().replace(" GMT", " UTC");
+  const entitlement = (sol) => Math.floor(sol * SOL * V1.backerAlloc / TARGET);
+  const LOCK = "Your SOL is locked until this launch succeeds or becomes refundable. If it launches, you receive tokens. Your SOL goes into the trading pool. Network fees are separate.";
+  const arrow = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
+  const clock = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5.5l3.5 2"/></svg>';
+  const cloud = (cls) => '<svg class="' + cls + '" viewBox="0 0 200 80" fill="none" aria-hidden="true"><path d="M10 80 C 6 60, 22 48, 40 52 C 44 34, 66 26, 82 36 C 92 14, 128 12, 142 34 C 160 26, 184 40, 180 58 C 196 60, 200 72, 196 80 Z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>';
+  const sparkle = (style, size, flip) => '<svg class="deco" style="' + style + '" width="' + size + '" height="' + size + '" viewBox="0 0 40 40" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" aria-hidden="true"' + (flip ? ' transform="scale(-1 1)"' : "") + '><path d="M6 10 L 16 18"/><path d="M4 26 L 16 24"/><path d="M24 4 L 22 16"/></svg>';
+  const string = (cls, h) => '<svg class="' + cls + '" width="' + h * 0.6 + '" height="' + h + '" viewBox="0 0 36 60" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M8 2 C 2 14, 22 22, 12 36 C 6 46, 20 50, 30 58"/></svg>';
+  const tagFor = (s) => s === "funding" ? '<span class="tag tag-yellow">Filling up</span>' : s === "ready" ? '<span class="tag">Getting ready</span>' : s === "live" ? '<span class="tag tag-green">Live</span>' : '<span class="tag">Refund available</span>';
+
+  // ---------- views ----------
+  function homeView() {
+    const rows = COINS.slice().sort((a, b) => b.raised - a.raised);
+    const f = rows[0], p = pctOf(f.raised);
+    return '<section class="wrap hero">' +
+      '<div class="copy"><h1 class="display"><span>Back it.</span><span>Fill it.</span><span class="pop">Pop it.</span></h1><p class="tag-line">Fill the balloon. Launch a coin together.</p></div>' +
+      '<div class="feat-wrap"><section class="box feat" aria-labelledby="featured-name">' +
+        '<div class="clouds">' + cloud("cloud-a") + cloud("cloud-b") + '</div>' +
+        '<div class="inner">' +
+          '<div class="note" aria-hidden="true">Community funded coins on Solana<svg width="36" height="36" viewBox="0 0 40 40" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10 L 30 6 L 8 30 L 32 28 M 24 34 l 4 -2"/></svg></div>' +
+          '<svg class="deco" style="left:212px;top:92px" width="36" height="36" viewBox="0 0 40 40" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8 L 18 14"/><path d="M6 24 L 18 18"/></svg>' +
+          '<a class="balloon balloon-float" href="#launch-' + f.id + '" aria-label="Help ' + esc(f.name) + ' pop"><img src="' + f.featured + '" alt="" width="325" height="420"></a>' +
+          sparkle("left:322px;top:296px", 34, true) +
+          '<div class="ident"><h2 id="featured-name" class="condensed name">' + esc(f.name) + '</h2><p class="cap">' + esc(f.description) + '</p></div>' +
+          '<div class="stats">' + sparkle("right:-8px;top:-28px", 44, false) +
+            '<div class="condensed pct num">' + p.text + '</div><div class="sol num">' + fmtSol(f.raised, 2) + ' / 50 SOL</div>' +
+            '<div class="bar bar-lg" role="progressbar" aria-valuenow="' + Math.round(p.bps / 100) + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + esc(f.name) + ' funded ' + p.text + '"><span class="hot" style="width:' + Math.min(100, p.bps / 100) + '%"></span></div>' +
+            '<div class="cd"><span class="chip num" data-left="' + f.fundingDeadline + '">' + left(f.fundingDeadline) + '</span></div>' +
+            sparkle("left:-16px;top:132px", 30, true) +
+          '</div>' +
+        '</div></section></div>' +
+      '</section><div class="rule"></div>' +
+      '<section id="launches" class="wrap launches"><div class="head"><h2 class="display"><span class="marker">Demo</span> launches</h2><a class="see" href="#launches">See all launches ' + arrow.replace('width="20" height="20"', 'width="18" height="18"') + '</a></div>' +
+      '<ul class="rows" role="list">' + rows.map(rowView).join("") + '</ul></section>';
+  }
+  function rowView(c) {
+    const p = pctOf(c.raised), href = "#launch-" + c.id;
+    return '<li class="box row"><div class="av"><div class="b"><img src="' + c.balloon + '" alt="' + esc(c.name) + ' balloon">' + string("str", 42) + '</div></div>' +
+      '<div style="min-width:0"><h3 class="display"><a href="' + href + '">' + esc(c.name) + '</a></h3><p class="tl">' + esc(c.tagline) + '</p></div>' +
+      '<div class="prog"><div class="bar" role="progressbar" aria-valuenow="' + Math.round(p.bps / 100) + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + esc(c.name) + ' funded ' + p.text + '"><span class="' + (p.bps >= 7500 ? "hot" : "") + '" style="width:' + Math.min(100, p.bps / 100) + '%"></span></div><div class="sol num">' + fmtSol(c.raised, 2) + ' / 50 SOL</div></div>' +
+      '<div class="pct num">' + p.text + '</div>' +
+      '<div class="left num">' + clock + '<span data-left="' + c.fundingDeadline + '">' + left(c.fundingDeadline) + '</span></div>' +
+      '<div class="act"><a class="btn btn-red btn-lg full" href="' + href + '" aria-label="Help ' + esc(c.name) + ' pop">Help it pop ' + arrow + '</a></div></li>';
+  }
+
+  function launchView(id, state) {
+    const base = COINS.find((c) => c.id === id);
+    if (!base) return '<div class="wrap page"><h1 class="display" style="font-size:40px">Not found</h1><p class="label" style="margin-top:12px">No demo launch with that id. <a class="link" href="#home">Back to launches</a></p></div>';
+    const l = withState(base, state), p = pctOf(l.raised);
+    const exSol = 1, exTok = entitlement(exSol);
+    const headline = l.state === "ready" ? "Filled! Getting your launch ready." : l.state === "live" ? "POP! " + l.name + " is live." : l.state === "refundable" ? "This one didn’t launch. Your 1 SOL is ready to reclaim." : null;
+    const dev = '<div class="box devbar" role="group" aria-label="Dev-only state preview"><span class="tag tag-ink">Dev preview</span><span class="label">Show this launch as:</span>' + ["funding", "ready", "live", "refundable"].map((s) => '<button type="button" class="tab" role="tab" aria-selected="' + (s === l.state) + '" data-state="' + s + '">' + STATE_LABEL[s] + '</button>').join("") + '</div>';
+    const balloon = l.state === "live"
+      ? '<div class="popped" role="img" aria-label="' + esc(l.name) + ' has launched">' + Array.from({ length: 18 }, (_, i) => { const a = i / 18 * Math.PI * 2, r = 300 * (0.3 + (i % 3) * 0.08), w = 7 + (i % 3) * 3; return '<span class="confetti" style="width:' + w + 'px;height:' + w * 1.6 + 'px;background:' + ["#fb473b", "#fddf31", "#37c04a", "#ffbf5e", "#000"][i % 5] + ';--dx:' + (Math.cos(a) * r).toFixed(0) + 'px;--dy:' + (Math.sin(a) * r * 0.8).toFixed(0) + 'px;--rot:' + (i * 47 % 360) + 'deg" aria-hidden="true"></span>'; }).join("") + '<img src="' + l.face + '" alt=""></div>'
+      : '<div class="big' + (l.state === "funding" ? " balloon-float" : "") + '"><img src="' + l.featured + '" alt="' + esc(l.name) + ' balloon" style="transform:scale(' + scaleOf(p.bps).toFixed(3) + ')"></div>';
+    const acts = l.state === "live" ? '<div class="acts"><button type="button" class="btn btn-red btn-lg demo-act">Claim ' + fmtTok(exTok) + ' ' + esc(l.ticker) + '</button><a class="btn btn-lg" href="https://raydium.io/" target="_blank" rel="noreferrer noopener">Trade ' + esc(l.ticker) + '</a></div><p class="label toast" data-demo-toast hidden></p><p class="label" style="margin-top:12px">Demo preview: this wallet position is an example. In the connected app these buttons send real transactions.</p>'
+      : l.state === "refundable" ? '<div class="acts" style="flex-direction:column;align-items:center;gap:8px"><button type="button" class="btn btn-red btn-lg demo-act">Reclaim SOL</button><span class="label">The target was not reached by the deadline (' + fmtSol(l.raised, 2) + ' of 50 SOL).</span></div><p class="label toast" data-demo-toast hidden></p><p class="label" style="margin-top:12px">Demo preview: this wallet position is an example. In the connected app this button sends a real refund.</p>' : "";
+    const foot = l.state === "funding" ? '<span data-left="' + l.fundingDeadline + '">' + left(l.fundingDeadline) + '</span>' : l.state === "ready" ? '<span>Recovery deadline: ' + fmtDur(l.settlementDeadline - Date.now()) + ' from now</span>' : l.state === "live" ? '<span>Live since ' + ago(l.liveAt) + '</span>' : '<span>Funding closed ' + ago(l.fundingDeadline) + '</span>';
+    const settle = l.state === "ready" ? '<div class="box panel" style="margin-top:24px"><div class="head" style="flex-wrap:wrap;gap:12px"><h2 class="display" style="font-size:20px">Settlement progress</h2><span class="tag">Demo steps</span></div><ol class="steps">' +
+      [["Target reached", "done", "confirmed"], ["Wrap 50 SOL and seed the pool", "pending", "in progress"], ["Burn LP tokens", "", "waiting"], ["Enable claims", "", "waiting"]].map((s) => '<li><span class="dot ' + s[1] + '" aria-hidden="true">' + (s[1] === "done" ? "✓" : s[1] === "pending" ? "…" : "") + '</span><span' + (s[1] === "" ? ' class="muted"' : "") + '>' + s[0] + '</span><span class="st">' + s[2] + '</span></li>').join("") +
+      '</ol><p class="label" style="margin-top:12px">The balloon pops only after settlement is finalized, not when funding hits 100%. If settlement is not finished before ' + utc(l.settlementDeadline) + ', this launch becomes refundable.</p></div>' : "";
+    const side = l.state === "funding" ? backingPanel(l, false)
+      : l.state === "ready" ? '<div class="box panel"><h2 class="display">Filled. No more backing.</h2><p class="label" style="margin-top:8px">The target was reached, so deposits are closed. A settlement transaction creates the pool, burns the LP tokens and enables claims in one step. If that does not happen before the recovery deadline, every backer can reclaim their SOL.</p><p class="label" style="margin-top:12px">' + LOCK + '</p></div>'
+      : l.state === "live" ? '<div class="box panel"><h2 class="display">Your position (example)</h2><dl class="kv" style="margin-top:12px"><div><dt class="muted">Backed</dt><dd class="num">1 SOL</dd></div><div><dt class="muted">Claimable</dt><dd class="num">' + fmtTok(exTok) + ' ' + esc(l.ticker) + '</dd></div><div><dt class="muted">Claimed so far</dt><dd class="num">0 ' + esc(l.ticker) + '</dd></div></dl><p class="label" style="margin-top:12px">Claims never expire and stay available even if you already traded elsewhere. Claim status comes from your on-chain receipt, not from wallet holdings.</p></div>'
+      : '<div class="box panel"><h2 class="display">Your position (example)</h2><dl class="kv" style="margin-top:12px"><div><dt class="muted">Backed</dt><dd class="num">1 SOL</dd></div><div><dt class="muted">Reclaimable</dt><dd class="num">1 SOL</dd></div><div><dt class="muted">Reclaimed so far</dt><dd class="num">0 SOL</dd></div></dl><p class="label" style="margin-top:12px">Refunds never expire and go only to the wallet that backed. Network fees paid earlier are not returned. After a refund you will see the receipt and signature here.</p></div>';
+    const details = '<details class="box panel" style="margin-top:24px"><summary style="display:flex;align-items:center;justify-content:space-between"><span class="display" style="font-size:20px">Launch details</span><span class="btn btn-sm" aria-hidden="true">Show / hide</span></summary><dl style="margin-top:16px">' +
+      [["Funding deadline", utc(l.fundingDeadline)], ["Settlement timeout", "60 minutes after the target is reached" + (l.settlementDeadline ? " (" + utc(l.settlementDeadline) + ")" : "")], ["Total supply", "1,000,000,000 " + l.ticker + " (6 decimals)"], ["Allocation", "50% to backers (500,000,000), 50% to the pool (500,000,000), paired with all 50 SOL"], ["Creator allocation", "0 tokens. The creator can back on the same terms as anyone."], ["Launch price", "0.0000001 SOL per " + l.ticker + " (initial pool ratio, before fees and trades)"], ["Creator contribution", l.creatorSol + " SOL"], ["Approved DEX", V1.dex], ["LP protection", (l.state === "live" ? "LP tokens burned at launch (demo: not verifiable here)" : "LP tokens will be burned at launch") + ". Burning the LP tokens means nobody, including Pop Launch or the creator, can withdraw the pooled SOL and tokens. It does not prevent price declines or holders selling."], ["Fees", "No fee is deducted from backing. The creator pays a 0.1 SOL creation fee and a separately quoted setup reserve. Backers pay network fees and token-account rent on claim."], ["Mint", '<span class="addr">' + l.mint + '</span> <span class="label">(demo address, no explorer link)</span>'], ["Creator", '<span class="addr">' + short(l.creator, 6) + '</span>'], ["Protocol settings", "Version 1. Terms are fixed at opening and cannot be changed, extended or canceled."]].map((r) => '<div class="drow"><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>').join("") + '</dl></details>';
+    return '<div class="wrap page pb-mobile">' +
+      '<nav class="crumb" aria-label="Breadcrumb"><a class="link" href="#launches">Launches</a><span aria-hidden="true">/</span><span>' + esc(l.name) + '</span></nav>' + dev +
+      '<div class="detail"><div style="min-width:0">' +
+        '<div class="ident-row"><img class="small" src="' + l.balloon + '" alt="" width="64"><div style="min-width:0;flex:1"><h1 class="display"><span class="pill-m">' + tagFor(l.state) + '</span> ' + esc(l.name) + ' <span class="tk">$' + esc(l.ticker) + '</span></h1><div class="meta"><span>by <span class="addr">' + short(l.creator, 5) + '</span></span>' + (l.x ? '<a class="link" href="https://x.com/' + esc(l.x) + '" target="_blank" rel="noreferrer noopener">X</a>' : "") + '<button type="button" class="link" id="copy-link">Copy link</button></div></div><span class="pill-d">' + tagFor(l.state) + '</span></div>' +
+        '<p class="tagline">' + esc(l.tagline) + '</p>' +
+        '<div class="box stage"><div class="blob1" aria-hidden="true"></div><div class="blob2" aria-hidden="true"></div><div class="center">' + balloon + (headline ? '<h2 class="display hl">' + esc(headline) + '</h2>' : "") + acts + '</div>' +
+          '<div class="figures"><div class="top"><div class="sol num">' + fmtSol(l.raised, 2) + ' / 50 SOL</div><div class="condensed pct num">' + p.text + '</div></div><div class="progress" style="margin-top:12px" role="progressbar" aria-valuenow="' + Math.round(p.bps / 100) + '" aria-valuemin="0" aria-valuemax="100" aria-label="Funded ' + p.text + '"><span style="width:' + Math.min(100, p.bps / 100) + '%"></span></div><div class="foot label">' + foot + '<span>' + l.backers + ' backing wallets</span></div></div>' +
+        '</div>' + settle + details +
+        '<p class="label" style="margin-top:16px">A successful launch does not promise profit or a minimum resale value. Backing counts can be manufactured by related wallets. Trading happens on a public DEX and is not confined to Pop Launch.</p>' +
+      '</div><aside class="' + (l.state === "funding" ? "aside-funding" : "") + '">' + side + '</aside></div>' +
+      (l.state === "funding" ? '<div class="sticky-act"><button type="button" class="btn btn-red btn-lg full" id="open-sheet">Help it pop</button></div><div class="sheet-bg" id="sheet" role="dialog" aria-modal="true" aria-label="Back this launch" hidden><div class="sheet">' + backingPanel(l, true) + '</div></div>' : "") +
+      '</div>';
+  }
+  function backingPanel(l, closable) {
+    const remaining = TARGET - l.raised;
+    return '<div class="box panel backing" data-remaining="' + remaining + '" data-ticker="' + esc(l.ticker) + '"><div class="head"><h2 class="display">Help it pop</h2>' + (closable ? '<button type="button" class="btn btn-plain btn-sm close-sheet" aria-label="Close">Close</button>' : "") + '</div>' +
+      '<div class="step1"><label style="display:block;margin-top:16px"><span class="label">Amount (SOL)</span><input class="input display num amount" style="margin-top:4px;font-size:22px" inputmode="decimal" value="0.5" aria-label="Amount in SOL"></label>' +
+      '<div class="presets" role="group" aria-label="Presets">' + ["0.1", "0.5", "1"].map((v) => '<button type="button" class="btn btn-sm preset" data-v="' + v + '">' + v + ' SOL</button>').join("") + '<button type="button" class="btn btn-sm btn-plain fill" data-v="' + (remaining / SOL) + '">Fill the rest</button></div>' +
+      '<div class="err" aria-live="polite"></div>' +
+      '<dl class="kv" style="margin-top:12px"><div><dt class="muted">Remaining to target</dt><dd class="num">' + fmtSol(remaining) + ' SOL</dd></div><div><dt class="muted">Estimated allocation at success</dt><dd class="num est-tokens">—</dd></div><div><dt class="muted">Share of backer allocation</dt><dd class="num est-share">—</dd></div><div><dt class="muted">Wallet balance</dt><dd class="label">not connected</dd></div></dl>' +
+      '<button type="button" class="btn btn-red btn-lg full go-review" style="margin-top:20px">Back with 0.5 SOL</button><p class="label" style="margin-top:12px">' + LOCK + '</p></div>' +
+      '<div class="step2" hidden><dl class="kv" style="margin-top:16px"><div><dt class="muted">You commit</dt><dd class="num display r-amount" style="font-size:18px"></dd></div><div><dt class="muted">At success you can claim</dt><dd class="num r-tokens"></dd></div><div><dt class="muted">If it never launches</dt><dd class="r-refund"></dd></div><div><dt class="muted">Network fee</dt><dd class="label">quoted at signing, not refundable</dd></div></dl><p class="lock">' + LOCK + '</p>' +
+      '<div style="margin-top:16px;display:flex;gap:8px"><button type="button" class="btn go-back">Back</button><button type="button" class="btn btn-red btn-lg confirm" style="flex:1">Back with 0.5 SOL</button></div><div class="toast" aria-live="polite" style="min-height:20px"><span class="tag tag-yellow demo-note" hidden>Demo preview: no wallet, no SOL moves. The connected app sends a real transaction here.</span></div></div></div>';
+  }
+  function wireBacking(root) {
+    root.querySelectorAll(".backing").forEach((b) => {
+      const remaining = Number(b.dataset.remaining) / SOL, ticker = b.dataset.ticker;
+      const inp = b.querySelector(".amount"), err = b.querySelector(".err"), go = b.querySelector(".go-review"), conf = b.querySelector(".confirm");
+      const calc = () => {
+        const raw = inp.value.replace(/[^0-9.]/g, ""); if (raw !== inp.value) inp.value = raw;
+        const v = raw === "" ? null : Number(raw);
+        const bad = v === null || !isFinite(v);
+        const tooSmall = !bad && v < V1.minContribution && Math.abs(v - remaining) > 1e-9, tooBig = !bad && v > remaining + 1e-9;
+        const valid = !bad && v > 0 && !tooSmall && !tooBig;
+        err.textContent = bad && raw !== "" ? "Enter a number with up to 9 decimals." : tooSmall ? "Minimum is 0.01 SOL, unless you fill the exact remainder." : tooBig ? "Only " + fmtSol(remaining * SOL) + " SOL is left. A larger amount is rejected whole, never partly taken." : "";
+        b.querySelector(".est-tokens").textContent = valid ? fmtTok(entitlement(v)) + " " + ticker : "—";
+        b.querySelector(".est-share").textContent = valid ? (v / 50 * 100).toFixed(2) + "%" : "—";
+        go.disabled = !valid; go.textContent = valid ? "Back with " + fmtSol(v * SOL) + " SOL" : "Back with SOL";
+        b.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(p.dataset.v === raw)));
+        return valid ? v : null;
+      };
+      inp.addEventListener("input", calc);
+      b.querySelectorAll(".preset, .fill").forEach((p) => p.addEventListener("click", () => { inp.value = p.dataset.v; calc(); }));
+      go.addEventListener("click", () => { const v = calc(); if (v === null) return; b.querySelector(".r-amount").textContent = fmtSol(v * SOL) + " SOL"; b.querySelector(".r-tokens").textContent = fmtTok(entitlement(v)) + " " + ticker; b.querySelector(".r-refund").textContent = "Reclaim " + fmtSol(v * SOL) + " SOL"; conf.textContent = "Back with " + fmtSol(v * SOL) + " SOL"; b.querySelector(".step1").hidden = true; b.querySelector(".step2").hidden = false; });
+      b.querySelector(".go-back").addEventListener("click", () => { b.querySelector(".step2").hidden = true; b.querySelector(".step1").hidden = false; b.querySelector(".demo-note").hidden = true; });
+      conf.addEventListener("click", () => { b.querySelector(".demo-note").hidden = false; });
+      calc();
+    });
+  }
+
+  function createView() {
+    return '<div class="wrap page"><h1 class="display" style="font-size:40px">Create a coin</h1><p class="label" style="margin-top:8px;max-width:60ch">Pick a name, a ticker and an image. The launch terms are fixed for every coin, so there is nothing else to configure.</p>' +
+      '<form class="form" id="create-form" style="margin-top:24px" novalidate>' +
+        '<label class="field"><span class="t">Name</span><input class="input" id="c-name" placeholder="CAT.EXE" maxlength="32" required><span class="label hint" style="display:block">Up to 32 characters. Fixed once published.</span></label>' +
+        '<label class="field"><span class="t">Ticker</span><input class="input" id="c-ticker" placeholder="CATEXE" maxlength="10" style="width:176px;text-transform:uppercase" required><span class="label hint" style="display:block">1 to 10 letters or digits. Fixed once published.</span></label>' +
+        '<div class="field"><span class="t">Image</span><div class="file-row"><img class="pv" id="c-pv" src="art/face-cat-small.png" alt=""><div><input type="file" id="c-file" accept="image/png,image/jpeg,image/gif,image/webp"><span class="label hint" style="display:block">PNG, JPEG, GIF or WebP up to 1 MB. Shown inside the balloon.</span></div></div></div>' +
+        '<label class="field"><span class="t">Short description (optional)</span><textarea class="input" id="c-desc" maxlength="500" placeholder="What is this coin about?"></textarea></label>' +
+        '<div class="two"><label class="field"><span class="t">Website (optional)</span><input class="input" id="c-web" placeholder="https://" inputmode="url"></label><label class="field"><span class="t">X handle (optional)</span><input class="input" id="c-x" placeholder="@handle"></label></div>' +
+        '<button type="submit" class="btn btn-red btn-lg full" id="c-preview" disabled>Preview launch</button>' +
+        '<p class="label">Images and text are checked and stored by Pop Launch; the on-chain launch pins their hash so they cannot change afterwards. No HTML, no scripts.</p>' +
+      '</form>' +
+      '<div id="create-step2" class="form" style="margin-top:24px" hidden>' +
+        '<div class="box panel"><div class="pv-head"><img id="p-img" src="art/face-cat-small.png" alt=""><div style="min-width:0"><div class="display" id="p-name" style="font-size:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><div class="mono" id="p-ticker" style="font-weight:700"></div><p class="label" id="p-desc" style="margin-top:4px"></p></div></div></div>' +
+        '<div class="box panel"><div class="display" style="font-size:20px">Standard launch terms</div><dl class="kv" style="margin-top:12px"><div><dt class="muted">Target</dt><dd class="num">50 SOL</dd></div><div><dt class="muted">Funding window</dt><dd class="num">24 hours from opening</dd></div><div><dt class="muted">Settlement timeout</dt><dd class="num">60 minutes after the target</dd></div><div><dt class="muted">Supply</dt><dd class="num">1,000,000,000 <span id="p-t2"></span></dd></div><div><dt class="muted">Allocation</dt><dd>50% to backers, 50% into the pool with all the SOL</dd></div><div><dt class="muted">Your allocation</dt><dd>0. You can back on the same terms as anyone.</dd></div><div><dt class="muted">Launch price</dt><dd class="num">0.0000001 SOL per <span id="p-t3"></span></dd></div><div><dt class="muted">Liquidity</dt><dd>LP tokens will be burned at launch</dd></div></dl></div>' +
+        '<div class="box panel"><div class="display" style="font-size:20px">What you pay</div><dl class="kv" style="margin-top:12px"><div><dt class="muted">Creation fee (only if creation succeeds)</dt><dd class="num">0.1 SOL</dd></div><div><dt class="muted">Setup reserve for pool costs</dt><dd class="num">0.2 SOL <span class="label">(example quote)</span></dd></div><div><dt class="muted">Account rent (mint, launch, vaults)</dt><dd class="num">about 0.012 SOL</dd></div><div><dt class="muted">Network fees</dt><dd class="num">about 0.002 SOL</dd></div><div class="total"><dt>Total now</dt><dd class="num">about 0.314 SOL</dd></div><div><dt class="muted">Wallet balance</dt><dd class="label">not connected</dd></div></dl><p class="label" style="margin-top:12px">Unused setup reserve is returned to you after the launch settles or becomes refundable.</p></div>' +
+        '<div style="display:flex;gap:8px"><button type="button" class="btn" id="c-back">Back</button><button type="button" class="btn btn-red btn-lg" id="c-publish" style="flex:1">Publish launch</button></div>' +
+        '<div class="toast" aria-live="polite" style="min-height:20px"><span class="tag tag-yellow" id="c-note" hidden>Demo preview: nothing is published. The connected app asks for one signature and one transaction here.</span></div>' +
+        '<p class="label">Publishing asks for one message signature (uploads the metadata, moves nothing) and one transaction (creates the mint, the launch and its vaults). The creation fee is charged only by that transaction. <a class="link" href="#how">How it works</a>.</p>' +
+      '</div></div>';
+  }
+  function wireCreate(root) {
+    const form = root.querySelector("#create-form"), name = root.querySelector("#c-name"), tick = root.querySelector("#c-ticker"), btn = root.querySelector("#c-preview"), file = root.querySelector("#c-file"), pv = root.querySelector("#c-pv");
+    let img = pv.src;
+    const check = () => { tick.value = tick.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10); btn.disabled = !(name.value.trim().length >= 1 && tick.value.length >= 1); };
+    name.addEventListener("input", check); tick.addEventListener("input", check); check();
+    file.addEventListener("change", () => { const f = file.files && file.files[0]; if (!f) return; if (f.size > 1024 * 1024) { file.value = ""; return; } const r = new FileReader(); r.onload = () => { img = r.result; pv.src = img; }; r.readAsDataURL(f); });
+    form.addEventListener("submit", (e) => { e.preventDefault(); if (btn.disabled) return; root.querySelector("#p-name").textContent = name.value.trim(); root.querySelector("#p-ticker").textContent = "$" + tick.value; root.querySelector("#p-t2").textContent = tick.value; root.querySelector("#p-t3").textContent = tick.value; root.querySelector("#p-desc").textContent = root.querySelector("#c-desc").value.trim(); root.querySelector("#p-img").src = img; form.hidden = true; root.querySelector("#create-step2").hidden = false; window.scrollTo({ top: 0 }); });
+    root.querySelector("#c-back").addEventListener("click", () => { root.querySelector("#create-step2").hidden = true; root.querySelector("#c-note").hidden = true; form.hidden = false; });
+    root.querySelector("#c-publish").addEventListener("click", () => { root.querySelector("#c-note").hidden = false; });
+  }
+
+  function howView() {
+    const steps = [["1", "Back it", "Pick a coin and commit SOL. It goes into a program-controlled escrow and stays locked until the launch succeeds or becomes refundable.", "var(--peach)"], ["2", "Fill it", "Together, backers fill the balloon to the 50 SOL target within 24 hours.", "var(--yellow)"], ["3", "Pop. It’s live.", "One transaction opens the pool with all the SOL, burns the LP tokens and enables claims. Backers claim their tokens; anyone can trade.", "var(--mint)"]];
+    const faq = [["When is my SOL locked?", "The moment your backing confirms. It cannot be withdrawn while the launch is filling up or getting ready. It is released only as tokens (if the launch succeeds) or as a refund (if it does not)."], ["What do I get if it launches?", "Tokens, in proportion to your share of the target. Half of the supply (500,000,000 tokens) goes to backers; 1 SOL of a 50 SOL launch is 10,000,000 tokens. You do not get your SOL back: the SOL becomes the pool's liquidity."], ["How do refunds work?", "If the target is not reached by the deadline, or settlement does not finish within 60 minutes of filling, every backer can reclaim their full SOL. Refunds never expire and go only to the wallet that backed. Network fees are not refunded."], ["Where does the liquidity go?", "All target SOL and the other half of the supply are deposited into a Raydium pool, and every LP token the pool issues is burned in the same transaction. Nobody, including Pop Launch or the creator, can withdraw that liquidity. Burning does not stop prices from falling or holders from selling."], ["Does the creator get tokens?", "No. Creators receive no allocation and no fee from backers. They pay a 0.1 SOL creation fee and a setup reserve for pool costs, and they can back their own coin on the same terms as everyone else."], ["What does it cost?", "Backers pay only network fees and the rent of their token account on claim. Creators pay the 0.1 SOL creation fee plus a quoted setup reserve; unused reserve is returned."], ["What are the risks of trading?", "After launch the token trades on a public DEX. Prices move, fees apply, and a launch that fills does not promise profit or any minimum resale value. Backer counts mean wallets, which can be created at will."]];
+    return '<div class="wrap page hiw"><h1 class="display">How it works</h1><p class="lead">Anyone can make a coin. The crowd makes it pop.</p><div class="box steps3">' + steps.map((s) => '<div class="step"><div class="n display" style="background:' + s[3] + '" aria-hidden="true">' + s[0] + '</div><div><h2 class="display">' + s[1] + '</h2><p>' + s[2] + '</p></div></div>').join("") + '</div>' +
+      '<h2 class="display" style="font-size:32px;margin-top:48px">Questions</h2><div class="faq">' + faq.map((q) => '<details class="box"><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>').join("") + '</div>' +
+      '<p class="label" style="margin-top:32px">Ready? <a class="link" href="#home">Explore launches</a> or <a class="link" href="#create">create a coin</a>.</p></div>';
+  }
+  function myPopsView() {
+    const c = COINS[0], f = COINS[1];
+    return '<div class="wrap page"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="display" style="font-size:40px">My pops</h1><span class="tag tag-yellow">Example wallet</span></div><p class="label" style="margin-top:8px;max-width:60ch">In the connected app this page appears once a wallet is connected and lists that wallet\'s real on-chain receipts. These rows are an invented example of what it shows.</p>' +
+      '<div style="margin-top:20px;display:flex;gap:4px;flex-wrap:wrap" role="tablist">' + ["Active", "Claimable", "Refundable", "Created"].map((t, i) => '<button type="button" class="tab" role="tab" aria-selected="' + (i === 0) + '" data-ptab="' + t + '">' + t + '</button>').join("") + '</div>' +
+      '<ul class="plist" role="list">' +
+        '<li class="box" data-pt="Active"><img src="' + c.balloon + '" alt=""><div style="min-width:0"><div class="display" style="font-size:22px">' + c.name + '</div><div class="label">Backed 1 SOL · ' + fmtTok(entitlement(1)) + ' ' + c.ticker + ' at success · <span data-left="' + c.fundingDeadline + '">' + left(c.fundingDeadline) + '</span></div></div><div class="pact"><a class="btn btn-sm" href="#launch-' + c.id + '">View</a></div></li>' +
+        '<li class="box" data-pt="Active"><img src="' + f.balloon + '" alt=""><div style="min-width:0"><div class="display" style="font-size:22px">' + f.name + '</div><div class="label">Backed 0.25 SOL · ' + fmtTok(entitlement(0.25)) + ' ' + f.ticker + ' at success · <span data-left="' + f.fundingDeadline + '">' + left(f.fundingDeadline) + '</span></div></div><div class="pact"><a class="btn btn-sm" href="#launch-' + f.id + '">View</a></div></li>' +
+        '<li class="box" data-pt="Claimable" hidden><img src="' + c.balloon + '" alt=""><div style="min-width:0"><div class="display" style="font-size:22px">' + c.name + '</div><div class="label">Live · claimable ' + fmtTok(entitlement(1)) + ' ' + c.ticker + '</div></div><div class="pact"><button type="button" class="btn btn-red btn-sm demo-act">Claim</button></div></li>' +
+        '<li class="box" data-pt="Refundable" hidden><img src="' + COINS[2].balloon + '" alt=""><div style="min-width:0"><div class="display" style="font-size:22px">' + COINS[2].name + '</div><div class="label">Did not launch · reclaim 0.5 SOL</div></div><div class="pact"><button type="button" class="btn btn-red btn-sm demo-act">Reclaim SOL</button></div></li>' +
+        '<li class="box" data-pt="Created" hidden><img src="' + c.balloon + '" alt=""><div style="min-width:0"><div class="display" style="font-size:22px">' + c.name + '</div><div class="label">Created by this wallet · setup reserve 0.2 SOL held until settlement</div></div><div class="pact"><a class="btn btn-sm" href="#launch-' + c.id + '">View</a></div></li>' +
+      '</ul><p class="label toast" data-demo-toast hidden></p>' +
+      '<h2 class="display" style="font-size:24px;margin-top:40px">History</h2><div class="box panel" style="margin-top:12px"><dl class="kv"><div><dt class="muted">Backed ' + c.name + ' with 1 SOL</dt><dd class="addr">5Kd3…9xQa</dd></div><div><dt class="muted">Backed ' + f.name + ' with 0.25 SOL</dt><dd class="addr">2hGq…m7Lp</dd></div></dl><p class="label" style="margin-top:12px">In the connected app each row links to the transaction on Solana Explorer.</p></div></div>';
+  }
+  const textPage = (title, paras) => '<div class="wrap page"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="display" style="font-size:40px">' + title + '</h1><span class="tag">Draft</span></div><div style="margin-top:16px;max-width:65ch;display:flex;flex-direction:column;gap:12px">' + paras.map((p) => '<p>' + p + '</p>').join("") + '</div></div>';
+  const termsView = () => textPage("Terms", ["Pop Launch is software that lets people fund and launch tokens on Solana. It is not an exchange, a broker or an investment service, and it gives no advice.", "Backing a launch locks your SOL in a program-controlled escrow until the launch succeeds or becomes refundable. If it succeeds you receive tokens and your SOL becomes pool liquidity. If it does not, you can reclaim your SOL at any time. Network fees are never refunded.", "A launch that fills does not promise profit or any minimum resale value. Tokens trade on a public DEX that Pop Launch does not control.", "Final terms will be published before mainnet."]);
+  const privacyView = () => textPage("Privacy", ["Pop Launch stores the images and text that creators upload, and caches public on-chain data. It does not store private keys and cannot move funds.", "Wallet addresses and transactions are public on Solana. Pop Launch keeps request logs for abuse prevention and rate limiting.", "The final policy will be published before mainnet."]);
+
+  // ---------- router ----------
+  const main = document.getElementById("main");
+  const LINKS = [["#home", "Explore"], ["#how", "How it works"], ["#create", "Create a coin"], ["#mypops", "My pops (example)"]];
+  let launchState = {};
+  function route() {
+    const h = (location.hash || "#home").slice(1);
+    let view, current = "#home";
+    if (h === "home" || h === "launches" || h === "") view = homeView();
+    else if (h.startsWith("launch-")) { const id = h.slice(7); view = launchView(id, launchState[id] || "funding"); }
+    else if (h === "create") { view = createView(); current = "#create"; }
+    else if (h === "how") { view = howView(); current = "#how"; }
+    else if (h === "mypops") { view = myPopsView(); current = "#mypops"; }
+    else if (h === "terms") view = termsView();
+    else if (h === "privacy") view = privacyView();
+    else view = homeView();
+    main.innerHTML = view;
+    document.querySelectorAll("#nav-desktop a, #mobile-menu a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === current ? "page" : ""));
+    wire(h);
+    fitFeatured();
+    if (h === "launches") { const el = document.getElementById("launches"); if (el) el.scrollIntoView(); } else window.scrollTo({ top: 0 });
+  }
+  function wire(h) {
+    wireBacking(main);
+    if (h === "create") wireCreate(main);
+    main.querySelectorAll("[data-state]").forEach((b) => b.addEventListener("click", () => { launchState[h.slice(7)] = b.dataset.state; route(); }));
+    const os = main.querySelector("#open-sheet"), sheet = main.querySelector("#sheet");
+    if (os && sheet) { os.addEventListener("click", () => { sheet.hidden = false; }); sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.hidden = true; }); sheet.querySelectorAll(".close-sheet").forEach((c) => c.addEventListener("click", () => { sheet.hidden = true; })); }
+    const cp = main.querySelector("#copy-link");
+    if (cp) cp.addEventListener("click", () => { const url = location.href.split("?")[0]; const done = () => { cp.textContent = "Link copied"; setTimeout(() => { cp.textContent = "Copy link"; }, 1500); }; try { navigator.clipboard.writeText(url).then(done, done); } catch (e) { done(); } });
+    main.querySelectorAll(".demo-act").forEach((b) => b.addEventListener("click", () => { const t = main.querySelector("[data-demo-toast]"); if (t) { t.hidden = false; t.textContent = "Demo preview: no wallet is connected, so nothing happens. The connected app sends a real transaction here."; } }));
+    main.querySelectorAll("[data-ptab]").forEach((t) => t.addEventListener("click", () => { main.querySelectorAll("[data-ptab]").forEach((x) => x.setAttribute("aria-selected", String(x === t))); main.querySelectorAll("[data-pt]").forEach((li) => { li.hidden = li.dataset.pt !== t.dataset.ptab; }); }));
+  }
+  function fitFeatured() { const w = main.querySelector(".feat-wrap"); if (!w) return; const avail = w.parentElement.clientWidth - (window.innerWidth >= 1024 ? 48 : 0); const hero = w.parentElement; const copy = hero.querySelector(".copy"); let s = 1; if (window.innerWidth >= 1024) { const room = hero.clientWidth - 48 - Math.min(copy.scrollWidth, 480); s = Math.max(0.6, Math.min(1, room / 887)); } w.style.setProperty("--s", s.toFixed(3)); void avail; }
+  // header nav
+  document.getElementById("nav-desktop").innerHTML = LINKS.map((l) => '<a class="nav-link" href="' + l[0] + '">' + l[1] + '</a>').join("");
+  document.getElementById("mobile-menu").innerHTML = LINKS.map((l) => '<a role="menuitem" href="' + l[0] + '">' + l[1] + '</a>').join("");
+  const wbtn = document.getElementById("wallet-btn"), wmenu = document.getElementById("wallet-menu"), burger = document.getElementById("burger"), mmenu = document.getElementById("mobile-menu");
+  const closeMenus = () => { wmenu.hidden = true; mmenu.hidden = true; wbtn.setAttribute("aria-expanded", "false"); burger.setAttribute("aria-expanded", "false"); };
+  wbtn.addEventListener("click", (e) => { e.stopPropagation(); const open = wmenu.hidden; closeMenus(); wmenu.hidden = !open; wbtn.setAttribute("aria-expanded", String(open)); });
+  burger.addEventListener("click", (e) => { e.stopPropagation(); const open = mmenu.hidden; closeMenus(); mmenu.hidden = !open; burger.setAttribute("aria-expanded", String(open)); });
+  document.addEventListener("click", (e) => { if (!document.getElementById("hdr-right").contains(e.target)) closeMenus(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeMenus(); const s = main.querySelector("#sheet"); if (s) s.hidden = true; } });
+  mmenu.addEventListener("click", (e) => { if (e.target.tagName === "A") closeMenus(); });
+  window.addEventListener("hashchange", route);
+  window.addEventListener("resize", fitFeatured);
+  setInterval(() => { document.querySelectorAll("[data-left]").forEach((el) => { el.textContent = left(Number(el.dataset.left)); }); }, 30000);
+  route();
+})();
+</script>
