@@ -123,18 +123,14 @@ pub fn quote_swap(
     is_buy: bool,
     gross: u64,
     min_output: u64,
-    internal_buyback: bool,
 ) -> Result<SwapResult> {
     require!(market.status == STATUS_ACTIVE || market.status == STATUS_GRADUATED, PopError::MarketNotActive);
     let min_in = if is_buy { market.min_quote_in } else { market.min_base_in };
     require!(gross >= min_in, PopError::InputBelowMinimum);
 
     let scar_fee = fee_of(gross, market.scar_fee_bps);
-    let (protocol_fee, creator_fee) = if internal_buyback {
-        (0, 0)
-    } else {
-        (fee_of(gross, market.protocol_fee_bps), fee_of(gross, market.creator_fee_bps))
-    };
+    let protocol_fee = fee_of(gross, market.protocol_fee_bps);
+    let creator_fee = fee_of(gross, market.creator_fee_bps);
     let tradable = gross
         .checked_sub(scar_fee)
         .and_then(|x| x.checked_sub(protocol_fee))
@@ -224,7 +220,6 @@ pub fn commit_swap(
     pages: &dyn BinAccess,
     r: &SwapResult,
     is_buy: bool,
-    internal_buyback: bool,
     slot: u64,
 ) -> Result<()> {
     for (j, f) in r.fills.iter().enumerate() {
@@ -237,22 +232,14 @@ pub fn commit_swap(
                 b.seed_quote = b.seed_quote.checked_add(f.seed_in).ok_or(PopError::Overflow)?;
                 b.scar_quote = b.scar_quote.checked_add(f.scar_in).ok_or(PopError::Overflow)?;
                 b.buy_volume_quote = b.buy_volume_quote.checked_add(f.input).ok_or(PopError::Overflow)?;
-                if internal_buyback {
-                    b.pending_quote_ineligible = b.pending_quote_ineligible.checked_add(share).ok_or(PopError::Overflow)?;
-                } else {
-                    b.pending_quote_eligible = b.pending_quote_eligible.checked_add(share).ok_or(PopError::Overflow)?;
-                }
+                b.pending_quote_eligible = b.pending_quote_eligible.checked_add(share).ok_or(PopError::Overflow)?;
             } else {
                 b.seed_quote = b.seed_quote.checked_sub(f.seed_out).ok_or(PopError::Invariant)?;
                 b.scar_quote = b.scar_quote.checked_sub(f.scar_out).ok_or(PopError::Invariant)?;
                 b.seed_base = b.seed_base.checked_add(f.seed_in).ok_or(PopError::Overflow)?;
                 b.scar_base = b.scar_base.checked_add(f.scar_in).ok_or(PopError::Overflow)?;
                 b.sell_volume_base = b.sell_volume_base.checked_add(f.input).ok_or(PopError::Overflow)?;
-                if internal_buyback {
-                    b.pending_base_ineligible = b.pending_base_ineligible.checked_add(share).ok_or(PopError::Overflow)?;
-                } else {
-                    b.pending_base_eligible = b.pending_base_eligible.checked_add(share).ok_or(PopError::Overflow)?;
-                }
+                b.pending_base_eligible = b.pending_base_eligible.checked_add(share).ok_or(PopError::Overflow)?;
             }
             b.last_execution_slot = slot;
             Ok(())
@@ -260,12 +247,9 @@ pub fn commit_swap(
     }
 
     if is_buy {
-        let (buyback, operating) = if market.is_pop_market {
-            (0u64, r.protocol_fee)
-        } else {
-            let bb = ((r.protocol_fee as u128) * (market.buyback_share_bps as u128) / 10_000) as u64;
-            (bb, r.protocol_fee - bb)
-        };
+        // Every market earmarks `buyback_share_bps` of its quote protocol fee for the buyback escrow.
+        let buyback = ((r.protocol_fee as u128) * (market.buyback_share_bps as u128) / 10_000) as u64;
+        let operating = r.protocol_fee - buyback;
         market.protocol_claimable_quote = market.protocol_claimable_quote.checked_add(operating).ok_or(PopError::Overflow)?;
         market.buyback_accrued_quote = market.buyback_accrued_quote.checked_add(buyback).ok_or(PopError::Overflow)?;
         market.creator_claimable_quote = market.creator_claimable_quote.checked_add(r.creator_fee).ok_or(PopError::Overflow)?;

@@ -1,15 +1,17 @@
-//! POP / Proof of Pain market program.
+//! POP / Proof of Pain launchpad program.
 //!
 //! A discrete constant-price-bin AMM where trading fees fund nonwithdrawable "scar" liquidity at
-//! the price bins where trading occurred. There is NO instruction that withdraws, relocates or
-//! confiscates seed, scar or pending-fee custody. The only custody powers that remain are the
-//! program upgrade authority (see docs/authority-model.md) and the fee claims to published
-//! recipients.
+//! the price bins where trading occurred. Every coin launched through the factory follows the same
+//! rules. There is NO instruction that withdraws, relocates or confiscates seed, scar or
+//! pending-fee custody. Remaining powers: the program upgrade authority (see
+//! docs/authority-model.md), fee claims to published recipients, and bounded withdrawals of the
+//! earmarked buyback escrow to the published buyback authority.
 #![allow(clippy::too_many_arguments)]
 #![allow(unexpected_cfgs)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, spl_token, Burn, Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::{self, spl_token, Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
 
 pub mod errors;
 pub mod events;
@@ -30,7 +32,7 @@ pub struct InitializeProtocolArgs {
     pub buyback_authority: Pubkey,
     pub settings: FactorySettings,
     pub buyback_min_interval_slots: u64,
-    pub buyback_max_spend_per_execution: u64,
+    pub buyback_max_withdraw_per_execution: u64,
     pub launches_enabled: bool,
 }
 
@@ -40,19 +42,9 @@ pub struct CreateMarketArgs {
     pub symbol: String,
     pub uri: String,
     pub seed_base: u64,
+    /// Creator-chosen seed quote (WSOL atomic), >= factory minimum. Locked at activation.
+    pub seed_quote: u64,
     pub decimals: u8,
-    pub is_pop_market: bool,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct CreateVestingArgs {
-    pub index: u8,
-    pub beneficiary: Pubkey,
-    pub amount: u64,
-    pub start_offset: i64,
-    pub cliff_offset: i64,
-    pub end_offset: i64,
-    pub label: String,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
@@ -71,8 +63,8 @@ fn validate_settings(s: &FactorySettings) -> Result<()> {
     let bands = math::floor_div(s.bin_max, s.band_size as i32) - math::floor_div(s.bin_min, s.band_size as i32) + 1;
     require!(bands > 0 && (bands as usize) <= MAX_BANDS, PopError::InvalidConfig);
     require!((s.scar_fee_bps as u32 + s.protocol_fee_bps as u32 + s.creator_fee_bps as u32) < 10_000, PopError::InvalidConfig);
-    require!(s.buyback_share_bps <= 10_000 && s.max_genesis_allocation_bps <= 10_000, PopError::InvalidConfig);
-    require!(s.seed_quote > 0 && s.bands_required > 0, PopError::InvalidConfig);
+    require!(s.buyback_share_bps <= 10_000, PopError::InvalidConfig);
+    require!(s.min_seed_quote > 0 && s.bands_required > 0, PopError::InvalidConfig);
     Ok(())
 }
 
@@ -94,7 +86,6 @@ pub mod pop_market {
         cfg.protocol_fee_recipient = args.protocol_fee_recipient;
         cfg.buyback_authority = args.buyback_authority;
         cfg.pop_mint = Pubkey::default();
-        cfg.pop_market = Pubkey::default();
         cfg.launches_enabled = args.launches_enabled;
         cfg.settings = args.settings;
         cfg.market_count = 0;
@@ -102,9 +93,8 @@ pub mod pop_market {
         let bb = &mut ctx.accounts.buyback_vault;
         bb.authority = args.buyback_authority;
         bb.quote_account = ctx.accounts.buyback_quote_account.key();
-        bb.pop_account = Pubkey::default();
         bb.min_interval_slots = args.buyback_min_interval_slots;
-        bb.max_spend_per_execution = args.buyback_max_spend_per_execution;
+        bb.max_withdraw_per_execution = args.buyback_max_withdraw_per_execution;
         bb.bump = ctx.bumps.buyback_vault;
         emit!(ProtocolInitialized { authority: args.authority, version: 1 });
         Ok(())
@@ -116,23 +106,27 @@ pub mod pop_market {
         Ok(())
     }
 
-    /// Create a market and its fixed-supply mint. Mints exactly `seed_base` into the locked base
-    /// vault. Mint authority stays with the market PDA until activation (to allow genesis
-    /// vesting allocations) and is then revoked. No freeze authority is ever set.
+    /// Publish the external $POP mint once. Required before any buyback withdrawal.
+    pub fn set_pop_mint(ctx: Context<SetPopMint>) -> Result<()> {
+        let cfg = &mut ctx.accounts.protocol_config;
+        require!(cfg.pop_mint == Pubkey::default(), PopError::PopMintAlreadySet);
+        cfg.pop_mint = ctx.accounts.pop_mint.key();
+        emit!(PopMintSet { pop_mint: cfg.pop_mint });
+        Ok(())
+    }
+
+    /// Create a coin market and its fixed-supply mint. Mints exactly `seed_base` into the locked
+    /// base vault and revokes the mint authority immediately. No freeze authority is ever set.
     pub fn create_market(ctx: Context<CreateMarket>, args: CreateMarketArgs) -> Result<()> {
         validate_str(&args.name, 32)?;
         validate_str(&args.symbol, 10)?;
         validate_str(&args.uri, 200)?;
         let cfg = &mut ctx.accounts.protocol_config;
         let s = cfg.settings;
-        if args.is_pop_market {
-            require_keys_eq!(ctx.accounts.creator.key(), cfg.authority, PopError::Unauthorized);
-            require!(cfg.pop_mint == Pubkey::default(), PopError::GenesisExists);
-        } else {
-            require!(cfg.launches_enabled, PopError::LaunchesDisabled);
-        }
+        require!(cfg.launches_enabled, PopError::LaunchesDisabled);
         require!(args.seed_base > 0, PopError::InvalidConfig);
-        let p0 = math::quantize_p0(s.seed_quote, args.seed_base).ok_or(PopError::PriceTooSmall)?;
+        require!(args.seed_quote >= s.min_seed_quote, PopError::SeedQuoteBelowMinimum);
+        let p0 = math::quantize_p0(args.seed_quote, args.seed_base).ok_or(PopError::PriceTooSmall)?;
         math::price_at_bin(p0, s.bin_min).ok_or(PopError::PriceRange)?;
         math::price_at_bin(p0, s.bin_max).ok_or(PopError::PriceRange)?;
 
@@ -152,7 +146,6 @@ pub mod pop_market {
         m.max_bins_per_swap = s.max_bins_per_swap;
         m.cursor = 0;
         m.status = STATUS_CREATED;
-        m.is_pop_market = args.is_pop_market;
         m.config_version = cfg.version;
         m.scar_fee_bps = s.scar_fee_bps;
         m.protocol_fee_bps = s.protocol_fee_bps;
@@ -165,9 +158,9 @@ pub mod pop_market {
         m.min_base_in = s.min_base_in;
         m.base_decimals = args.decimals;
         m.seed_base_total = args.seed_base;
-        m.seed_quote_total = s.seed_quote;
+        m.seed_quote_total = args.seed_quote;
         m.unmaterialized_seed_base = args.seed_base;
-        m.unmaterialized_seed_quote = s.seed_quote;
+        m.unmaterialized_seed_quote = args.seed_quote;
         m.created_at_slot = Clock::get()?.slot;
         m.name = args.name;
         m.symbol = args.symbol;
@@ -188,86 +181,33 @@ pub mod pop_market {
             ),
             args.seed_base,
         )?;
-
-        if args.is_pop_market {
-            cfg.pop_mint = mint_key;
-            cfg.pop_market = ctx.accounts.market.key();
-        }
+        token::set_authority(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.key(),
+                SetAuthority {
+                    current_authority: ctx.accounts.market.to_account_info(),
+                    account_or_mint: ctx.accounts.base_mint.to_account_info(),
+                },
+                &[seeds],
+            ),
+            spl_token::instruction::AuthorityType::MintTokens,
+            None,
+        )?;
         cfg.market_count += 1;
         emit!(MarketCreated {
             market: ctx.accounts.market.key(),
             base_mint: mint_key,
             creator: ctx.accounts.creator.key(),
             seed_base: args.seed_base,
-            seed_quote: s.seed_quote,
+            seed_quote: args.seed_quote,
             p0_x64: p0,
-            is_pop_market: args.is_pop_market,
             config_version: cfg.version,
         });
         Ok(())
     }
 
-    /// Genesis-only published vesting allocation (founder / ecosystem). Mints into an on-chain
-    /// vesting vault before activation. Bounded by `max_genesis_allocation_bps` of total supply.
-    pub fn create_vesting(ctx: Context<CreateVesting>, args: CreateVestingArgs) -> Result<()> {
-        validate_str(&args.label, 32)?;
-        let m = &mut ctx.accounts.market;
-        require!(m.status == STATUS_CREATED, PopError::MarketNotCreated);
-        require!(m.is_pop_market, PopError::VestingNotAllowed);
-        require!(args.amount > 0, PopError::InvalidConfig);
-        require!(
-            args.start_offset >= 0 && args.cliff_offset >= args.start_offset && args.end_offset > args.start_offset && args.end_offset >= args.cliff_offset,
-            PopError::InvalidVestingSchedule
-        );
-        let new_alloc = m.allocated_supply.checked_add(args.amount).ok_or(PopError::Overflow)?;
-        let total_supply = (m.seed_base_total as u128) + (new_alloc as u128);
-        let max_bps = ctx.accounts.protocol_config.settings.max_genesis_allocation_bps as u128;
-        require!((new_alloc as u128) * 10_000 <= max_bps * total_supply, PopError::AllocationTooLarge);
-        m.allocated_supply = new_alloc;
-        m.vesting_count += 1;
-
-        let v = &mut ctx.accounts.vesting;
-        v.market = m.key();
-        v.mint = m.base_mint;
-        v.beneficiary = args.beneficiary;
-        v.vault = ctx.accounts.vesting_vault.key();
-        v.index = args.index;
-        v.total = args.amount;
-        v.claimed = 0;
-        v.start_offset = args.start_offset;
-        v.cliff_offset = args.cliff_offset;
-        v.end_offset = args.end_offset;
-        v.label = args.label;
-        v.bump = ctx.bumps.vesting;
-
-        let mint_key = m.base_mint;
-        let bump = m.bump;
-        let seeds: &[&[u8]] = &[SEED_MARKET, mint_key.as_ref(), &[bump]];
-        token::mint_to(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.key(),
-                MintTo {
-                    mint: ctx.accounts.base_mint.to_account_info(),
-                    to: ctx.accounts.vesting_vault.to_account_info(),
-                    authority: ctx.accounts.market.to_account_info(),
-                },
-                &[seeds],
-            ),
-            args.amount,
-        )?;
-        emit!(VestingCreated {
-            market: ctx.accounts.market.key(),
-            vesting: ctx.accounts.vesting.key(),
-            beneficiary: args.beneficiary,
-            amount: args.amount,
-            start_offset: args.start_offset,
-            cliff_offset: args.cliff_offset,
-            end_offset: args.end_offset,
-        });
-        Ok(())
-    }
-
-    /// Permissionless lazy page creation: assigns the fixed seed schedule exactly once.
+    /// Permissionless lazy page creation: assigns the fixed seed schedule exactly once. Anyone
+    /// (launcher, keeper or a trader whose route needs the page) may pay the rent.
     pub fn initialize_bin_page(ctx: Context<InitializeBinPage>, page_index: i32) -> Result<()> {
         let m = &mut ctx.accounts.market;
         require!(page_index >= m.min_page() && page_index <= m.max_page(), PopError::PageOutOfRange);
@@ -290,8 +230,7 @@ pub mod pop_market {
         Ok(())
     }
 
-    /// Fund seed quote, verify supply and authorities, revoke mint authority, activate. All
-    /// checks fail atomically.
+    /// Fund the seed quote, verify supply and authorities, activate. All checks fail atomically.
     pub fn activate_market(ctx: Context<ActivateMarket>) -> Result<()> {
         let m = &mut ctx.accounts.market;
         require!(m.status == STATUS_CREATED, PopError::MarketAlreadyActive);
@@ -310,34 +249,15 @@ pub mod pop_market {
         require!(ctx.accounts.quote_vault.amount >= m.seed_quote_total, PopError::SeedQuoteNotFunded);
         ctx.accounts.base_vault.reload()?;
         require!(ctx.accounts.base_vault.amount == m.seed_base_total, PopError::SupplyMismatch);
-        let expected_supply = m.seed_base_total.checked_add(m.allocated_supply).ok_or(PopError::Overflow)?;
-        require!(ctx.accounts.base_mint.supply == expected_supply, PopError::SupplyMismatch);
-        require!(ctx.accounts.base_mint.freeze_authority.is_none(), PopError::MintAuthorityPresent);
-
-        let mint_key = m.base_mint;
-        let bump = m.bump;
-        let seeds: &[&[u8]] = &[SEED_MARKET, mint_key.as_ref(), &[bump]];
-        token::set_authority(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.key(),
-                SetAuthority {
-                    current_authority: ctx.accounts.market.to_account_info(),
-                    account_or_mint: ctx.accounts.base_mint.to_account_info(),
-                },
-                &[seeds],
-            ),
-            spl_token::instruction::AuthorityType::MintTokens,
-            None,
-        )?;
-        ctx.accounts.base_mint.reload()?;
+        require!(ctx.accounts.base_mint.supply == m.seed_base_total, PopError::SupplyMismatch);
         require!(ctx.accounts.base_mint.mint_authority.is_none(), PopError::MintAuthorityPresent);
-
+        require!(ctx.accounts.base_mint.freeze_authority.is_none(), PopError::MintAuthorityPresent);
         let clock = Clock::get()?;
         let m = &mut ctx.accounts.market;
         m.status = STATUS_ACTIVE;
         m.activated_at_slot = clock.slot;
         m.activated_at_ts = clock.unix_timestamp;
-        emit!(MarketActivated { market: m.key(), slot: clock.slot, unix_ts: clock.unix_timestamp, supply: expected_supply });
+        emit!(MarketActivated { market: m.key(), slot: clock.slot, unix_ts: clock.unix_timestamp, supply: m.seed_base_total });
         Ok(())
     }
 
@@ -347,15 +267,10 @@ pub mod pop_market {
         let clock = Clock::get()?;
         require!(clock.slot <= args.deadline_slot, PopError::DeadlinePassed);
         let market_key = ctx.accounts.market.key();
-        {
-            let m = &ctx.accounts.market;
-            require!(m.config_version == args.expected_config_version, PopError::ConfigVersionMismatch);
-        }
+        require!(ctx.accounts.market.config_version == args.expected_config_version, PopError::ConfigVersionMismatch);
         let pages = swap_core::load_pages(ctx.program_id, &market_key, &ctx.accounts.market, ctx.remaining_accounts)?;
-        let r = swap_core::quote_swap(&ctx.accounts.market, &pages, args.is_buy, args.gross_input, args.min_output, false)?;
+        let r = swap_core::quote_swap(&ctx.accounts.market, &pages, args.is_buy, args.gross_input, args.min_output)?;
 
-        // Token movements: input (tradable + scar fee) to the locked vault, revenue to the fee
-        // vault, output from the locked vault to the user.
         let locked_in = r.tradable.checked_add(r.scar_fee).ok_or(PopError::Overflow)?;
         let revenue = r.protocol_fee.checked_add(r.creator_fee).ok_or(PopError::Overflow)?;
         let tp = ctx.accounts.token_program.key();
@@ -376,15 +291,9 @@ pub mod pop_market {
                 ctx.accounts.user_quote.to_account_info(),
             )
         };
-        token::transfer(
-            CpiContext::new(tp, Transfer { from: user_in.clone(), to: vault_in, authority: ctx.accounts.user.to_account_info() }),
-            locked_in,
-        )?;
+        token::transfer(CpiContext::new(tp, Transfer { from: user_in.clone(), to: vault_in, authority: ctx.accounts.user.to_account_info() }), locked_in)?;
         if revenue > 0 {
-            token::transfer(
-                CpiContext::new(tp, Transfer { from: user_in, to: fee_vault, authority: ctx.accounts.user.to_account_info() }),
-                revenue,
-            )?;
+            token::transfer(CpiContext::new(tp, Transfer { from: user_in, to: fee_vault, authority: ctx.accounts.user.to_account_info() }), revenue)?;
         }
         let mint_key = ctx.accounts.market.base_mint;
         let bump = ctx.accounts.market.bump;
@@ -395,8 +304,7 @@ pub mod pop_market {
         )?;
 
         let start_bin = r.fills[0].bin;
-        let m = &mut ctx.accounts.market;
-        swap_core::commit_swap(m, &market_key, &pages, &r, args.is_buy, false, clock.slot)?;
+        swap_core::commit_swap(&mut ctx.accounts.market, &market_key, &pages, &r, args.is_buy, clock.slot)?;
         emit!(SwapExecuted {
             market: market_key,
             user: ctx.accounts.user.key(),
@@ -409,7 +317,6 @@ pub mod pop_market {
             bins_inspected: r.bins_inspected,
             start_bin,
             end_bin: r.new_cursor,
-            internal_buyback: false,
             slot: clock.slot,
         });
         Ok(())
@@ -479,10 +386,9 @@ pub mod pop_market {
         Ok(())
     }
 
-    /// Permissionless: move the buyback earmark (non-POP markets only) to the buyback vault.
+    /// Permissionless: move a market's buyback earmark to the protocol buyback escrow.
     pub fn sweep_buyback_funds(ctx: Context<SweepBuyback>) -> Result<()> {
         let m = &mut ctx.accounts.market;
-        require!(!m.is_pop_market, PopError::BuybackSourceExcluded);
         let amount = core::mem::take(&mut m.buyback_accrued_quote);
         require!(amount > 0, PopError::NothingToClaim);
         let mint_key = m.base_mint;
@@ -502,110 +408,34 @@ pub mod pop_market {
         Ok(())
     }
 
-    /// Manual, authority-approved buyback with explicit bounds: spend realized WSOL on the POP
-    /// market (scar fee charged into INELIGIBLE escrow, no protocol/creator fee) and burn the
-    /// purchased POP atomically. Remaining accounts: bin pages.
-    pub fn execute_pop_buyback<'info>(
-        ctx: Context<'info, ExecutePopBuyback<'info>>,
-        quote_spend: u64,
-        min_pop_out: u64,
-        max_price_x64: u128,
-    ) -> Result<()> {
+    /// Bounded withdrawal of realized buyback escrow to the buyback authority's OWN WSOL ATA, so
+    /// the keeper can execute the buy-and-burn of the external $POP mint in the same transaction
+    /// (Jupiter swap + SPL burn). Cap, minimum interval and a published POP mint are required.
+    pub fn withdraw_buyback_funds(ctx: Context<WithdrawBuyback>, amount: u64) -> Result<()> {
         let clock = Clock::get()?;
-        let market_key = ctx.accounts.market.key();
+        let cfg = &ctx.accounts.protocol_config;
+        require!(cfg.pop_mint != Pubkey::default(), PopError::PopMintNotSet);
         {
             let bb = &ctx.accounts.buyback_vault;
-            require!(quote_spend > 0 && quote_spend <= bb.max_spend_per_execution, PopError::BuybackSpendCap);
-            require!(quote_spend <= ctx.accounts.buyback_quote_account.amount, PopError::BuybackSpendCap);
-            require!(bb.last_execution_slot == 0 || clock.slot >= bb.last_execution_slot + bb.min_interval_slots, PopError::BuybackInterval);
-            let m = &ctx.accounts.market;
-            require!(m.is_pop_market, PopError::NotPopMarket);
-            let cursor_price = math::price_at_bin(m.p0_x64, m.cursor).ok_or(PopError::PriceRange)?;
-            require!(cursor_price <= max_price_x64, PopError::BuybackPriceGuard);
+            require!(amount > 0 && amount <= bb.max_withdraw_per_execution, PopError::BuybackWithdrawCap);
+            require!(amount <= ctx.accounts.buyback_quote_account.amount, PopError::BuybackWithdrawCap);
+            require!(bb.last_withdrawal_slot == 0 || clock.slot >= bb.last_withdrawal_slot + bb.min_interval_slots, PopError::BuybackInterval);
         }
-        let pages = swap_core::load_pages(ctx.program_id, &market_key, &ctx.accounts.market, ctx.remaining_accounts)?;
-        let r = swap_core::quote_swap(&ctx.accounts.market, &pages, true, quote_spend, min_pop_out, true)?;
-        let locked_in = r.tradable.checked_add(r.scar_fee).ok_or(PopError::Overflow)?;
-        require!(locked_in == quote_spend, PopError::Invariant);
-        let tp = ctx.accounts.token_program.key();
-        let bb_bump = ctx.accounts.buyback_vault.bump;
-        let bb_seeds: &[&[u8]] = &[SEED_BUYBACK, &[bb_bump]];
-        token::transfer(
-            CpiContext::new_with_signer(
-                tp,
-                Transfer { from: ctx.accounts.buyback_quote_account.to_account_info(), to: ctx.accounts.quote_vault.to_account_info(), authority: ctx.accounts.buyback_vault.to_account_info() },
-                &[bb_seeds],
-            ),
-            locked_in,
-        )?;
-        let mint_key = ctx.accounts.market.base_mint;
-        let bump = ctx.accounts.market.bump;
-        let seeds: &[&[u8]] = &[SEED_MARKET, mint_key.as_ref(), &[bump]];
-        token::transfer(
-            CpiContext::new_with_signer(
-                tp,
-                Transfer { from: ctx.accounts.base_vault.to_account_info(), to: ctx.accounts.buyback_pop_account.to_account_info(), authority: ctx.accounts.market.to_account_info() },
-                &[seeds],
-            ),
-            r.output,
-        )?;
-        token::burn(
-            CpiContext::new_with_signer(
-                tp,
-                Burn { mint: ctx.accounts.base_mint.to_account_info(), from: ctx.accounts.buyback_pop_account.to_account_info(), authority: ctx.accounts.buyback_vault.to_account_info() },
-                &[bb_seeds],
-            ),
-            r.output,
-        )?;
-        let start_bin = r.fills[0].bin;
-        swap_core::commit_swap(&mut ctx.accounts.market, &market_key, &pages, &r, true, true, clock.slot)?;
-        let bb = &mut ctx.accounts.buyback_vault;
-        bb.total_spent = bb.total_spent.checked_add(quote_spend).ok_or(PopError::Overflow)?;
-        bb.total_burned = bb.total_burned.checked_add(r.output).ok_or(PopError::Overflow)?;
-        bb.last_execution_slot = clock.slot;
-        bb.execution_count += 1;
-        emit!(SwapExecuted {
-            market: market_key,
-            user: ctx.accounts.buyback_vault.key(),
-            is_buy: true,
-            gross_input: r.gross,
-            output: r.output,
-            scar_fee: r.scar_fee,
-            protocol_fee: 0,
-            creator_fee: 0,
-            bins_inspected: r.bins_inspected,
-            start_bin,
-            end_bin: r.new_cursor,
-            internal_buyback: true,
-            slot: clock.slot,
-        });
-        emit!(BuybackExecuted { market: market_key, quote_spent: quote_spend, pop_bought: r.output, pop_burned: r.output, slot: clock.slot });
-        Ok(())
-    }
-
-    pub fn claim_vested(ctx: Context<ClaimVested>) -> Result<()> {
-        let m = &ctx.accounts.market;
-        require!(m.status != STATUS_CREATED, PopError::MarketNotActive);
-        let now = Clock::get()?.unix_timestamp;
-        let v = &mut ctx.accounts.vesting;
-        let vested = v.vested_at(m.activated_at_ts, now);
-        let claimable = vested.saturating_sub(v.claimed);
-        require!(claimable > 0, PopError::NothingToClaim);
-        v.claimed += claimable;
-        let vkey = ctx.accounts.vesting.key();
-        let market_key = ctx.accounts.market.key();
-        let idx = ctx.accounts.vesting.index;
-        let bump = ctx.accounts.vesting.bump;
-        let seeds: &[&[u8]] = &[SEED_VESTING, market_key.as_ref(), &[idx], &[bump]];
+        let bump = ctx.accounts.buyback_vault.bump;
+        let seeds: &[&[u8]] = &[SEED_BUYBACK, &[bump]];
         token::transfer(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.key(),
-                Transfer { from: ctx.accounts.vault.to_account_info(), to: ctx.accounts.destination.to_account_info(), authority: ctx.accounts.vesting.to_account_info() },
+                Transfer { from: ctx.accounts.buyback_quote_account.to_account_info(), to: ctx.accounts.destination.to_account_info(), authority: ctx.accounts.buyback_vault.to_account_info() },
                 &[seeds],
             ),
-            claimable,
+            amount,
         )?;
-        emit!(VestingClaimed { vesting: vkey, beneficiary: ctx.accounts.beneficiary.key(), amount: claimable, claimed_total: ctx.accounts.vesting.claimed });
+        let bb = &mut ctx.accounts.buyback_vault;
+        bb.total_withdrawn = bb.total_withdrawn.checked_add(amount).ok_or(PopError::Overflow)?;
+        bb.last_withdrawal_slot = clock.slot;
+        bb.withdrawal_count += 1;
+        emit!(BuybackWithdrawn { amount, destination: ctx.accounts.destination.key(), pop_mint: cfg.pop_mint, authority: ctx.accounts.authority.key(), slot: clock.slot });
         Ok(())
     }
 }
@@ -638,6 +468,15 @@ pub struct AdminOnly<'info> {
 }
 
 #[derive(Accounts)]
+pub struct SetPopMint<'info> {
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [SEED_PROTOCOL], bump = protocol_config.bump, has_one = authority @ PopError::Unauthorized)]
+    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
+    /// The external $POP mint (must be a real SPL mint).
+    pub pop_mint: Box<Account<'info, Mint>>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: CreateMarketArgs)]
 pub struct CreateMarket<'info> {
     #[account(mut)]
@@ -663,25 +502,6 @@ pub struct CreateMarket<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(args: CreateVestingArgs)]
-pub struct CreateVesting<'info> {
-    #[account(mut)]
-    pub creator: Signer<'info>,
-    #[account(seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
-    pub protocol_config: Box<Account<'info, ProtocolConfig>>,
-    #[account(mut, has_one = creator @ PopError::Unauthorized, has_one = base_mint)]
-    pub market: Box<Account<'info, Market>>,
-    #[account(mut)]
-    pub base_mint: Box<Account<'info, Mint>>,
-    #[account(init, payer = creator, space = 8 + Vesting::INIT_SPACE, seeds = [SEED_VESTING, market.key().as_ref(), &[args.index]], bump)]
-    pub vesting: Box<Account<'info, Vesting>>,
-    #[account(init, payer = creator, seeds = [SEED_VESTING, b"vault", vesting.key().as_ref()], bump, token::mint = base_mint, token::authority = vesting)]
-    pub vesting_vault: Box<Account<'info, TokenAccount>>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 #[instruction(page_index: i32)]
 pub struct InitializeBinPage<'info> {
     #[account(mut)]
@@ -698,7 +518,6 @@ pub struct ActivateMarket<'info> {
     pub creator: Signer<'info>,
     #[account(mut, has_one = creator @ PopError::Unauthorized, has_one = base_mint, has_one = base_vault, has_one = quote_vault)]
     pub market: Box<Account<'info, Market>>,
-    #[account(mut)]
     pub base_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub base_vault: Box<Account<'info, TokenAccount>>,
@@ -770,36 +589,19 @@ pub struct SweepBuyback<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ExecutePopBuyback<'info> {
+pub struct WithdrawBuyback<'info> {
     pub authority: Signer<'info>,
     #[account(seeds = [SEED_PROTOCOL], bump = protocol_config.bump)]
     pub protocol_config: Box<Account<'info, ProtocolConfig>>,
     #[account(mut, seeds = [SEED_BUYBACK], bump = buyback_vault.bump, has_one = authority @ PopError::Unauthorized)]
     pub buyback_vault: Box<Account<'info, BuybackVault>>,
-    #[account(mut, address = protocol_config.pop_market @ PopError::NotPopMarket, has_one = base_vault @ PopError::InvalidVault, has_one = quote_vault @ PopError::InvalidVault, has_one = base_mint)]
-    pub market: Box<Account<'info, Market>>,
-    #[account(mut)]
-    pub base_mint: Box<Account<'info, Mint>>,
-    #[account(mut)]
-    pub base_vault: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    pub quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = buyback_vault.quote_account @ PopError::InvalidVault)]
     pub buyback_quote_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut, token::mint = base_mint, token::authority = buyback_vault)]
-    pub buyback_pop_account: Box<Account<'info, TokenAccount>>,
-    pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
-pub struct ClaimVested<'info> {
-    pub beneficiary: Signer<'info>,
-    pub market: Box<Account<'info, Market>>,
-    #[account(mut, has_one = beneficiary @ PopError::Unauthorized, has_one = market, has_one = vault @ PopError::InvalidVault)]
-    pub vesting: Box<Account<'info, Vesting>>,
-    #[account(mut)]
-    pub vault: Box<Account<'info, TokenAccount>>,
-    #[account(mut, token::mint = vesting.mint, token::authority = beneficiary)]
+    /// Destination is fixed to the authority's own WSOL associated token account.
+    #[account(mut, associated_token::mint = quote_mint, associated_token::authority = authority)]
     pub destination: Box<Account<'info, TokenAccount>>,
+    #[account(address = spl_token::native_mint::ID @ PopError::InvalidQuoteMint)]
+    pub quote_mint: Box<Account<'info, Mint>>,
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }

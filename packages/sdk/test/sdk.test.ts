@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID, IDL, marketPda, pagePda, protocolPda, marketVaults, toMarketConfig, toMarketState, PILOT_SETTINGS, TEST_SETTINGS } from "../src/index.js";
-import { POP_PILOT_DEFAULTS } from "@pop/math";
+import { FACTORY_DEFAULTS } from "@pop/math";
 
 describe("sdk", () => {
   it("program id matches the IDL and Anchor.toml", () => {
@@ -20,9 +20,9 @@ describe("sdk", () => {
   });
 
   it("pilot settings mirror @pop/math defaults; test settings only lower thresholds", () => {
-    expect(PILOT_SETTINGS.seedQuote).toBe(POP_PILOT_DEFAULTS.seedQuote);
-    expect(PILOT_SETTINGS.scarFeeBps).toBe(POP_PILOT_DEFAULTS.fees.scarFeeBps);
-    expect(PILOT_SETTINGS.maturityQuoteTarget).toBe(POP_PILOT_DEFAULTS.maturityQuoteTarget);
+    expect(PILOT_SETTINGS.minSeedQuote).toBe(1_000_000_000n);
+    expect(PILOT_SETTINGS.scarFeeBps).toBe(FACTORY_DEFAULTS.fees.scarFeeBps);
+    expect(PILOT_SETTINGS.maturityQuoteTarget).toBe(FACTORY_DEFAULTS.maturityQuoteTarget);
     expect(TEST_SETTINGS.scarFeeBps).toBe(PILOT_SETTINGS.scarFeeBps);
     expect(TEST_SETTINGS.maturityQuoteTarget < PILOT_SETTINGS.maturityQuoteTarget).toBe(true);
   });
@@ -30,9 +30,9 @@ describe("sdk", () => {
   it("converts a raw market into math config/state", () => {
     const raw = {
       baseMint: PublicKey.default, quoteMint: PublicKey.default, creator: PublicKey.default, baseVault: PublicKey.default, quoteVault: PublicKey.default, feeVaultBase: PublicKey.default, feeVaultQuote: PublicKey.default,
-      p0X64: "409927646082434", binMin: -64, binMax: 511, binsPerPage: 16, bandSize: 10, maxBinsPerSwap: 32, cursor: 3, status: 1, isPopMarket: true, configVersion: 1,
+      p0X64: "409927646082434", binMin: -64, binMax: 511, binsPerPage: 16, bandSize: 10, maxBinsPerSwap: 32, cursor: 3, status: 1, configVersion: 1,
       scarFeeBps: 150, protocolFeeBps: 25, creatorFeeBps: 25, buybackShareBps: 5000, maturityQuoteTarget: "100000000000", bandQuoteTarget: "1000000000", bandsRequired: 10, minQuoteIn: "100000", minBaseIn: "1000000", baseDecimals: 6,
-      seedBaseTotal: "900000000000000", seedQuoteTotal: "20000000000", unmaterializedSeedBase: "0", unmaterializedSeedQuote: "0", allocatedSupply: "0", vestingCount: 0, pairedQuoteLifetime: "5", hardenedBands: 1,
+      seedBaseTotal: "900000000000000", seedQuoteTotal: "20000000000", unmaterializedSeedBase: "0", unmaterializedSeedQuote: "0", pairedQuoteLifetime: "5", hardenedBands: 1,
       bandPairedQuote: Array.from({ length: 64 }, (_, i) => (i === 7 ? "5" : "0")), bandHardenedBits: String(1 << 7), protocolClaimableBase: "0", protocolClaimableQuote: "0", creatorClaimableBase: "0", creatorClaimableQuote: "0", buybackAccruedQuote: "0",
       totalBuyVolumeQuote: "0", totalSellVolumeBase: "0", swapCount: "0", createdAtSlot: "0", activatedAtSlot: "0", activatedAtTs: "0", graduatedAtSlot: "0", name: "POP", symbol: "POP", uri: "x", bump: 1,
     };

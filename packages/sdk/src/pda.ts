@@ -4,14 +4,12 @@ export const SEEDS = {
   protocol: Buffer.from("protocol"),
   market: Buffer.from("market"),
   page: Buffer.from("page"),
-  vesting: Buffer.from("vesting"),
   buyback: Buffer.from("buyback"),
   vaultBase: Buffer.from("vault_base"),
   vaultQuote: Buffer.from("vault_quote"),
   feeBase: Buffer.from("fee_base"),
   feeQuote: Buffer.from("fee_quote"),
   quote: Buffer.from("quote"),
-  vault: Buffer.from("vault"),
 };
 
 export const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
@@ -45,12 +43,4 @@ export function marketVaults(programId: PublicKey, market: PublicKey) {
 
 export function pagePda(programId: PublicKey, market: PublicKey, pageIndex: number): PublicKey {
   return PublicKey.findProgramAddressSync([SEEDS.page, market.toBuffer(), i32le(pageIndex)], programId)[0];
-}
-
-export function vestingPda(programId: PublicKey, market: PublicKey, index: number): PublicKey {
-  return PublicKey.findProgramAddressSync([SEEDS.vesting, market.toBuffer(), Buffer.from([index])], programId)[0];
-}
-
-export function vestingVaultPda(programId: PublicKey, vesting: PublicKey): PublicKey {
-  return PublicKey.findProgramAddressSync([SEEDS.vesting, SEEDS.vault, vesting.toBuffer()], programId)[0];
 }

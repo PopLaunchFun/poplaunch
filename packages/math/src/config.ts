@@ -11,7 +11,7 @@ export interface FeeConfig {
   protocolFeeBps: number;
   /** Creator revenue, bps of gross input. */
   creatorFeeBps: number;
-  /** Share of collected WSOL protocol fees earmarked for POP buyback on non-POP markets, bps. */
+  /** Share of collected WSOL protocol fees earmarked for the POP buyback escrow, bps. */
   buybackShareBps: number;
 }
 
@@ -37,19 +37,23 @@ export interface MarketConfig {
   bandsRequired: number;
   minQuoteIn: bigint;
   minBaseIn: bigint;
-  /** POP's own market is excluded from buyback funding (self-referential loop). */
-  isPopMarket: boolean;
   /** Config version this market was created under (immutable). */
   configVersion: number;
 }
 
 export const SOL = 1_000_000_000n;
 
-/** Pilot defaults from the brief (section 3). Experimental calibration, not validated economics. */
-export const POP_PILOT_DEFAULTS: MarketConfig = {
+/** Factory minimum seed quote per coin (owner decision; experimental calibration). */
+export const MIN_SEED_QUOTE = 1n * SOL;
+
+/**
+ * Factory defaults from the v2 brief (section 3) for a 1B-supply coin seeded with 20 SOL.
+ * Experimental calibration, not validated economics. Creators choose the seed (>= MIN_SEED_QUOTE).
+ */
+export const FACTORY_DEFAULTS: MarketConfig = {
   baseDecimals: 6,
   quoteDecimals: 9,
-  seedBase: 900_000_000n * 1_000_000n,
+  seedBase: 1_000_000_000n * 1_000_000n,
   seedQuote: 20n * SOL,
   binMin: -64,
   binMax: 511,
@@ -63,13 +67,12 @@ export const POP_PILOT_DEFAULTS: MarketConfig = {
   bandsRequired: 10,
   minQuoteIn: 100_000n, // 0.0001 SOL
   minBaseIn: 1_000_000n, // 1 token at 6 decimals
-  isPopMarket: true,
   configVersion: 1,
 };
 
-/** Defaults for a non-POP market launched through the factory: 100% supply to seed, same seed quote. */
-export function factoryMarketDefaults(totalSupplyAtomic: bigint, baseDecimals = 6): MarketConfig {
-  return { ...POP_PILOT_DEFAULTS, baseDecimals, seedBase: totalSupplyAtomic, isPopMarket: false };
+/** Config for a coin launched through the factory: 100% supply to seed, creator-chosen seed quote. */
+export function factoryMarketDefaults(totalSupplyAtomic: bigint, seedQuote: bigint = FACTORY_DEFAULTS.seedQuote, baseDecimals = 6): MarketConfig {
+  return { ...FACTORY_DEFAULTS, baseDecimals, seedBase: totalSupplyAtomic, seedQuote };
 }
 
 /** Small thresholds for local-validator demonstrations. Clearly labeled TEST config; never for mainnet. */
@@ -88,6 +91,15 @@ export function validateConfig(c: MarketConfig): void {
   if (f.buybackShareBps > 10_000) bad("buyback share");
   if (c.seedBase <= 0n || c.seedQuote <= 0n) bad("seed amounts");
   if (c.bandsRequired <= 0) bad("bandsRequired");
+}
+
+/** Pages created at launch: the cursor page and its neighbours; the rest are created lazily by whoever needs them. */
+export const LAUNCH_PAGES: readonly number[] = [-1, 0, 1, 2];
+
+/** Smallest seed quote the price table can represent for a given seed base: ceil(2^32 * seedBase / 2^64). */
+export function minSeedQuoteForSupply(seedBaseAtomic: bigint): bigint {
+  const num = (1n << 32n) * seedBaseAtomic;
+  return num / (1n << 64n) + (num % (1n << 64n) === 0n ? 0n : 1n);
 }
 
 export function pageIndexOf(c: MarketConfig, bin: number): number {

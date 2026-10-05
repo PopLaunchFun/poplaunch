@@ -1,10 +1,11 @@
 {
-  "worstChopSwapCu": 225728,
+  "worstChopSwapCu": 241167,
   "cappedBuy": {
     "binsInspected": 32,
     "fills": 32,
     "pages": 3,
-    "computeUnits": 186703,
-    "grossLamports": "260956877"
+    "pagesCreated": 1,
+    "computeUnits": 213290,
+    "grossLamports": "167660241"
   }
 }

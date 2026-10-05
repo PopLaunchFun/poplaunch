@@ -16,8 +16,7 @@ export type PopMarket = {
     {
       "name": "activateMarket",
       "docs": [
-        "Fund seed quote, verify supply and authorities, revoke mint authority, activate. All",
-        "checks fail atomically."
+        "Fund the seed quote, verify supply and authorities, activate. All checks fail atomically."
       ],
       "discriminator": [
         10,
@@ -43,7 +42,6 @@ export type PopMarket = {
         },
         {
           "name": "baseMint",
-          "writable": true,
           "relations": [
             "market"
           ]
@@ -135,59 +133,10 @@ export type PopMarket = {
       ]
     },
     {
-      "name": "claimVested",
-      "discriminator": [
-        208,
-        190,
-        166,
-        114,
-        203,
-        225,
-        140,
-        208
-      ],
-      "accounts": [
-        {
-          "name": "beneficiary",
-          "signer": true,
-          "relations": [
-            "vesting"
-          ]
-        },
-        {
-          "name": "market",
-          "relations": [
-            "vesting"
-          ]
-        },
-        {
-          "name": "vesting",
-          "writable": true
-        },
-        {
-          "name": "vault",
-          "writable": true,
-          "relations": [
-            "vesting"
-          ]
-        },
-        {
-          "name": "destination",
-          "writable": true
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "createMarket",
       "docs": [
-        "Create a market and its fixed-supply mint. Mints exactly `seed_base` into the locked base",
-        "vault. Mint authority stays with the market PDA until activation (to allow genesis",
-        "vesting allocations) and is then revoked. No freeze authority is ever set."
+        "Create a coin market and its fixed-supply mint. Mints exactly `seed_base` into the locked",
+        "base vault and revokes the mint authority immediately. No freeze authority is ever set."
       ],
       "discriminator": [
         103,
@@ -385,120 +334,6 @@ export type PopMarket = {
       ]
     },
     {
-      "name": "createVesting",
-      "docs": [
-        "Genesis-only published vesting allocation (founder / ecosystem). Mints into an on-chain",
-        "vesting vault before activation. Bounded by `max_genesis_allocation_bps` of total supply."
-      ],
-      "discriminator": [
-        135,
-        184,
-        171,
-        156,
-        197,
-        162,
-        246,
-        44
-      ],
-      "accounts": [
-        {
-          "name": "creator",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "protocolConfig",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  116,
-                  111,
-                  99,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "market",
-          "writable": true
-        },
-        {
-          "name": "baseMint",
-          "writable": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "vesting",
-          "writable": true
-        },
-        {
-          "name": "vestingVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  101,
-                  115,
-                  116,
-                  105,
-                  110,
-                  103
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "vesting"
-              }
-            ]
-          }
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": {
-              "name": "createVestingArgs"
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "evaluateGraduation",
       "docs": [
         "Permissionless re-evaluation from stored counters (normally graduation happens inside matching)."
@@ -522,127 +357,10 @@ export type PopMarket = {
       "args": []
     },
     {
-      "name": "executePopBuyback",
-      "docs": [
-        "Manual, authority-approved buyback with explicit bounds: spend realized WSOL on the POP",
-        "market (scar fee charged into INELIGIBLE escrow, no protocol/creator fee) and burn the",
-        "purchased POP atomically. Remaining accounts: bin pages."
-      ],
-      "discriminator": [
-        87,
-        238,
-        144,
-        54,
-        94,
-        96,
-        99,
-        167
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "signer": true,
-          "relations": [
-            "buybackVault"
-          ]
-        },
-        {
-          "name": "protocolConfig",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  116,
-                  111,
-                  99,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "buybackVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  98,
-                  117,
-                  121,
-                  98,
-                  97,
-                  99,
-                  107
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "market",
-          "writable": true
-        },
-        {
-          "name": "baseMint",
-          "writable": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "baseVault",
-          "writable": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "quoteVault",
-          "writable": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "buybackQuoteAccount",
-          "writable": true
-        },
-        {
-          "name": "buybackPopAccount",
-          "writable": true
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        }
-      ],
-      "args": [
-        {
-          "name": "quoteSpend",
-          "type": "u64"
-        },
-        {
-          "name": "minPopOut",
-          "type": "u64"
-        },
-        {
-          "name": "maxPriceX64",
-          "type": "u128"
-        }
-      ]
-    },
-    {
       "name": "initializeBinPage",
       "docs": [
-        "Permissionless lazy page creation: assigns the fixed seed schedule exactly once."
+        "Permissionless lazy page creation: assigns the fixed seed schedule exactly once. Anyone",
+        "(launcher, keeper or a trader whose route needs the page) may pay the rent."
       ],
       "discriminator": [
         154,
@@ -894,6 +612,59 @@ export type PopMarket = {
       ]
     },
     {
+      "name": "setPopMint",
+      "docs": [
+        "Publish the external $POP mint once. Required before any buyback withdrawal."
+      ],
+      "discriminator": [
+        199,
+        37,
+        166,
+        207,
+        198,
+        52,
+        93,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "protocolConfig"
+          ]
+        },
+        {
+          "name": "protocolConfig",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "popMint",
+          "docs": [
+            "The external $POP mint (must be a real SPL mint)."
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "swapExactIn",
       "docs": [
         "Exact-input, fill-or-kill swap. Remaining accounts: the bin pages the route may touch,",
@@ -973,7 +744,7 @@ export type PopMarket = {
     {
       "name": "sweepBuybackFunds",
       "docs": [
-        "Permissionless: move the buyback earmark (non-POP markets only) to the buyback vault."
+        "Permissionless: move a market's buyback earmark to the protocol buyback escrow."
       ],
       "discriminator": [
         69,
@@ -1027,6 +798,188 @@ export type PopMarket = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "withdrawBuybackFunds",
+      "docs": [
+        "Bounded withdrawal of realized buyback escrow to the buyback authority's OWN WSOL ATA, so",
+        "the keeper can execute the buy-and-burn of the external $POP mint in the same transaction",
+        "(Jupiter swap + SPL burn). Cap, minimum interval and a published POP mint are required."
+      ],
+      "discriminator": [
+        2,
+        83,
+        143,
+        135,
+        82,
+        151,
+        151,
+        138
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "buybackVault"
+          ]
+        },
+        {
+          "name": "protocolConfig",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "buybackVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  121,
+                  98,
+                  97,
+                  99,
+                  107
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "buybackQuoteAccount",
+          "writable": true
+        },
+        {
+          "name": "destination",
+          "docs": [
+            "Destination is fixed to the authority's own WSOL associated token account."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "quoteMint",
+          "address": "So11111111111111111111111111111111111111112"
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1081,19 +1034,6 @@ export type PopMarket = {
         215,
         209
       ]
-    },
-    {
-      "name": "vesting",
-      "discriminator": [
-        100,
-        149,
-        66,
-        138,
-        95,
-        200,
-        128,
-        241
-      ]
     }
   ],
   "events": [
@@ -1111,19 +1051,6 @@ export type PopMarket = {
       ]
     },
     {
-      "name": "buybackExecuted",
-      "discriminator": [
-        150,
-        109,
-        157,
-        10,
-        124,
-        24,
-        38,
-        189
-      ]
-    },
-    {
       "name": "buybackSwept",
       "discriminator": [
         218,
@@ -1134,6 +1061,19 @@ export type PopMarket = {
         133,
         244,
         31
+      ]
+    },
+    {
+      "name": "buybackWithdrawn",
+      "discriminator": [
+        133,
+        189,
+        155,
+        159,
+        201,
+        249,
+        72,
+        42
       ]
     },
     {
@@ -1215,6 +1155,19 @@ export type PopMarket = {
       ]
     },
     {
+      "name": "popMintSet",
+      "discriminator": [
+        132,
+        9,
+        111,
+        30,
+        28,
+        51,
+        77,
+        177
+      ]
+    },
+    {
       "name": "protocolInitialized",
       "discriminator": [
         173,
@@ -1251,32 +1204,6 @@ export type PopMarket = {
         89,
         38,
         79
-      ]
-    },
-    {
-      "name": "vestingClaimed",
-      "discriminator": [
-        166,
-        62,
-        135,
-        158,
-        137,
-        1,
-        85,
-        15
-      ]
-    },
-    {
-      "name": "vestingCreated",
-      "discriminator": [
-        181,
-        223,
-        229,
-        220,
-        204,
-        6,
-        169,
-        125
       ]
     }
   ],
@@ -1433,66 +1360,46 @@ export type PopMarket = {
     },
     {
       "code": 6030,
-      "name": "genesisExists",
-      "msg": "Genesis POP market already exists"
-    },
-    {
-      "code": 6031,
-      "name": "vestingNotAllowed",
-      "msg": "Only the genesis POP market may carry vesting allocations"
-    },
-    {
-      "code": 6032,
-      "name": "allocationTooLarge",
-      "msg": "Allocation exceeds the configured maximum"
-    },
-    {
-      "code": 6033,
-      "name": "invalidVestingSchedule",
-      "msg": "Invalid vesting schedule"
-    },
-    {
-      "code": 6034,
       "name": "nothingToClaim",
       "msg": "Nothing claimable"
     },
     {
+      "code": 6031,
+      "name": "buybackWithdrawCap",
+      "msg": "Buyback withdrawal exceeds cap or realized funds"
+    },
+    {
+      "code": 6032,
+      "name": "seedQuoteBelowMinimum",
+      "msg": "Seed quote below the factory minimum"
+    },
+    {
+      "code": 6033,
+      "name": "popMintAlreadySet",
+      "msg": "POP mint already published"
+    },
+    {
+      "code": 6034,
+      "name": "popMintNotSet",
+      "msg": "POP mint not published yet"
+    },
+    {
       "code": 6035,
-      "name": "buybackSourceExcluded",
-      "msg": "POP market cannot fund buybacks"
-    },
-    {
-      "code": 6036,
-      "name": "buybackSpendCap",
-      "msg": "Buyback spend exceeds cap or realized funds"
-    },
-    {
-      "code": 6037,
       "name": "buybackInterval",
       "msg": "Buyback interval not elapsed"
     },
     {
-      "code": 6038,
-      "name": "buybackPriceGuard",
-      "msg": "Buyback reference price guard violated"
-    },
-    {
-      "code": 6039,
-      "name": "notPopMarket",
-      "msg": "Market is not the POP market"
-    },
-    {
-      "code": 6040,
+      "code": 6036,
       "name": "invalidMetadata",
       "msg": "Invalid metadata string"
     },
     {
-      "code": 6041,
+      "code": 6037,
       "name": "invalidClaimDestination",
       "msg": "Invalid fee claim destination"
     },
     {
-      "code": 6042,
+      "code": 6038,
       "name": "invariant",
       "msg": "Bin inventory invariant violated"
     }
@@ -1553,14 +1460,6 @@ export type PopMarket = {
           },
           {
             "name": "pendingQuoteEligible",
-            "type": "u64"
-          },
-          {
-            "name": "pendingBaseIneligible",
-            "type": "u64"
-          },
-          {
-            "name": "pendingQuoteIneligible",
             "type": "u64"
           },
           {
@@ -1629,34 +1528,6 @@ export type PopMarket = {
       }
     },
     {
-      "name": "buybackExecuted",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "quoteSpent",
-            "type": "u64"
-          },
-          {
-            "name": "popBought",
-            "type": "u64"
-          },
-          {
-            "name": "popBurned",
-            "type": "u64"
-          },
-          {
-            "name": "slot",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "buybackSwept",
       "type": {
         "kind": "struct",
@@ -1679,6 +1550,9 @@ export type PopMarket = {
         "fields": [
           {
             "name": "authority",
+            "docs": [
+              "Keeper/multisig allowed to withdraw bounded amounts to its own WSOL ATA for off-program execution."
+            ],
             "type": "pubkey"
           },
           {
@@ -1686,23 +1560,15 @@ export type PopMarket = {
             "type": "pubkey"
           },
           {
-            "name": "popAccount",
-            "type": "pubkey"
-          },
-          {
             "name": "totalReceived",
             "type": "u64"
           },
           {
-            "name": "totalSpent",
+            "name": "totalWithdrawn",
             "type": "u64"
           },
           {
-            "name": "totalBurned",
-            "type": "u64"
-          },
-          {
-            "name": "lastExecutionSlot",
+            "name": "lastWithdrawalSlot",
             "type": "u64"
           },
           {
@@ -1710,16 +1576,44 @@ export type PopMarket = {
             "type": "u64"
           },
           {
-            "name": "maxSpendPerExecution",
+            "name": "maxWithdrawPerExecution",
             "type": "u64"
           },
           {
-            "name": "executionCount",
+            "name": "withdrawalCount",
             "type": "u64"
           },
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "buybackWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "popMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
           }
         ]
       }
@@ -1746,48 +1640,15 @@ export type PopMarket = {
             "type": "u64"
           },
           {
-            "name": "decimals",
-            "type": "u8"
-          },
-          {
-            "name": "isPopMarket",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "createVestingArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "index",
-            "type": "u8"
-          },
-          {
-            "name": "beneficiary",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
+            "name": "seedQuote",
+            "docs": [
+              "Creator-chosen seed quote (WSOL atomic), >= factory minimum. Locked at activation."
+            ],
             "type": "u64"
           },
           {
-            "name": "startOffset",
-            "type": "i64"
-          },
-          {
-            "name": "cliffOffset",
-            "type": "i64"
-          },
-          {
-            "name": "endOffset",
-            "type": "i64"
-          },
-          {
-            "name": "label",
-            "type": "string"
+            "name": "decimals",
+            "type": "u8"
           }
         ]
       }
@@ -1801,7 +1662,10 @@ export type PopMarket = {
         "kind": "struct",
         "fields": [
           {
-            "name": "seedQuote",
+            "name": "minSeedQuote",
+            "docs": [
+              "Minimum seed quote (WSOL atomic) a creator must lock per coin. The creator chooses the amount."
+            ],
             "type": "u64"
           },
           {
@@ -1855,13 +1719,6 @@ export type PopMarket = {
           {
             "name": "bandSize",
             "type": "u8"
-          },
-          {
-            "name": "maxGenesisAllocationBps",
-            "docs": [
-              "Max share of total supply that genesis vesting allocations may take (bps of total)."
-            ],
-            "type": "u16"
           }
         ]
       }
@@ -1948,7 +1805,7 @@ export type PopMarket = {
             "type": "u64"
           },
           {
-            "name": "buybackMaxSpendPerExecution",
+            "name": "buybackMaxWithdrawPerExecution",
             "type": "u64"
           },
           {
@@ -2036,10 +1893,6 @@ export type PopMarket = {
             "type": "u8"
           },
           {
-            "name": "isPopMarket",
-            "type": "bool"
-          },
-          {
             "name": "configVersion",
             "type": "u32"
           },
@@ -2098,17 +1951,6 @@ export type PopMarket = {
           {
             "name": "unmaterializedSeedQuote",
             "type": "u64"
-          },
-          {
-            "name": "allocatedSupply",
-            "docs": [
-              "Supply minted to vesting allocations (genesis only)."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "vestingCount",
-            "type": "u8"
           },
           {
             "name": "pairedQuoteLifetime",
@@ -2255,10 +2097,6 @@ export type PopMarket = {
             "type": "u128"
           },
           {
-            "name": "isPopMarket",
-            "type": "bool"
-          },
-          {
             "name": "configVersion",
             "type": "u32"
           }
@@ -2294,6 +2132,18 @@ export type PopMarket = {
       }
     },
     {
+      "name": "popMintSet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "popMint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
       "name": "protocolConfig",
       "type": {
         "kind": "struct",
@@ -2316,10 +2166,10 @@ export type PopMarket = {
           },
           {
             "name": "popMint",
-            "type": "pubkey"
-          },
-          {
-            "name": "popMarket",
+            "docs": [
+              "External $POP mint (launched outside this program). Settable once; buyback withdrawals",
+              "are blocked until it is published."
+            ],
             "type": "pubkey"
           },
           {
@@ -2471,131 +2321,8 @@ export type PopMarket = {
             "type": "i32"
           },
           {
-            "name": "internalBuyback",
-            "type": "bool"
-          },
-          {
             "name": "slot",
             "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "vesting",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "beneficiary",
-            "type": "pubkey"
-          },
-          {
-            "name": "vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "index",
-            "type": "u8"
-          },
-          {
-            "name": "total",
-            "type": "u64"
-          },
-          {
-            "name": "claimed",
-            "type": "u64"
-          },
-          {
-            "name": "startOffset",
-            "docs": [
-              "Offsets in seconds relative to the market's activation timestamp."
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "cliffOffset",
-            "type": "i64"
-          },
-          {
-            "name": "endOffset",
-            "type": "i64"
-          },
-          {
-            "name": "label",
-            "type": "string"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "vestingClaimed",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "vesting",
-            "type": "pubkey"
-          },
-          {
-            "name": "beneficiary",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
-          },
-          {
-            "name": "claimedTotal",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "vestingCreated",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "vesting",
-            "type": "pubkey"
-          },
-          {
-            "name": "beneficiary",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
-          },
-          {
-            "name": "startOffset",
-            "type": "i64"
-          },
-          {
-            "name": "cliffOffset",
-            "type": "i64"
-          },
-          {
-            "name": "endOffset",
-            "type": "i64"
           }
         ]
       }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { POP_PILOT_DEFAULTS, largestRemainder, splitFees, splitProtocolQuoteFee, SOL } from "../src/index.js";
+import { FACTORY_DEFAULTS, largestRemainder, splitFees, splitProtocolQuoteFee, SOL } from "../src/index.js";
 
 describe("fees", () => {
   it("splits 2.00% of gross input into 150/25/25 bps", () => {
-    const f = splitFees(100n * SOL, POP_PILOT_DEFAULTS.fees);
+    const f = splitFees(100n * SOL, FACTORY_DEFAULTS.fees);
     expect(f.scarFee).toBe(15n * SOL / 10n);
     expect(f.protocolFee).toBe(25n * SOL / 100n);
     expect(f.creatorFee).toBe(25n * SOL / 100n);
@@ -12,26 +12,19 @@ describe("fees", () => {
     expect(f.scarFee + f.protocolFee + f.creatorFee + f.tradable).toBe(f.gross);
   });
 
-  it("internal buyback pays only the scar fee", () => {
-    const f = splitFees(100n * SOL, POP_PILOT_DEFAULTS.fees, true);
-    expect(f.protocolFee).toBe(0n);
-    expect(f.creatorFee).toBe(0n);
-    expect(f.scarFee).toBe(15n * SOL / 10n);
-  });
-
   it("fee totals always equal charged input (property)", () => {
     fc.assert(
       fc.property(fc.bigInt({ min: 0n, max: (1n << 64n) - 1n }), (g) => {
-        const f = splitFees(g, POP_PILOT_DEFAULTS.fees);
+        const f = splitFees(g, FACTORY_DEFAULTS.fees);
         return f.scarFee + f.protocolFee + f.creatorFee + f.tradable === g;
       }),
     );
   });
 
-  it("earmarks 50% of quote protocol fees for buybacks only on non-POP markets", () => {
-    const protocolFee = splitFees(100n * SOL, POP_PILOT_DEFAULTS.fees).protocolFee; // 0.25 SOL
-    expect(splitProtocolQuoteFee(protocolFee, 5000, false)).toEqual({ buyback: 125_000_000n, operating: 125_000_000n });
-    expect(splitProtocolQuoteFee(protocolFee, 5000, true)).toEqual({ buyback: 0n, operating: 250_000_000n });
+  it("earmarks 50% of quote protocol fees for the buyback escrow on every market", () => {
+    const protocolFee = splitFees(100n * SOL, FACTORY_DEFAULTS.fees).protocolFee; // 0.25 SOL
+    expect(splitProtocolQuoteFee(protocolFee, 5000)).toEqual({ buyback: 125_000_000n, operating: 125_000_000n });
+    expect(splitProtocolQuoteFee(protocolFee, 0)).toEqual({ buyback: 0n, operating: 250_000_000n });
   });
 
   it("largest remainder sums exactly and breaks ties by bin id", () => {

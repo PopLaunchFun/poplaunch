@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
   BinStore,
-  POP_PILOT_DEFAULTS,
+  FACTORY_DEFAULTS,
   SOL,
   commitSwap,
   emptyBin,
@@ -19,7 +19,7 @@ import {
   type SwapParams,
 } from "../src/index.js";
 
-function setup(cfg: MarketConfig = POP_PILOT_DEFAULTS) {
+function setup(cfg: MarketConfig = FACTORY_DEFAULTS) {
   const state = newMarketState(cfg);
   const store = new BinStore(cfg);
   store.initAllPages(state);
@@ -84,9 +84,9 @@ describe("swap walker", () => {
     expect(bin0.scarQuote).toBe(0n);
     expect(bin0.pendingQuoteEligible).toBe(150_000n);
     expect(bin0.pendingBaseEligible).toBe(0n);
-    expect(env.state.protocolClaimableQuote).toBe(25_000n);
     expect(env.state.creatorClaimableQuote).toBe(25_000n);
-    expect(env.state.buybackAccruedQuote).toBe(0n); // POP market excluded
+    expect(env.state.buybackAccruedQuote).toBe(12_500n); // 50% of the 25,000 lamport protocol fee
+    expect(env.state.protocolClaimableQuote).toBe(12_500n);
     expect(q.output).toBe((9_800_000n << 64n) / priceAtBin(env.p0, 0));
     checkReconciliation(env, ledger);
   });
@@ -158,7 +158,7 @@ describe("swap walker", () => {
   });
 
   it("enforces the 32-bin traversal cap counting empty bins", () => {
-    const env = setup({ ...POP_PILOT_DEFAULTS });
+    const env = setup({ ...FACTORY_DEFAULTS });
     const ledger = new Ledger(env.cfg.seedBase, env.cfg.seedQuote);
     // Clear all base in bins 0..31 by pre-emptying them (simulate a prior state) then buy.
     for (let i = 0; i < 40; i++) {
@@ -175,7 +175,7 @@ describe("swap walker", () => {
   });
 
   it("fails when a page is missing instead of inventing inventory", () => {
-    const cfg = POP_PILOT_DEFAULTS;
+    const cfg = FACTORY_DEFAULTS;
     const state = newMarketState(cfg);
     const store = new BinStore(cfg);
     store.initPage(state, 0);
@@ -250,7 +250,7 @@ describe("matching", () => {
 
 describe("graduation", () => {
   it("requires both thresholds and emits exactly one event", () => {
-    const cfg = testThresholds(POP_PILOT_DEFAULTS); // 1 SOL paired, 2 bands at 0.01 SOL
+    const cfg = testThresholds(FACTORY_DEFAULTS); // 1 SOL paired, 2 bands at 0.01 SOL
     const env = setup(cfg);
     const ledger = new Ledger(cfg.seedBase, cfg.seedQuote);
     let graduated = 0;
@@ -292,10 +292,14 @@ describe("conservation under random histories (property)", () => {
           const ledger = new Ledger(env.cfg.seedBase, env.cfg.seedQuote);
           let heldBase = 0n; // trader's base balance from previous buys
           let pairedBefore = 0n;
+          let quoteScarFees = 0n; // every buy's scar fee: it is either still pending or was paired
           for (const op of ops) {
             if (op.buy) {
               const r = swap(env, ledger, { direction: "buy", grossInput: op.amount, minOutput: 0n });
-              if (r.ok) heldBase += r.quote.output;
+              if (r.ok) {
+                heldBase += r.quote.output;
+                quoteScarFees += r.quote.fees.scarFee;
+              }
             } else {
               if (heldBase === 0n) continue;
               const amt = (heldBase * BigInt(op.fraction)) / 100n;
@@ -308,14 +312,46 @@ describe("conservation under random histories (property)", () => {
             pairedBefore = env.state.pairedQuoteLifetime;
             checkReconciliation(env, ledger);
           }
-          // paired contributions never exceed total scar fees collected in quote
+          // Every lamport of buy scar fee is either still pending or was paired exactly once.
+          // (Paired quote then sits in scar inventory and may later be traded away, so the
+          // historical counter can exceed current scar quote; that is expected.)
           const r = reconcile(env.state, env.store);
-          const totalQuoteScarFees = r.pendingQuoteEligible + r.binScarQuote + 0n; // scar quote came only from matching
-          expect(env.state.pairedQuoteLifetime <= totalQuoteScarFees + r.binScarQuote).toBe(true);
+          expect(r.pendingQuoteEligible + env.state.pairedQuoteLifetime).toBe(quoteScarFees);
           return true;
         },
       ),
       { numRuns: 60 },
     );
+  });
+});
+
+describe("virtual pages", () => {
+  it("quoting across an uninitialized page equals quoting after it is materialized", async () => {
+    const { FACTORY_DEFAULTS: cfg0, BinStore: Store, newMarketState: ns, quantizeP0: qp, quoteSwap: qs, LAUNCH_PAGES } = await import("../src/index.js");
+    const cfg = { ...cfg0, seedQuote: SOL };
+    const stateA = ns(cfg);
+    const storeA = new Store(cfg);
+    expect(LAUNCH_PAGES).toEqual([-1, 0, 1, 2]);
+    for (const p of [-1, 0]) storeA.initPage(stateA, p);
+    stateA.status = "active";
+    const p0 = qp(cfg.seedQuote, cfg.seedBase);
+    // ~20 bins at 1 SOL seed: runs past page 0 (bins 0..15) into the uninitialized page 1
+    const gross = SOL / 25n;
+    const strict = qs(cfg, stateA, p0, (b) => storeA.get(b), { direction: "buy", grossInput: gross, minOutput: 0n });
+    const virtual = qs(cfg, stateA, p0, (b) => storeA.getVirtual(b), { direction: "buy", grossInput: gross, minOutput: 0n });
+    const stateB = ns(cfg);
+    const storeB = new Store(cfg);
+    storeB.initAllPages(stateB);
+    stateB.status = "active";
+    const full = qs(cfg, stateB, p0, (b) => storeB.get(b), { direction: "buy", grossInput: gross, minOutput: 0n });
+    expect(strict.ok).toBe(false);
+    if (!strict.ok) expect(strict.error).toBe("PageNotInitialized");
+    expect(virtual.ok && full.ok).toBe(true);
+    if (virtual.ok && full.ok) {
+      expect(virtual.output).toBe(full.output);
+      expect(virtual.fills).toEqual(full.fills);
+      expect(virtual.pagesTouched).toEqual(full.pagesTouched);
+      expect(virtual.pagesTouched.some((p) => storeA.missingPages().includes(p))).toBe(true);
+    }
   });
 });

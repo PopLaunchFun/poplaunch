@@ -62,26 +62,18 @@ pub enum PopError {
     Unauthorized,
     #[msg("New market creation is disabled")]
     LaunchesDisabled,
-    #[msg("Genesis POP market already exists")]
-    GenesisExists,
-    #[msg("Only the genesis POP market may carry vesting allocations")]
-    VestingNotAllowed,
-    #[msg("Allocation exceeds the configured maximum")]
-    AllocationTooLarge,
-    #[msg("Invalid vesting schedule")]
-    InvalidVestingSchedule,
     #[msg("Nothing claimable")]
     NothingToClaim,
-    #[msg("POP market cannot fund buybacks")]
-    BuybackSourceExcluded,
-    #[msg("Buyback spend exceeds cap or realized funds")]
-    BuybackSpendCap,
+    #[msg("Buyback withdrawal exceeds cap or realized funds")]
+    BuybackWithdrawCap,
+    #[msg("Seed quote below the factory minimum")]
+    SeedQuoteBelowMinimum,
+    #[msg("POP mint already published")]
+    PopMintAlreadySet,
+    #[msg("POP mint not published yet")]
+    PopMintNotSet,
     #[msg("Buyback interval not elapsed")]
     BuybackInterval,
-    #[msg("Buyback reference price guard violated")]
-    BuybackPriceGuard,
-    #[msg("Market is not the POP market")]
-    NotPopMarket,
     #[msg("Invalid metadata string")]
     InvalidMetadata,
     #[msg("Invalid fee claim destination")]

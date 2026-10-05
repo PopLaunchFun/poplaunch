@@ -15,7 +15,6 @@ pub const FEE_KIND_CREATOR: u8 = 1;
 pub const SEED_PROTOCOL: &[u8] = b"protocol";
 pub const SEED_MARKET: &[u8] = b"market";
 pub const SEED_PAGE: &[u8] = b"page";
-pub const SEED_VESTING: &[u8] = b"vesting";
 pub const SEED_BUYBACK: &[u8] = b"buyback";
 pub const SEED_VAULT_BASE: &[u8] = b"vault_base";
 pub const SEED_VAULT_QUOTE: &[u8] = b"vault_quote";
@@ -25,7 +24,8 @@ pub const SEED_FEE_QUOTE: &[u8] = b"fee_quote";
 /// Factory defaults applied to markets created under this config version.
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, InitSpace, PartialEq, Eq)]
 pub struct FactorySettings {
-    pub seed_quote: u64,
+    /// Minimum seed quote (WSOL atomic) a creator must lock per coin. The creator chooses the amount.
+    pub min_seed_quote: u64,
     pub scar_fee_bps: u16,
     pub protocol_fee_bps: u16,
     pub creator_fee_bps: u16,
@@ -39,8 +39,6 @@ pub struct FactorySettings {
     pub bin_max: i32,
     pub max_bins_per_swap: u8,
     pub band_size: u8,
-    /// Max share of total supply that genesis vesting allocations may take (bps of total).
-    pub max_genesis_allocation_bps: u16,
 }
 
 #[account]
@@ -50,8 +48,9 @@ pub struct ProtocolConfig {
     pub authority: Pubkey,
     pub protocol_fee_recipient: Pubkey,
     pub buyback_authority: Pubkey,
+    /// External $POP mint (launched outside this program). Settable once; buyback withdrawals
+    /// are blocked until it is published.
     pub pop_mint: Pubkey,
-    pub pop_market: Pubkey,
     pub launches_enabled: bool,
     pub settings: FactorySettings,
     pub market_count: u64,
@@ -76,7 +75,6 @@ pub struct Market {
     pub max_bins_per_swap: u8,
     pub cursor: i32,
     pub status: u8,
-    pub is_pop_market: bool,
     pub config_version: u32,
     pub scar_fee_bps: u16,
     pub protocol_fee_bps: u16,
@@ -92,9 +90,6 @@ pub struct Market {
     pub seed_quote_total: u64,
     pub unmaterialized_seed_base: u64,
     pub unmaterialized_seed_quote: u64,
-    /// Supply minted to vesting allocations (genesis only).
-    pub allocated_supply: u64,
-    pub vesting_count: u8,
     pub paired_quote_lifetime: u64,
     pub hardened_bands: u16,
     pub band_paired_quote: [u64; MAX_BANDS],
@@ -175,8 +170,6 @@ pub struct Bin {
     pub scar_quote: u64,
     pub pending_base_eligible: u64,
     pub pending_quote_eligible: u64,
-    pub pending_base_ineligible: u64,
-    pub pending_quote_ineligible: u64,
     pub buy_volume_quote: u64,
     pub sell_volume_base: u64,
     pub paired_quote_lifetime: u64,
@@ -203,7 +196,7 @@ pub struct BinPage {
 }
 
 impl BinPage {
-    pub const LEN: usize = 8 + 32 + 4 + 1 + 3 + 96 * BINS_PER_PAGE;
+    pub const LEN: usize = 8 + 32 + 4 + 1 + 3 + 80 * BINS_PER_PAGE;
     pub fn first_bin(&self) -> i32 {
         self.page_index * BINS_PER_PAGE as i32
     }
@@ -211,53 +204,15 @@ impl BinPage {
 
 #[account]
 #[derive(InitSpace)]
-pub struct Vesting {
-    pub market: Pubkey,
-    pub mint: Pubkey,
-    pub beneficiary: Pubkey,
-    pub vault: Pubkey,
-    pub index: u8,
-    pub total: u64,
-    pub claimed: u64,
-    /// Offsets in seconds relative to the market's activation timestamp.
-    pub start_offset: i64,
-    pub cliff_offset: i64,
-    pub end_offset: i64,
-    #[max_len(32)]
-    pub label: String,
-    pub bump: u8,
-}
-
-impl Vesting {
-    /// Linear vesting between start and end, nothing before cliff; all after end.
-    pub fn vested_at(&self, activated_at_ts: i64, now: i64) -> u64 {
-        let start = activated_at_ts + self.start_offset;
-        let cliff = activated_at_ts + self.cliff_offset;
-        let end = activated_at_ts + self.end_offset;
-        if now < cliff || now < start {
-            return 0;
-        }
-        if now >= end {
-            return self.total;
-        }
-        let elapsed = (now - start) as u128;
-        let duration = (end - start) as u128;
-        ((self.total as u128) * elapsed / duration) as u64
-    }
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct BuybackVault {
+    /// Keeper/multisig allowed to withdraw bounded amounts to its own WSOL ATA for off-program execution.
     pub authority: Pubkey,
     pub quote_account: Pubkey,
-    pub pop_account: Pubkey,
     pub total_received: u64,
-    pub total_spent: u64,
-    pub total_burned: u64,
-    pub last_execution_slot: u64,
+    pub total_withdrawn: u64,
+    pub last_withdrawal_slot: u64,
     pub min_interval_slots: u64,
-    pub max_spend_per_execution: u64,
-    pub execution_count: u64,
+    pub max_withdraw_per_execution: u64,
+    pub withdrawal_count: u64,
     pub bump: u8,
 }

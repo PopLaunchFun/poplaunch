@@ -1,6 +1,6 @@
 import type { MarketConfig } from "./config.js";
-import { bandIndexOf, seedAllocationForPage, pageRange, pageFirstBin, seedAllocationForBin, validateConfig } from "./config.js";
-import { emptyBin, totalBase, totalQuote, type BinState } from "./bin.js";
+import { bandIndexOf, isBinInRange, seedAllocationForPage, pageRange, pageFirstBin, seedAllocationForBin, validateConfig } from "./config.js";
+import { emptyBin, seedBinState, totalBase, totalQuote, type BinState } from "./bin.js";
 
 export type MarketStatus = "created" | "active" | "graduated";
 
@@ -20,7 +20,7 @@ export interface MarketState {
   protocolClaimableQuote: bigint;
   creatorClaimableBase: bigint;
   creatorClaimableQuote: bigint;
-  /** Quote earmarked for POP buyback (non-POP markets only); physically in the fee vault until swept. */
+  /** Quote earmarked for the POP buyback escrow; physically in the fee vault until swept. */
   buybackAccruedQuote: bigint;
   unmaterializedSeedBase: bigint;
   unmaterializedSeedQuote: bigint;
@@ -100,6 +100,26 @@ export class BinStore {
     return page[bin - pageIndex * this.config.binsPerPage];
   }
 
+  /**
+   * Lookup that treats bins on uninitialized (but in-range) pages as their seed-schedule content.
+   * Used for client quotes that will create the page in the same transaction.
+   */
+  getVirtual(bin: number): BinState | undefined {
+    const b = this.get(bin);
+    if (b) return b;
+    if (!isBinInRange(this.config, bin)) return undefined;
+    const a = seedAllocationForBin(this.config, bin);
+    return seedBinState(a.seedBase, a.seedQuote);
+  }
+
+  /** Page indices in range that are not initialized. */
+  missingPages(): number[] {
+    const { minPage, maxPage } = pageRange(this.config);
+    const out: number[] = [];
+    for (let p = minPage; p <= maxPage; p++) if (!this.pages.has(p)) out.push(p);
+    return out;
+  }
+
   getOrThrow(bin: number): BinState {
     const b = this.get(bin);
     if (!b) throw new Error(`page for bin ${bin} not initialized`);
@@ -130,8 +150,6 @@ export interface Reconciliation {
   binScarQuote: bigint;
   pendingBaseEligible: bigint;
   pendingQuoteEligible: bigint;
-  pendingBaseIneligible: bigint;
-  pendingQuoteIneligible: bigint;
 }
 
 /** Account sums that must equal physical vault balances at all times. */
@@ -147,8 +165,6 @@ export function reconcile(state: MarketState, store: BinStore): Reconciliation {
     binScarQuote: 0n,
     pendingBaseEligible: 0n,
     pendingQuoteEligible: 0n,
-    pendingBaseIneligible: 0n,
-    pendingQuoteIneligible: 0n,
   };
   for (const [, b] of store.entries()) {
     r.vaultBase += totalBase(b);
@@ -159,8 +175,6 @@ export function reconcile(state: MarketState, store: BinStore): Reconciliation {
     r.binScarQuote += b.scarQuote;
     r.pendingBaseEligible += b.pendingBaseEligible;
     r.pendingQuoteEligible += b.pendingQuoteEligible;
-    r.pendingBaseIneligible += b.pendingBaseIneligible;
-    r.pendingQuoteIneligible += b.pendingQuoteIneligible;
   }
   return r;
 }

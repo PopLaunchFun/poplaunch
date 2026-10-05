@@ -4,8 +4,7 @@
  *   seed*     - launch seed inventory (never withdrawable, trades at the bin price)
  *   scar*     - activated fee-funded inventory (never withdrawable, trades at the bin price)
  *   pending*  - collected scar fees waiting for an opposing fee to match
- * Eligible vs ineligible pending escrow is kept separate so buyback executions can never
- * create graduation contributions.
+ * Only recorded swap fees enter pending escrow; nothing else qualifies for matching.
  */
 export interface BinState {
   seedBase: bigint;
@@ -14,8 +13,6 @@ export interface BinState {
   scarQuote: bigint;
   pendingBaseEligible: bigint;
   pendingQuoteEligible: bigint;
-  pendingBaseIneligible: bigint;
-  pendingQuoteIneligible: bigint;
   /** Cumulative gross quote input executed into this bin by buys (net of fees, i.e., tradable). */
   buyVolumeQuote: bigint;
   /** Cumulative base input executed into this bin by sells (tradable). */
@@ -33,8 +30,6 @@ export function emptyBin(): BinState {
     scarQuote: 0n,
     pendingBaseEligible: 0n,
     pendingQuoteEligible: 0n,
-    pendingBaseIneligible: 0n,
-    pendingQuoteIneligible: 0n,
     buyVolumeQuote: 0n,
     sellVolumeBase: 0n,
     pairedQuoteLifetime: 0n,
@@ -56,11 +51,11 @@ export function availableQuote(b: BinState): bigint {
 
 /** Total base held in the bin across all classes (for vault reconciliation). */
 export function totalBase(b: BinState): bigint {
-  return b.seedBase + b.scarBase + b.pendingBaseEligible + b.pendingBaseIneligible;
+  return b.seedBase + b.scarBase + b.pendingBaseEligible;
 }
 
 export function totalQuote(b: BinState): bigint {
-  return b.seedQuote + b.scarQuote + b.pendingQuoteEligible + b.pendingQuoteIneligible;
+  return b.seedQuote + b.scarQuote + b.pendingQuoteEligible;
 }
 
 export interface ClassSplit {
@@ -79,4 +74,17 @@ export function splitByOutputInventory(amount: bigint, seedAvail: bigint, scarAv
   if (seedAvail === 0n) return { seed: 0n, scar: amount };
   const scar = (amount * scarAvail) / avail;
   return { seed: amount - scar, scar };
+}
+
+/**
+ * A never-initialized page can only contain its fixed seed schedule with zero history. Quoting
+ * against that virtual content is exact: if someone materializes the page before the trader's
+ * transaction, the trader's prepended `initialize_bin_page` fails and the whole transaction
+ * reverts (then the client re-quotes).
+ */
+export function seedBinState(seedBase: bigint, seedQuote: bigint): BinState {
+  const b = emptyBin();
+  b.seedBase = seedBase;
+  b.seedQuote = seedQuote;
+  return b;
 }

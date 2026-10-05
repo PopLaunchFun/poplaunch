@@ -14,7 +14,6 @@ pub struct MarketCreated {
     pub seed_base: u64,
     pub seed_quote: u64,
     pub p0_x64: u128,
-    pub is_pop_market: bool,
     pub config_version: u32,
 }
 
@@ -48,7 +47,6 @@ pub struct SwapExecuted {
     pub bins_inspected: u8,
     pub start_bin: i32,
     pub end_bin: i32,
-    pub internal_buyback: bool,
     pub slot: u64,
 }
 
@@ -94,31 +92,17 @@ pub struct BuybackSwept {
 }
 
 #[event]
-pub struct BuybackExecuted {
-    pub market: Pubkey,
-    pub quote_spent: u64,
-    pub pop_bought: u64,
-    pub pop_burned: u64,
+pub struct BuybackWithdrawn {
+    pub amount: u64,
+    pub destination: Pubkey,
+    pub pop_mint: Pubkey,
+    pub authority: Pubkey,
     pub slot: u64,
 }
 
 #[event]
-pub struct VestingCreated {
-    pub market: Pubkey,
-    pub vesting: Pubkey,
-    pub beneficiary: Pubkey,
-    pub amount: u64,
-    pub start_offset: i64,
-    pub cliff_offset: i64,
-    pub end_offset: i64,
-}
-
-#[event]
-pub struct VestingClaimed {
-    pub vesting: Pubkey,
-    pub beneficiary: Pubkey,
-    pub amount: u64,
-    pub claimed_total: u64,
+pub struct PopMintSet {
+    pub pop_mint: Pubkey,
 }
 
 #[event]

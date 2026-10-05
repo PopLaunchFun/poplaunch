@@ -47,8 +47,6 @@ export interface SwapParams {
   direction: Direction;
   grossInput: bigint;
   minOutput: bigint;
-  /** Internal buyback execution: scar fee flagged ineligible, no protocol/creator fees. */
-  internalBuyback?: boolean;
   /** Slot the swap executes in (for deadline checks and last-execution instrumentation). */
   slot?: bigint;
   deadlineSlot?: bigint;
@@ -116,7 +114,7 @@ export function quoteSwap(
   const min = isBuy ? c.minQuoteIn : c.minBaseIn;
   if (params.grossInput < min) return fail("InputBelowMinimum", `gross ${params.grossInput} < min ${min}`);
 
-  const fees = splitFees(params.grossInput, c.fees, params.internalBuyback ?? false);
+  const fees = splitFees(params.grossInput, c.fees);
   let remaining = fees.tradable;
   if (remaining === 0n) return fail("InputBelowMinimum", "tradable input is zero after fees");
 
@@ -243,7 +241,6 @@ export interface SwapExecutedEvent {
   binsInspected: number;
   startBin: number;
   endBin: number;
-  internalBuyback: boolean;
   slot: bigint;
 }
 
@@ -266,7 +263,6 @@ export function commitSwap(
 ): SwapReceipt {
   const isBuy = q.direction === "buy";
   const slot = params.slot ?? 0n;
-  const internal = params.internalBuyback ?? false;
 
   // 1. Apply fills.
   for (const f of q.fills) {
@@ -289,21 +285,16 @@ export function commitSwap(
     b.lastExecutionSlot = slot;
   }
 
-  // 2. Distribute the scar fee to visited bins (eligible unless internal buyback).
+  // 2. Distribute the scar fee to visited bins as pending escrow.
   for (const s of q.scarShares) {
     const b = lookupMut(s.bin);
-    if (isBuy) {
-      if (internal) b.pendingQuoteIneligible += s.amount;
-      else b.pendingQuoteEligible += s.amount;
-    } else {
-      if (internal) b.pendingBaseIneligible += s.amount;
-      else b.pendingBaseEligible += s.amount;
-    }
+    if (isBuy) b.pendingQuoteEligible += s.amount;
+    else b.pendingBaseEligible += s.amount;
   }
 
   // 3. Protocol and creator revenue (never touch locked custody).
   if (isBuy) {
-    const split = splitProtocolQuoteFee(q.fees.protocolFee, c.fees.buybackShareBps, c.isPopMarket);
+    const split = splitProtocolQuoteFee(q.fees.protocolFee, c.fees.buybackShareBps);
     state.protocolClaimableQuote += split.operating;
     state.buybackAccruedQuote += split.buyback;
     state.creatorClaimableQuote += q.fees.creatorFee;
@@ -330,7 +321,6 @@ export function commitSwap(
       binsInspected: q.binsInspected,
       startBin: q.fills[0]!.bin,
       endBin: q.newCursor,
-      internalBuyback: internal,
       slot,
     },
   ];

@@ -131,7 +131,6 @@ fn market_from(cfg: &Cfg, test_thresholds: bool) -> Market {
         max_bins_per_swap: cfg.max_bins_per_swap,
         cursor: 0,
         status: STATUS_ACTIVE,
-        is_pop_market: true,
         config_version: 1,
         scar_fee_bps: cfg.scar_fee_bps,
         protocol_fee_bps: cfg.protocol_fee_bps,
@@ -147,8 +146,6 @@ fn market_from(cfg: &Cfg, test_thresholds: bool) -> Market {
         seed_quote_total: seed_quote,
         unmaterialized_seed_base: seed_base,
         unmaterialized_seed_quote: seed_quote,
-        allocated_supply: 0,
-        vesting_count: 0,
         paired_quote_lifetime: 0,
         hardened_bands: 0,
         band_paired_quote: [0; MAX_BANDS],
@@ -196,7 +193,7 @@ fn replay(cfg: &Cfg, run: &Run, test_thresholds: bool) {
     let mut slot: u64 = 1;
     for (i, r) in run.results.iter().enumerate() {
         let gross = u(&r.gross);
-        let res = quote_swap(&m, &bins, r.is_buy, gross, 0, false);
+        let res = quote_swap(&m, &bins, r.is_buy, gross, 0);
         match (&r.error, res) {
             (Some(e), Err(err)) => {
                 let s = format!("{err:?}");
@@ -227,7 +224,7 @@ fn replay(cfg: &Cfg, run: &Run, test_thresholds: bool) {
                     assert_eq!(*a, u(&b.amount), "op {i} scar share bin {}", b.bin);
                 }
                 let paired_before = m.paired_quote_lifetime;
-                commit_swap(&mut m, &key, &bins, &q, r.is_buy, false, slot).unwrap();
+                commit_swap(&mut m, &key, &bins, &q, r.is_buy, slot).unwrap();
                 // scars formed: compare total paired delta and per-bin via bin state later
                 let formed = r.scars_formed.as_ref().unwrap();
                 let delta: u64 = formed.iter().map(|s| u(&s.quote)).sum();

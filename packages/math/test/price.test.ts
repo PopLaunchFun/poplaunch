@@ -3,7 +3,7 @@ import {
   DOWN_X64,
   MIN_P0_X64,
   ONE_X64,
-  POP_PILOT_DEFAULTS,
+  FACTORY_DEFAULTS,
   UP_X64,
   floorDiv,
   priceAtBin,
@@ -16,15 +16,15 @@ import {
   pageRange,
 } from "../src/index.js";
 
-const c = POP_PILOT_DEFAULTS;
+const c = FACTORY_DEFAULTS;
 const p0 = quantizeP0(c.seedQuote, c.seedBase);
 
 describe("price table", () => {
-  it("quantizes P0 = 20 SOL / 900M POP in atomic units", () => {
-    expect(p0).toBe(409927646082434n);
+  it("quantizes P0 = 20 SOL / 1B tokens in atomic units", () => {
+    expect(p0).toBe(368934881474191n);
     expect(p0 >= MIN_P0_X64).toBe(true);
-    // 20e9 lamports / 9e14 base atomic = 2.222e-5 lamports per atomic
-    expect(Number(p0) / Number(ONE_X64)).toBeCloseTo(2.2222222e-5, 12);
+    // 20e9 lamports / 1e15 base atomic = 2e-5 lamports per atomic
+    expect(Number(p0) / Number(ONE_X64)).toBeCloseTo(2e-5, 12);
   });
 
   it("is strictly increasing across the whole range and matches 1.01^i within the documented bound", () => {
@@ -103,9 +103,9 @@ describe("layout helpers", () => {
     }
     expect(pb).toBe(c.seedBase);
     expect(pq).toBe(c.seedQuote);
-    // 20 SOL / 64 bins = 0.3125 SOL per bin, 900M / 512 bins
+    // 20 SOL / 64 bins = 0.3125 SOL per bin, 1B / 512 bins
     expect(seedAllocationForBin(c, -5).seedQuote).toBe(312_500_000n);
-    expect(seedAllocationForBin(c, 7).seedBase).toBe(900_000_000n * 1_000_000n / 512n);
+    expect(seedAllocationForBin(c, 7).seedBase).toBe(1_000_000_000n * 1_000_000n / 512n);
   });
 
   it("distributes remainders to the lowest ids", () => {

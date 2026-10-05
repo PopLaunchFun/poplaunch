@@ -33,7 +33,6 @@ export interface RawMarket {
   maxBinsPerSwap: number;
   cursor: number;
   status: number;
-  isPopMarket: boolean;
   configVersion: number;
   scarFeeBps: number;
   protocolFeeBps: number;
@@ -49,8 +48,6 @@ export interface RawMarket {
   seedQuoteTotal: Big;
   unmaterializedSeedBase: Big;
   unmaterializedSeedQuote: Big;
-  allocatedSupply: Big;
-  vestingCount: number;
   pairedQuoteLifetime: Big;
   hardenedBands: number;
   bandPairedQuote: Big[];
@@ -80,8 +77,6 @@ export interface RawBin {
   scarQuote: Big;
   pendingBaseEligible: Big;
   pendingQuoteEligible: Big;
-  pendingBaseIneligible: Big;
-  pendingQuoteIneligible: Big;
   buyVolumeQuote: Big;
   sellVolumeBase: Big;
   pairedQuoteLifetime: Big;
@@ -115,7 +110,6 @@ export function toMarketConfig(m: RawMarket): MarketConfig {
     bandsRequired: m.bandsRequired,
     minQuoteIn: big(m.minQuoteIn),
     minBaseIn: big(m.minBaseIn),
-    isPopMarket: m.isPopMarket,
     configVersion: m.configVersion,
   };
 }
@@ -158,8 +152,6 @@ export function toBinState(b: RawBin): BinState {
     scarQuote: big(b.scarQuote),
     pendingBaseEligible: big(b.pendingBaseEligible),
     pendingQuoteEligible: big(b.pendingQuoteEligible),
-    pendingBaseIneligible: big(b.pendingBaseIneligible),
-    pendingQuoteIneligible: big(b.pendingQuoteIneligible),
     buyVolumeQuote: big(b.buyVolumeQuote),
     sellVolumeBase: big(b.sellVolumeBase),
     pairedQuoteLifetime: big(b.pairedQuoteLifetime),

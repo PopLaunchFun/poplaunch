@@ -5,7 +5,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
-  BinStore, POP_PILOT_DEFAULTS, SOL, commitSwap, newMarketState, priceAtBin, quantizeP0, quoteSwap, testThresholds,
+  BinStore, FACTORY_DEFAULTS, SOL, commitSwap, newMarketState, priceAtBin, quantizeP0, quoteSwap, testThresholds,
   type MarketConfig, type SwapParams,
 } from "../../packages/math/src/index.js";
 
@@ -56,7 +56,7 @@ function run(cfg: MarketConfig, ops: { buy: boolean; gross: bigint }[]) {
   return { results, bins, cursor: state.cursor };
 }
 
-const cfg = POP_PILOT_DEFAULTS;
+const cfg = FACTORY_DEFAULTS;
 const p0 = quantizeP0(cfg.seedQuote, cfg.seedBase);
 const prices: Record<string, string> = {};
 for (let i = cfg.binMin; i <= cfg.binMax; i++) prices[i] = priceAtBin(p0, i).toString();

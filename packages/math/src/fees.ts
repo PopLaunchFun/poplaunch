@@ -10,20 +10,18 @@ export interface FeeBreakdown {
 }
 
 /** Fees are floor(input * bps / 10000) of the GROSS input, each computed independently. */
-export function splitFees(gross: bigint, fees: FeeConfig, internalBuyback = false): FeeBreakdown {
+export function splitFees(gross: bigint, fees: FeeConfig): FeeBreakdown {
   const scarFee = (gross * BigInt(fees.scarFeeBps)) / 10_000n;
-  // Internal buyback executions pay the scar fee (flagged ineligible) but no protocol/creator fees.
-  const protocolFee = internalBuyback ? 0n : (gross * BigInt(fees.protocolFeeBps)) / 10_000n;
-  const creatorFee = internalBuyback ? 0n : (gross * BigInt(fees.creatorFeeBps)) / 10_000n;
+  const protocolFee = (gross * BigInt(fees.protocolFeeBps)) / 10_000n;
+  const creatorFee = (gross * BigInt(fees.creatorFeeBps)) / 10_000n;
   let tradable = checkedSubU64(gross, scarFee);
   tradable = checkedSubU64(tradable, protocolFee);
   tradable = checkedSubU64(tradable, creatorFee);
   return { gross, scarFee, protocolFee, creatorFee, tradable };
 }
 
-/** Split of the protocol fee in quote on non-POP markets: buyback earmark vs. operations. */
-export function splitProtocolQuoteFee(protocolFee: bigint, buybackShareBps: number, isPopMarket: boolean): { buyback: bigint; operating: bigint } {
-  if (isPopMarket) return { buyback: 0n, operating: protocolFee };
+/** Split of the quote protocol fee: buyback escrow earmark vs. operations. Applies to every market. */
+export function splitProtocolQuoteFee(protocolFee: bigint, buybackShareBps: number): { buyback: bigint; operating: bigint } {
   const buyback = (protocolFee * BigInt(buybackShareBps)) / 10_000n;
   return { buyback, operating: protocolFee - buyback };
 }
