@@ -296,7 +296,7 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
     const site: Record<string, string> = {};
     for (const r of rows) site[r.key] = r.value;
     c.header("cache-control", "public, max-age=30");
-    return c.json({ contractAddress: site.contractAddress ?? "", updatedAt: rows.find((r) => r.key === "contractAddress")?.updated_at ?? null });
+    return c.json({ contractAddress: site.contractAddress ?? "", feelessUntil: site.feelessUntil ?? null, updatedAt: rows.find((r) => r.key === "contractAddress")?.updated_at ?? null });
   });
 
   /**
@@ -316,8 +316,17 @@ export function buildApi(connection: Connection, keeper: Keeper, startedAt: numb
       const contractAddress = String(p.contractAddress ?? "").trim();
       if (contractAddress !== "") new PublicKey(contractAddress); // throws on anything that is not a Solana address
       await consumeSignature(signature);
-      await query(`INSERT INTO site_settings (key, value, updated_by, updated_at) VALUES ('contractAddress', $1, $2, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`, [contractAddress, pk.toBase58()]);
-      return c.json({ ok: true, contractAddress });
+      const upsert = (key: string, value: string) => query(`INSERT INTO site_settings (key, value, updated_by, updated_at) VALUES ($1, $2, $3, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`, [key, value, pk.toBase58()]);
+      const [prev] = await query<{ value: string }>(`SELECT value FROM site_settings WHERE key = 'contractAddress'`);
+      await upsert("contractAddress", contractAddress);
+      // Owner's rule: publishing a new contract address restarts the 24-hour feeless countdown shown on the site.
+      // The countdown is display only; the creation fee itself is whatever the chain says (the bubble checks both).
+      let feelessUntil: string | null = null;
+      if (contractAddress !== "" && contractAddress !== (prev?.value ?? "")) {
+        feelessUntil = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+        await upsert("feelessUntil", feelessUntil);
+      }
+      return c.json({ ok: true, contractAddress, feelessUntil });
     } catch (e) {
       return c.json({ error: (e as Error).message }, 400);
     }

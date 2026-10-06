@@ -33,8 +33,9 @@ export function AdminPanel() {
   const [err, setErr] = useState<string | null>(null);
   const [ca, setCa] = useState("");
   const [caSaved, setCaSaved] = useState<string | null>(null);
+  const [feelessUntil, setFeelessUntil] = useState<string | null>(null);
   const [caBusy, setCaBusy] = useState(false);
-  useEffect(() => { if (!DEMO) void api.site().then((r) => { if (r) { setCa(r.contractAddress); setCaSaved(r.contractAddress); } }); }, []);
+  useEffect(() => { if (!DEMO) void api.site().then((r) => { if (r) { setCa(r.contractAddress); setCaSaved(r.contractAddress); setFeelessUntil(r.feelessUntil); } }); }, []);
   /** Signs the site message with the authority wallet; the backend checks the signer against the on-chain authority. */
   const saveContractAddress = async () => {
     if (!wallet.publicKey || !wallet.signMessage) { setErr("this wallet cannot sign messages"); return; }
@@ -44,7 +45,7 @@ export function AdminPanel() {
       const signedAt = Math.floor(Date.now() / 1000);
       const sig = await wallet.signMessage(new TextEncoder().encode(siteMessage(SIGN_DOMAIN, await sha256Hex(payload), signedAt)));
       const saved = await api.postSite({ payload, signer: wallet.publicKey.toBase58(), signature: bs58.encode(sig), signedAt });
-      setCa(saved); setCaSaved(saved);
+      setCa(saved.contractAddress); setCaSaved(saved.contractAddress); if (saved.feelessUntil) setFeelessUntil(saved.feelessUntil);
     } catch (e) { setErr((e as Error).message); } finally { setCaBusy(false); }
   };
 
@@ -134,12 +135,13 @@ export function AdminPanel() {
           </section>
           <section className="box p-5 md:p-6 mt-6">
             <h2 className="display text-[22px]">Contract address chip</h2>
-            <p className="label mt-2">The CA shown in the site header. Changes apply within a minute, no redeploy. Leave empty to show &ldquo;CA soon&rdquo;. This signs a message with your wallet; it is not a transaction and costs nothing.</p>
+            <p className="label mt-2">The CA shown in the site header. Changes apply within a minute, no redeploy. Leave empty to show &ldquo;CA soon&rdquo;. Saving a <b>new</b> address also restarts the &ldquo;Feeless for 24 hours&rdquo; countdown from that moment (the bubble only shows while the creation fee above is 0). This signs a message with your wallet; it is not a transaction and costs nothing.</p>
             <div className="flex flex-wrap items-end gap-3 mt-4">
               <label className="block flex-1 min-w-[260px]"><span className="label">Contract address</span><input className="input mt-1" value={ca} onChange={(e) => setCa(e.target.value.trim())} placeholder="token mint address (empty for none)" /></label>
               <button type="button" className="btn btn-red" disabled={caBusy || ca === caSaved} onClick={() => void saveContractAddress()}>{caBusy ? "Signing…" : "Save CA"}</button>
             </div>
             {caSaved !== null && <p className="label mt-2">Currently shown: {caSaved ? <span className="addr">{caSaved}</span> : "CA soon"}</p>}
+            {feelessUntil && <p className="label mt-1">Feeless countdown ends {new Date(feelessUntil).toLocaleString()} ({Date.parse(feelessUntil) > Date.now() ? "running" : "over"}).</p>}
           </section>
           <section className="box p-5 md:p-6 mt-6">
             <h2 className="display text-[22px]">Hand over the authority</h2>
